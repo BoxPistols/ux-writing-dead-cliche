@@ -1,0 +1,128 @@
+# 空虚な抽象 — 具体を書かずに大きな概念で覆う表現。
+
+- id: empty-abstraction/essence
+  severity: warn
+  pattern: 'の本質(です|だ|である|と言え|に迫)'
+  why: 「本質」と言うことで、具体的な説明を省いている。
+  ask: 本質と呼んでいる内容を、観察できる事実か手順で書く。
+  examples:
+    bad:
+      - 'ユーザー理解こそがUXの本質です。'
+    good:
+      - 'UX改善は、ユーザーの誤操作の観察から始める。'
+  deny_examples:
+    - '両者の本質的な違いは初期化の順序にある。'
+
+- id: empty-abstraction/shinzui
+  severity: error
+  surface:
+    - '真髄'
+    - '神髄'
+  why: 深さの主張だけで、中身が書かれない。
+  ask: 具体的に何を学べるのか、1 つ例を書く。
+  examples:
+    bad:
+      - 'アジャイル開発の真髄に触れる内容です。'
+    good:
+      - 'スプリントの分割単位を、機能ではなく検証したい仮説で決める方法を扱う。'
+
+- id: empty-abstraction/core
+  severity: warn
+  pattern: '核心を突く|の核心に迫'
+  why: 「重要な点に触れている」の主張だけで、その点自体が書かれない。
+  ask: 核心と呼んでいる内容を明示する。
+  examples:
+    bad:
+      - '問題の核心に迫る分析です。'
+    good:
+      - '障害の再発は、監視ではなくデプロイ手順の属人化に起因していた。'
+  deny_examples:
+    - '核心的利益をめぐる交渉が続いた。'
+
+- id: empty-abstraction/paradigm
+  severity: error
+  surface:
+    - 'パラダイムシフト'
+  why: 変化の大きさの主張だけで、何がどう変わるのかが書かれない。
+  ask: 変わる前と後の前提を並べて書く。
+  examples:
+    bad:
+      - '開発プロセスのパラダイムシフトが起きています。'
+    good:
+      - '手動テストの工程がなくなり、リリース周期が月次から週次になった。'
+
+- id: empty-abstraction/synergy
+  severity: warn
+  surface:
+    - 'シナジー'
+  why: 相乗効果の主張だけで、何と何がどう組み合わさるのかが書かれない。
+  ask: 掛け合わせの実体と、期待する効果の経路を書く。
+  examples:
+    bad:
+      - '両事業のシナジーを追求します。'
+    good:
+      - '両事業で顧客リストを共用し、営業の重複訪問をなくす。'
+
+- id: empty-abstraction/sublimation
+  severity: error
+  pattern: 'を昇華(さ|し)'
+  why: 変換の中身を書かずに、質の向上を主張する表現。
+  ask: 何をどう変換して、何に反映したのかを書く。
+  examples:
+    bad:
+      - '悔しさを昇華させて次の設計に活かした。'
+    good:
+      - '障害対応で得た再発防止策 3 件を、次期版の設計要件に加えた。'
+  deny_examples:
+    - 'ドライアイスが昇華して白い気体のように見えた。'
+
+- id: empty-abstraction/daigomi
+  severity: warn
+  surface:
+    - '醍醐味'
+  why: 魅力の主張だけで、何が面白いのかが書かれない。
+  ask: 面白さの実体を、具体的な場面で書く。
+  examples:
+    bad:
+      - 'これぞ設計の醍醐味です。'
+    good:
+      - '制約が矛盾したとき、どちらを捨てるかの判断が設計の面白さである。'
+
+- id: empty-abstraction/worldview
+  severity: warn
+  pattern: '(独自|唯一無二)の世界観'
+  why: 独自性の主張だけで、何が独自なのかが書かれない。
+  ask: 他と異なる具体的な特徴を 1 つ書く。
+  examples:
+    bad:
+      - '独自の世界観を持つプロダクトです。'
+    good:
+      - '全画面を手描きのイラストで構成し、写真素材を使っていない。'
+  deny_examples:
+    - 'ゲームの世界観設定を資料にまとめた。'
+
+- id: empty-abstraction/story
+  severity: error
+  pattern: '新たな物語|物語が(始ま|幕を開け)'
+  why: 期待感の演出で、計画の中身が書かれない。
+  ask: 次に何をするのか、最初の 1 手を書く。
+  examples:
+    bad:
+      - 'ここから新たな物語が始まります。'
+    good:
+      - '来月から、まず九州 3 県で実証実験を始める。'
+  deny_examples:
+    - '物語の構造を分析する研究が進んでいる。'
+
+- id: empty-abstraction/shinka
+  severity: warn
+  pattern: 'を深化さ'
+  why: 「深める」の抽象化で、何がどう変わるのかが書かれない。
+  ask: 深まった状態を、行動や成果物の変化で書く。
+  examples:
+    bad:
+      - '議論を深化させる場になった。'
+    good:
+      - '論点を 3 つに絞り、それぞれに反対意見を集めた。'
+  deny_examples:
+    - '進化の過程を系統樹で確認した。'

@@ -1,0 +1,42 @@
+{
+  "name": "ux-writing-dead-cliche",
+  "version": "0.1.0",
+  "description": "AI が日本語文章に持ち込むクリシェを検出し、平易な文章へ直すための辞書とツール",
+  "type": "module",
+  "bin": {
+    "dead-cliche": "./src/cli.mjs"
+  },
+  "exports": {
+    ".": "./src/engine.mjs",
+    "./load-rules": "./src/load-rules.mjs",
+    "./textlint-rule": "./src/textlint-rule.mjs"
+  },
+  "files": [
+    "src",
+    "rules",
+    "presets",
+    "schema"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check:self": "node src/cli.mjs check README.md CONTRIBUTING.md"
+  },
+  "keywords": [
+    "japanese",
+    "ux-writing",
+    "textlint",
+    "proofreading",
+    "claude-code-plugin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BoxPistols/ux-writing-dead-cliche.git"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

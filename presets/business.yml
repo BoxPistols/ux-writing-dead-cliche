@@ -1,0 +1,13 @@
+name: business
+description: 社内外のビジネス文書・PR・レビューコメント向け。慣用の強調は許容しつつ、比喩と誇張は検出する。
+include:
+  - metaphor
+  - overstatement
+  - empty-abstraction
+  - syntax-pattern
+  - translationese
+  - closing
+  - formatting
+overrides: {}
+disable:
+  - overstatement/masani

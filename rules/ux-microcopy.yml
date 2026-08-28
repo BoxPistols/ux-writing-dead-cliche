@@ -1,0 +1,207 @@
+# UI テキスト・マイクロコピー — 画面文言の規範。
+# 根拠は公開ガイド (JTF日本語標準スタイルガイド、文化庁「公用文作成の考え方」、
+# SmartHR Design System、デジタル庁デザインシステム) に共通する原則から採る。
+
+- id: ux-microcopy/ga-shippai
+  severity: error
+  pattern: '(取得|保存|送信|削除|更新|登録|作成|読み込み|読込|接続|認証|通信|アップロード|ダウンロード)が失敗しました'
+  why: 完了・失敗の述語は「{対象}の{操作}に失敗しました」。「が失敗」は助詞のゆれ。
+  ask: 「〜に失敗しました」に直し、原因か対処を続ける。
+  examples:
+    bad:
+      - '保存が失敗しました。'
+    good:
+      - '保存に失敗しました。ネットワーク接続を確認してください。'
+  deny_examples:
+    - 'テストが失敗した場合は自動で再実行される。'
+
+- id: ux-microcopy/fusei
+  severity: error
+  pattern: '不正な(値|入力|形式|文字|操作|リクエスト)'
+  why: ユーザーを責める表現。何が使えないのかも伝わらない。
+  ask: 事象と対処に置き換える。使える形式・文字を明示する。
+  examples:
+    bad:
+      - '不正な値が入力されました。'
+    good:
+      - '使用できない文字が含まれています。記号はハイフンとアンダースコアのみ使えます。'
+  deny_examples:
+    - '不正アクセスを検知する仕組みを導入した。'
+
+- id: ux-microcopy/error-only
+  severity: warn
+  pattern: 'エラーが発生しました。?$'
+  why: 対処のないエラー文。ユーザーは次に何をすべきか分からない。
+  ask: 事象・原因・対処の 3 要素で組み立てる。少なくとも対処を足す。
+  examples:
+    bad:
+      - 'エラーが発生しました。'
+    good:
+      - '読み込みに失敗しました。ページを再読み込みしてください。'
+  deny_examples:
+    - 'エラーが発生しました。時間をおいて再試行してください。'
+
+- id: ux-microcopy/ok-button
+  severity: warn
+  pattern: '>(OK|実行)</'
+  why: 「OK」「実行」は押した結果が分からないラベル。
+  ask: ボタンは最終的に起きる操作の名詞にする (保存・削除・送信など)。
+  examples:
+    bad:
+      - '<button>OK</button>'
+    good:
+      - '<button>保存</button>'
+  deny_examples:
+    - '「OKです」と返信があった。'
+
+- id: ux-microcopy/browser-confirm
+  severity: warn
+  pattern: '(?<!\w)confirm\('
+  why: ブラウザ標準の confirm はボタン文言が OS 依存になり、文言設計が及ばない。
+  ask: アプリ内の確認ダイアログコンポーネントに置き換える。
+  examples:
+    bad:
+      - 'if (confirm("削除しますか？")) { remove(); }'
+    good:
+      - '確認ダイアログコンポーネントを開き、ボタンは「削除」「キャンセル」にする。'
+  deny_examples:
+    - 'confirmButton.addEventListener("click", handler);'
+
+- id: ux-microcopy/kagikakko-kuten
+  severity: warn
+  pattern: '。」'
+  why: かぎかっこ内の文末には句点を付けない (JTF スタイルの原則)。
+  ask: 閉じかっこ直前の句点を削る。
+  examples:
+    bad:
+      - '画面には「保存しました。」と表示する。'
+    good:
+      - '画面には「保存しました」と表示する。'
+
+- id: ux-microcopy/shite-kudasai
+  severity: error
+  surface:
+    - 'して下さい'
+  why: 補助動詞はひらがなで書く (公用文・JTF 共通)。
+  ask: 「してください」に直す。
+  examples:
+    bad:
+      - '氏名を入力して下さい。'
+    good:
+      - '氏名を入力してください。'
+
+- id: ux-microcopy/shite-itadaku
+  severity: error
+  pattern: 'して頂(き|く|け)'
+  why: 補助動詞はひらがなで書く。本動詞 (賞状を頂く) は漢字のまま。
+  ask: 「していただく」に直す。
+  examples:
+    bad:
+      - '内容を確認して頂けますか。'
+    good:
+      - '内容を確認していただけますか。'
+  deny_examples:
+    - '来賓から賞状を頂いた。'
+
+- id: ux-microcopy/dekiru
+  severity: error
+  pattern: '(が|も|は)出来(ます|る|ません|ない)'
+  why: 可能の意味の「できる」はひらがなで書く。名詞 (出来事・出来栄え) は漢字のまま。
+  ask: 「できます」に直す。
+  examples:
+    bad:
+      - '削除は管理者のみが出来ます。'
+    good:
+      - '削除は管理者のみができます。'
+  deny_examples:
+    - '出来事を時系列で記録した。'
+
+- id: ux-microcopy/itashimasu
+  severity: error
+  pattern: '(願い|お待ち|失礼|連絡|送付)致します'
+  why: 補助動詞「いたします」はひらがなで書く。
+  ask: 「いたします」に直す。
+  examples:
+    bad:
+      - 'よろしくお願い致します。'
+    good:
+      - 'よろしくお願いいたします。'
+  deny_examples:
+    - '検索条件に一致します。'
+
+- id: ux-microcopy/placeholder-kudasai
+  severity: warn
+  manual: true
+  why: プレースホルダーは入力例・入力内容の提示であり、依頼文の場所ではない。消える文言に必須情報を書くことにもなる。
+  ask: 「{対象}を入力」「{対象}で検索」の体言止めにする。末尾に記号を付けない。
+  examples:
+    bad:
+      - 'placeholder="メールアドレスを入力してください"'
+    good:
+      - 'placeholder="メールアドレスを入力"'
+
+- id: ux-microcopy/dialog-title
+  severity: warn
+  manual: true
+  why: 確認ダイアログのタイトルが疑問形だと、本文・ボタンと役割が重複する。
+  ask: タイトルは操作の名詞句 (例、予定の削除)。本文は「{対象}を{操作}します。よろしいですか？」。取り消せない操作には「この操作は元に戻せません。」を必ず入れる。
+  examples:
+    bad:
+      - 'タイトル「本当に削除しますか？」'
+    good:
+      - 'タイトル「予定の削除」、本文「この予定を削除します。よろしいですか？この操作は元に戻せません。」'
+
+- id: ux-microcopy/error-3parts
+  severity: warn
+  manual: true
+  why: エラーは事象・原因・対処の 3 要素がないと、ユーザーが次の行動を決められない。表示スペースが足りないときは原因、対処、事象の順に残す。
+  ask: 何が起きたか、なぜか、どうすればよいかを分けて書く。エラーコードは末尾に付ける。
+  examples:
+    bad:
+      - '問題が発生しました。'
+    good:
+      - 'ファイルを読み込めませんでした。サイズが上限の 10MB を超えています。10MB 以下のファイルを選んでください。'
+
+- id: ux-microcopy/button-noun
+  severity: warn
+  manual: true
+  why: ボタンラベルの語彙が画面ごとに揺れると、同じ操作が別の操作に見える。
+  ask: 操作を表す名詞を単体で使う。新規に作る=作成、一覧に足す=追加、フォーム送信=登録、ファイル送付=送信、取得=ダウンロード。迷ったら「このボタンは最終的に何をするか」で選ぶ。
+  examples:
+    bad:
+      - '<button>ファイルをアップロードする</button>'
+    good:
+      - '<button>アップロード</button>'
+
+- id: ux-microcopy/empty-state
+  severity: info
+  manual: true
+  why: 初回の空状態と絞り込み 0 件は原因が違うのに、同じ文言だとユーザーが状況を誤解する。
+  ask: 初回は「{対象}はまだありません」、絞り込み 0 件は「該当する{対象}はありません」で書き分ける。
+  examples:
+    bad:
+      - 'データがありません'
+    good:
+      - '契約はまだありません (初回) / 該当する契約はありません (絞り込み 0 件)'
+
+- id: ux-microcopy/kuten-principle
+  severity: info
+  manual: true
+  why: 句点の有無が画面内で揺れると、文とラベルの区別がつかなくなる。
+  ask: 完全な文には句点を付け、名詞句で終わるものには付けない。見出し・ボタン・プレースホルダー・テーブルセルは付けない。説明文・通知・エラー・トーストは短文でも付ける。箇条書きはひとまとまり内で統一する。
+  examples:
+    bad:
+      - 'ボタン「保存する。」、エラー「保存に失敗しました」'
+    good:
+      - 'ボタン「保存」、エラー「保存に失敗しました。」'
+
+- id: ux-microcopy/required-mark
+  severity: info
+  manual: true
+  why: 「*」方式と「(任意)」方式が同一フォームに混在すると、無印の項目の扱いが決められない。
+  ask: フォーム単位でどちらかに統一する。
+  examples:
+    bad:
+      - '氏名* とメールアドレス (任意) が同じフォームに並ぶ'
+    good:
+      - '必須に * を付け、無印は任意とする。フォーム冒頭に「* は必須項目」と示す'

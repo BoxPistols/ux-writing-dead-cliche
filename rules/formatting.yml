@@ -1,0 +1,49 @@
+# 書式の型 — 語彙ではなく見た目に表れる AI 文章の癖。
+
+- id: formatting/emoji-heading
+  severity: error
+  pattern: '^#{1,6} ?[^\n]*\p{Extended_Pictographic}'
+  why: 絵文字付き見出しは装飾が内容より先に立ち、文書の信用を下げる。
+  ask: 見出しは内容を表す語だけにする。
+  examples:
+    bad:
+      - '## 🚀 はじめに'
+    good:
+      - '## はじめに'
+  deny_examples:
+    - '本文中の絵文字の扱いはチャンネルの慣習に従う。'
+
+- id: formatting/double-exclamation
+  severity: error
+  pattern: '[！!]{2,}'
+  why: 感嘆符の重ねがけは誇張の書式版。
+  ask: 感嘆符を減らし、伝えたい事実を本文に書く。
+  examples:
+    bad:
+      - '新バージョンがリリースされました！！'
+    good:
+      - '新バージョンをリリースした。変更点は 3 つある。'
+  deny_examples:
+    - '「重要！」と書かれた付箋が貼ってあった。'
+
+- id: formatting/bold-spam
+  severity: warn
+  manual: true
+  why: 段落中に太字を散りばめると、読み手が拾うべき強弱を書き手が決めつけた文になり、機械生成の印象を与える。
+  ask: 段落内の太字は原則 0 にする。強調したい内容は文の構成で先頭に置く。
+  examples:
+    bad:
+      - '**重要**なのは**スピード**と**品質**の**両立**です。'
+    good:
+      - '優先するのは処理速度である。品質は自動テストの通過を条件とする。'
+
+- id: formatting/kagikakko-emphasis
+  severity: info
+  manual: true
+  why: かぎかっこの強調転用は、引用・発話との区別を失わせる。
+  ask: 強調をやめて語を具体化するか、本当に引用なら出典を書く。
+  examples:
+    bad:
+      - 'それが「本当の」課題です。'
+    good:
+      - '未解決の課題は、権限設計の担当が決まっていないことである。'

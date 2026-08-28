@@ -1,0 +1,14 @@
+{
+  "preset": "paper",
+  "ignore": [
+    "rules/",
+    "presets/",
+    "corpus/",
+    "test/",
+    "schema/",
+    "skills/",
+    "commands/",
+    "agents/",
+    "docs/design.md"
+  ]
+}

@@ -1,0 +1,71 @@
+# 翻訳調・冗長 — 英語からの直訳に由来する回りくどい型。
+
+- id: translationese/koto-ga-dekimasu
+  severity: warn
+  pattern: 'することができ(ます|る)'
+  why: 「できます」で足りる冗長形。
+  ask: 「〜できます」に短くする。
+  examples:
+    bad:
+      - 'ボタンひとつで削除することができます。'
+    good:
+      - 'ボタンひとつで削除できます。'
+  deny_examples:
+    - 'この列は削除することができない仕様になっている。'
+
+- id: translationese/kanou-desu
+  severity: warn
+  pattern: 'することが可能(です|になります)'
+  why: 「できます」で足りる冗長形。
+  ask: 「〜できます」に短くする。
+  examples:
+    bad:
+      - 'CSV形式で出力することが可能です。'
+    good:
+      - 'CSV形式で出力できます。'
+
+- id: translationese/watashitachi
+  severity: warn
+  pattern: '^私たちは'
+  why: 英語の We に由来する書き出し。主体がぼやける。
+  ask: 主語を組織名・チーム名など具体にするか、省く。
+  examples:
+    bad:
+      - '私たちは、顧客体験の向上に取り組んでいます。'
+    good:
+      - '開発チームは、問い合わせ導線の改修を進めている。'
+  deny_examples:
+    - '調査の結果、私たちは当初の仮説を棄却した。'
+
+- id: translationese/to-ieru
+  severity: warn
+  pattern: 'と言える(でしょう|かもしれません)'
+  why: 判断の主体と条件を曖昧にするぼかし表現。
+  ask: 言い切るか、成立する条件を書く。
+  examples:
+    bad:
+      - 'この施策は成功だったと言えるでしょう。'
+    good:
+      - '目標の登録数 1,000 件に対し、実績は 1,240 件だった。'
+
+- id: translationese/mono-to-narimasu
+  severity: warn
+  pattern: 'もの(と|に)なります'
+  why: 「なります」で足りる冗長形。主体が消える。
+  ask: 「〜になります」か、動作主のある文にする。
+  examples:
+    bad:
+      - '本機能は今後の開発の土台となるものとなります。'
+    good:
+      - '今後の機能は本機能の API を使って実装する。'
+
+- id: translationese/teiku-juyou
+  severity: error
+  pattern: 'していくことが(重要|大切|必要|求められ)'
+  why: 具体的な行動計画を書かずに済ませる定型。
+  ask: 誰が、何を、どの頻度でやるのかを書く。
+  examples:
+    bad:
+      - '継続的に改善していくことが重要です。'
+    good:
+      - '毎週金曜に計測結果を確認し、悪化した指標を翌週の改善対象にする。'

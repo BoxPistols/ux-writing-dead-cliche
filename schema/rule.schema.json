@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "dead-cliche rule",
+  "description": "rules/*.yml の各エントリの書式。カテゴリはファイル名から決まる。",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "severity", "why", "ask", "examples"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[a-z-]+/[a-z0-9-]+$",
+        "description": "カテゴリ名/ルール名。カテゴリ名はファイル名と一致させる。"
+      },
+      "severity": { "enum": ["error", "warn", "info"] },
+      "surface": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 },
+        "description": "文字列一致で検出する表層形のリスト。"
+      },
+      "pattern": {
+        "type": "string",
+        "description": "正規表現 (JavaScript)。既定フラグは gmu。"
+      },
+      "flags": {
+        "type": "string",
+        "description": "既定フラグ mu の差し替え。g は常に付与される。"
+      },
+      "manual": {
+        "type": "boolean",
+        "description": "true なら機械検出しない。スキルやレビューでの人力判断ルール。"
+      },
+      "why": { "type": "string", "minLength": 1, "description": "なぜ避けるか。" },
+      "ask": { "type": "string", "minLength": 1, "description": "代わりに何を書くべきかの問い。" },
+      "examples": {
+        "type": "object",
+        "required": ["bad", "good"],
+        "properties": {
+          "bad": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "good": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        }
+      },
+      "deny_examples": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "検出してはいけない正当な用例。テストで強制される。"
+      },
+      "refs": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "根拠にした公開ガイドの名称。"
+      }
+    }
+  }
+}

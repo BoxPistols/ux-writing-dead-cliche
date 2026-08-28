@@ -1,0 +1,137 @@
+# 誇張・断定の型 — 根拠の提示を省いて強度だけを上げる表現。
+
+- id: overstatement/nothing-but
+  severity: error
+  pattern: '(に|の)(ほか|他)なりません'
+  why: 断定の強度を上げるだけで、根拠は増えていない。
+  ask: 「です」で言い切り、根拠を 1 つ添える。
+  examples:
+    bad:
+      - 'これは設計の失敗にほかなりません。'
+    good:
+      - 'これは設計の失敗です。初期化の順序が仕様と逆になっている。'
+  deny_examples:
+    - '他ならぬ君の頼みだから引き受けた。'
+
+- id: overstatement/itself
+  severity: warn
+  pattern: 'そのものです'
+  why: 対象を理念と同一視して、評価の根拠を省く表現。
+  ask: 何を見てそう判断したのか、観察された事実を書く。
+  examples:
+    bad:
+      - 'この姿勢がプロフェッショナリズムそのものです。'
+    good:
+      - '締め切り前日までに全件の検証を終えていた。'
+  deny_examples:
+    - 'そのものずばりの回答だった。'
+
+- id: overstatement/masani
+  severity: info
+  surface:
+    - 'まさに'
+  why: 強調の常套句。削っても意味が変わらないことが多い。
+  ask: 削って読み直す。強調が要るなら根拠を足す。
+  examples:
+    bad:
+      - 'まさに求めていた機能です。'
+    good:
+      - '検索条件の保存は、問い合わせの多かった機能だった。'
+
+- id: overstatement/kiwamete
+  severity: warn
+  pattern: '極めて(重要|大切|有効|優れ)'
+  why: 重要度の主張だけが強く、比較の基準がない。
+  ask: 何と比べて、何がどれだけ違うのかを書く。
+  examples:
+    bad:
+      - 'テスト自動化は極めて重要です。'
+    good:
+      - 'テストがないと、退行をリリース後まで検出できない。'
+  deny_examples:
+    - '極めて低い温度で超伝導を観測した。'
+
+- id: overstatement/overwhelming
+  severity: warn
+  surface:
+    - '圧倒的'
+  why: 差の大きさの主張だけで、測定値がない。
+  ask: 数値と計測条件を書く。書けないなら形容を弱める。
+  examples:
+    bad:
+      - '圧倒的な処理速度を実現しました。'
+    good:
+      - '同一データセットの処理時間は 12 秒で、従来版の 3 分の 1 だった。'
+
+- id: overstatement/revolutionary
+  severity: error
+  surface:
+    - '革命的'
+  why: 変化の大きさの主張だけで、何が変わるのかが書かれない。
+  ask: 従来と異なる点を 1 つに絞って書く。
+  examples:
+    bad:
+      - '革命的なアプローチです。'
+    good:
+      - '従来手法と異なるのは、事前学習を省いた点である。'
+
+- id: overstatement/dramatic
+  severity: warn
+  pattern: '(劇的|飛躍的|桁違い)に'
+  why: 変化量の主張だけで、数値がない。
+  ask: 前後の値を書く。
+  examples:
+    bad:
+      - '生産性が劇的に向上します。'
+    good:
+      - 'ビルド時間が 12 分から 90 秒になった。'
+  deny_examples:
+    - '劇的な結末の映画だった。'
+
+- id: overstatement/kagon
+  severity: error
+  pattern: 'と言っても過言では(ありません|ない)'
+  why: 誇張の予防線。主張の強さを曖昧にする。
+  ask: 過言でないなら言い切る。言い切れないなら主張を弱める。
+  examples:
+    bad:
+      - '業界の常識を変えたと言っても過言ではありません。'
+    good:
+      - '発売後 1 年で、主要 5 社が同方式を採用した。'
+
+- id: overstatement/conviction
+  severity: warn
+  pattern: '確信し(てい|てお)|確信を持って'
+  why: 主観の強度で根拠を代替する表現。
+  ask: 確信の根拠を書き、「見込む」「判断する」に置き換える。
+  examples:
+    bad:
+      - 'このプロジェクトは成功すると確信しています。'
+    good:
+      - '過去 3 回の類似案件が納期内に完了しており、同じ体制で進める。'
+  deny_examples:
+    - '確信犯的な遅刻が三日続いた。'
+
+- id: overstatement/unique
+  severity: error
+  surface:
+    - '唯一無二'
+  why: 独自性の主張だけで、比較対象がない。
+  ask: 競合や従来手法と異なる点を特定して書く。
+  examples:
+    bad:
+      - '唯一無二のユーザー体験を提供します。'
+    good:
+      - '画面遷移なしで全操作を完了できる点は、競合 3 製品にはない。'
+
+- id: overstatement/must-see
+  severity: warn
+  surface:
+    - '必見'
+  why: 読者への価値の主張だけで、対象と理由がない。
+  ask: 誰にとって、何の役に立つのかを書く。
+  examples:
+    bad:
+      - 'エンジニア必見の内容です。'
+    good:
+      - '対象読者は、初めて CI を設定する人である。'

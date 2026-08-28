@@ -1,0 +1,11 @@
+name: chat
+description: チャット・カジュアルな文章向け。呼びかけ・感嘆・締めの型は許容し、比喩と空虚な抽象だけを検出する。
+include:
+  - metaphor
+  - overstatement
+  - empty-abstraction
+  - translationese
+overrides: {}
+disable:
+  - overstatement/masani
+  - overstatement/must-see

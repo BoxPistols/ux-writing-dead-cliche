@@ -1,0 +1,14 @@
+name: paper
+description: 論文・技術文書・設計ドキュメント向け。クリシェ検出をすべて有効にし、修辞疑問と呼びかけを error に上げる。
+include:
+  - metaphor
+  - overstatement
+  - empty-abstraction
+  - syntax-pattern
+  - translationese
+  - closing
+  - formatting
+overrides:
+  syntax-pattern/rhetorical-question: error
+  closing/mashou: error
+disable: []

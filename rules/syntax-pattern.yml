@@ -1,0 +1,86 @@
+# 構文の型 — 語彙ではなく文の形に表れるクリシェ。
+
+- id: syntax-pattern/not-just
+  severity: error
+  pattern: '単なる[^。\n]{1,25}では(なく|ありません)'
+  why: 対象を持ち上げるための定型で、比較の中身がない。
+  ask: 「単なるX」との差分を具体的に書く。差分が書けないなら削る。
+  examples:
+    bad:
+      - 'これは単なるツールではなく、開発の思想です。'
+    good:
+      - 'このツールは依存関係の解決を自動化する。設定ファイルは不要になる。'
+  deny_examples:
+    - '原因は単なる誤記だった。'
+
+- id: syntax-pattern/sore-wa
+  severity: warn
+  pattern: '。それは、?[^。\n]{1,30}(です|である|だ)。'
+  why: もったいぶった定義の型。一文で言える内容を引き延ばしている。
+  ask: 一文にまとめる。
+  examples:
+    bad:
+      - '私たちには使命があります。それは、顧客の時間を取り戻すことです。'
+    good:
+      - '当社の使命は、顧客の作業時間を減らすことである。'
+  deny_examples:
+    - 'それは検証済みです。'
+
+- id: syntax-pattern/rhetorical-question
+  severity: warn
+  pattern: '(の|べき)ではないでしょうか'
+  why: 主張を疑問形に包んで、根拠の提示を避ける型。
+  ask: 主張として言い切り、根拠を添える。
+  examples:
+    bad:
+      - 'そろそろ設計を見直すべきではないでしょうか。'
+    good:
+      - '設計を見直す時期だ。変更要求の 6 割が現行構造と衝突している。'
+  deny_examples:
+    - '「これは仕様ではないですか」と質問が来た。'
+
+- id: syntax-pattern/antithesis
+  severity: warn
+  pattern: 'ではない。[^。\n]{0,25}(なのだ|のです|なのです)。'
+  why: 否定と断定の対句で高揚感を作る型。情報は増えていない。
+  ask: 事実の文に戻す。
+  examples:
+    bad:
+      - 'これは終わりではない。新しい始まりなのだ。'
+    good:
+      - '本プロジェクトは終了し、運用は保守チームへ移管する。'
+  deny_examples:
+    - '今回の対象ではない。詳細は付録に記載した。'
+
+- id: syntax-pattern/dash-definition
+  severity: warn
+  pattern: '(――|——)それは'
+  why: ダッシュで溜めて定義を出す演出の型。
+  ask: 「XはYである」の形で書く。
+  examples:
+    bad:
+      - '品質――それは全員の責任です。'
+    good:
+      - '品質の最終確認は、職種を問わず全員が担う。'
+
+- id: syntax-pattern/taigen-run
+  severity: warn
+  manual: true
+  why: 体言止めを連打すると、断定の主体と根拠が文から消える。
+  ask: 各文に主語と述語を戻し、事実の文にする。
+  examples:
+    bad:
+      - '圧倒的なスピード。洗練された体験。選ばれる理由。'
+    good:
+      - '処理は平均 0.4 秒で完了し、操作は 3 手順で終わる。'
+
+- id: syntax-pattern/triple-list
+  severity: info
+  manual: true
+  why: 内容が 2 点でも 4 点でも 3 点に丸める癖。点の数が内容より先に決まっている。
+  ask: 点の数は内容に合わせる。並列でないものを並列にしない。
+  examples:
+    bad:
+      - '速い・安い・美しいの三拍子そろったツールです。'
+    good:
+      - '処理が速く、無料枠で運用できる。UI の評価は利用者調査を待って判断する。'
