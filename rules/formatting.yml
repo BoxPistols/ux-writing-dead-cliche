@@ -15,8 +15,8 @@
 
 - id: formatting/double-exclamation
   severity: error
-  pattern: '[！!]{2,}'
-  why: 感嘆符の重ねがけは誇張の書式版。
+  pattern: '(?<!「[^「」]*)[！!]{2,}'
+  why: 感嘆符の重ねがけは誇張の書式版。かぎかっこ内 (作品名・引用) は対象外。
   ask: 感嘆符を減らし、伝えたい事実を本文に書く。
   examples:
     bad:
@@ -25,6 +25,7 @@
       - '新バージョンをリリースした。変更点は 3 つある。'
   deny_examples:
     - '「重要！」と書かれた付箋が貼ってあった。'
+    - '「絶対合格!!」という参考書を買った。'
 
 - id: formatting/bold-spam
   severity: warn
