@@ -1,0 +1,14 @@
+{
+  "name": "ux-writing-dead-cliche",
+  "owner": {
+    "name": "BoxPistols",
+    "url": "https://github.com/BoxPistols"
+  },
+  "plugins": [
+    {
+      "name": "dead-cliche",
+      "source": "./",
+      "description": "AI 日本語クリシェの検出と平易な書き直し。UX ライティングレビュー、署名なしの PR・コミット文面、Slack レビュー依頼文の生成を含む"
+    }
+  ]
+}
