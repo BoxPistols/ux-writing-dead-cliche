@@ -48,3 +48,33 @@
       - 'それが「本当の」課題です。'
     good:
       - '未解決の課題は、権限設計の担当が決まっていないことである。'
+
+- id: formatting/bold-list-prefix
+  severity: warn
+  pattern: '^ *[-*・] *\*\*[^*\n]+\*\*'
+  why: 箇条書きの太字プリフィックス (「**重要**:」等) は機械的な強調の型。強弱は文の構成で表す。
+  ask: 太字を外し、重要な項目は先頭に置くか理由を書く。
+  refs:
+    - 'textlint-rule-preset-ai-writing (MIT) と同観点の独自実装'
+  examples:
+    bad:
+      - '- **重要**: 設定ファイルを確認してください。'
+    good:
+      - '- 設定ファイルを確認する。誤設定は起動時に検出されない。'
+  deny_examples:
+    - '**注意** 段落先頭の太字は bold-spam の対象。'
+
+- id: formatting/emoji-list
+  severity: warn
+  pattern: '^ *(?:[-*・]|\d+\.) *[\p{Extended_Pictographic}✅❌]'
+  why: 絵文字を先頭に付けた箇条書きは装飾が内容より先に立つ。
+  ask: 絵文字を外す。可否は「使える・使えない」等の語で書く。
+  refs:
+    - 'textlint-rule-preset-ai-writing (MIT) と同観点の独自実装'
+  examples:
+    bad:
+      - '- ✅ 高速な処理'
+    good:
+      - '- 処理は平均 0.4 秒で完了する。'
+  deny_examples:
+    - '- 絵文字の扱いはチャンネルの慣習に従う。'

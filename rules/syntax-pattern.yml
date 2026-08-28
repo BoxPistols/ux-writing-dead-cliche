@@ -84,3 +84,18 @@
       - '速い・安い・美しいの三拍子そろったツールです。'
     good:
       - '処理が速く、無料枠で運用できる。UI の評価は利用者調査を待って判断する。'
+
+- id: syntax-pattern/colon-predicate
+  severity: warn
+  pattern: '(です|ます|した)[:：]$'
+  why: 述語で終わる文にコロンを付ける型 (「実行します:」)。日本語の文の切れ目と記号が衝突する。
+  ask: 名詞止め (「実行するコマンド:」) にするか、コロンを句点にする。
+  refs:
+    - 'textlint-rule-preset-ai-writing (MIT) と同観点の独自実装 (形態素解析なしの近似)'
+  examples:
+    bad:
+      - '次のコマンドを実行します:'
+    good:
+      - '実行するコマンド:'
+  deny_examples:
+    - '主な設定項目:'
