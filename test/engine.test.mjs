@@ -52,3 +52,48 @@ test('textlint ラッパーが違反を報告する', () => {
   assert.ok(reports.length >= 1);
   assert.match(reports[0].message, /metaphor\/compass/);
 });
+
+test('textlint ラッパーもコードフェンスを検査しない', () => {
+  const text = '本文です。\n```\nこの文書はチームの羅針盤です。\n```\n';
+  const reports = [];
+  const context = {
+    Syntax: { Document: 'Document' },
+    getSource: () => text,
+    report: (_node, err) => reports.push(err),
+    RuleError: class {
+      constructor(message, opts) {
+        this.message = message;
+        this.opts = opts;
+      }
+    },
+    locator: { range: (r) => r },
+  };
+  textlintRule(context, { preset: 'paper' }).Document({ type: 'Document' });
+  assert.equal(reports.length, 0);
+});
+
+test('textlint ラッパーのメッセージに severity が含まれる', () => {
+  const text = 'この文書はチームの羅針盤です。';
+  const reports = [];
+  const context = {
+    Syntax: { Document: 'Document' },
+    getSource: () => text,
+    report: (_node, err) => reports.push(err),
+    RuleError: class {
+      constructor(message, opts) {
+        this.message = message;
+        this.opts = opts;
+      }
+    },
+    locator: { range: (r) => r },
+  };
+  textlintRule(context, { preset: 'paper' }).Document({ type: 'Document' });
+  assert.match(reports[0].message, /^\[error\]/);
+});
+
+test('感嘆符ルールのかぎかっこ除外は行を跨がない', () => {
+  const rules = loadAllRules().filter((r) => r.id === 'formatting/double-exclamation');
+  const unclosedQuoteOnPreviousLine = '彼は「と言いかけて黙った。\nすごい機能です！！';
+  assert.equal(check(unclosedQuoteOnPreviousLine, rules).length, 1, '前の行の閉じていない「で無効化された');
+  assert.equal(check('タイトルは「絶対合格!!」だ。', rules).length, 0, '同一行のかぎかっこ内は除外されるべき');
+});

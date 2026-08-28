@@ -15,7 +15,7 @@
 
 - id: formatting/double-exclamation
   severity: error
-  pattern: '(?<!「[^「」]*)[！!]{2,}'
+  pattern: '(?<!「[^「」\n]*)[！!]{2,}'
   why: 感嘆符の重ねがけは誇張の書式版。かぎかっこ内 (作品名・引用) は対象外。
   ask: 感嘆符を減らし、伝えたい事実を本文に書く。
   examples:
