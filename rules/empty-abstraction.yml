@@ -2,7 +2,7 @@
 
 - id: empty-abstraction/essence
   severity: warn
-  pattern: 'の本質(です|だ|である|と言え|に迫)'
+  pattern: 'の本質(です|だ|である|と言え|に迫)|本質的には'
   why: 「本質」と言うことで、具体的な説明を省いている。
   ask: 本質と呼んでいる内容を、観察できる事実か手順で書く。
   examples:
@@ -103,7 +103,7 @@
 
 - id: empty-abstraction/story
   severity: error
-  pattern: '新たな物語|物語が(始ま|幕を開け)'
+  pattern: '新たな物語|物語(が始ま|を紡)|(時代|歴史|新章)の幕開け'
   why: 期待感の演出で、計画の中身が書かれない。
   ask: 次に何をするのか、最初の 1 手を書く。
   examples:
@@ -126,3 +126,77 @@
       - '論点を 3 つに絞り、それぞれに反対意見を集めました。'
   deny_examples:
     - '進化の過程を系統樹で確認した。'
+
+- id: empty-abstraction/kachi-teikyou
+  severity: warn
+  pattern: '(価値|体験|感動)を(提供|お届け)'
+  why: 企業文の定型。提供物の実体が書かれない。
+  ask: 何を、誰に、どう役立つ形で渡すのかを書く。
+  examples:
+    bad:
+      - '新しい価値を提供します。'
+    good:
+      - '手作業だった集計を自動化し、月 20 時間を減らします。'
+  deny_examples:
+    - '昼食を提供する施設を運営している。'
+
+- id: empty-abstraction/yorisou
+  severity: warn
+  pattern: '(顧客|お客様|ユーザー|利用者|一人ひとり)に寄り添'
+  why: 姿勢の表明だけで、行動が書かれない。
+  ask: 寄り添うと呼んでいる行動 (対応時間・選択肢・例外処理) を書く。
+  examples:
+    bad:
+      - 'お客様一人ひとりに寄り添ったサービスです。'
+    good:
+      - '問い合わせには担当者が 1 営業日以内に返信します。定型の自動返信は使いません。'
+  deny_examples:
+    - '入院中の祖母に寄り添って過ごした。'
+
+- id: empty-abstraction/omoi-katachi
+  severity: warn
+  pattern: '想いを(形|カタチ)に'
+  why: 制作の常套句。想いの中身も形の中身も書かれない。
+  ask: 誰の何の要望を、どんな仕様にしたのかを書く。
+  examples:
+    bad:
+      - 'お客様の想いをカタチにします。'
+    good:
+      - '要望を仕様書に起こし、着工前に 3D モデルで確認してもらいます。'
+  deny_examples:
+    - '故人への思いを形にした記念碑が建った。'
+
+- id: empty-abstraction/jitsugen-kouken
+  severity: warn
+  pattern: '(社会|未来|世界)の実現に(貢献|寄与)'
+  why: 目的の連鎖を大きな言葉で打ち切る定型。自社の行動が書かれない。
+  ask: 自分たちが何をするのかを、観測できる粒度で書く。
+  examples:
+    bad:
+      - '持続可能な社会の実現に貢献します。'
+    good:
+      - '製造工程の電力使用量を 2030 年までに 3 割減らします。'
+
+- id: empty-abstraction/shugyoku
+  severity: warn
+  pattern: '珠玉の'
+  why: 質の高さの主張だけで、選定基準が書かれない。
+  ask: 何を基準に選んだのかを書く。
+  examples:
+    bad:
+      - '珠玉のテクニック集です。'
+    good:
+      - '実案件で使った 12 の手法を、失敗例と併せて載せています。'
+
+- id: empty-abstraction/minshuka
+  severity: warn
+  pattern: '(AI|技術|データ|開発|情報|知識)を民主化'
+  why: democratize の直訳。誰が何をできるようになるのかが書かれない。
+  ask: これまでできなかった誰が、何をできるようになるのかを書く。
+  examples:
+    bad:
+      - 'AIを民主化するプラットフォームです。'
+    good:
+      - 'プログラミング経験がなくても、画面操作だけで分類モデルを作れます。'
+  deny_examples:
+    - '選挙制度の民主化を求める運動が起きた。'

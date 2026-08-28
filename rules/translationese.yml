@@ -69,3 +69,49 @@
       - '継続的に改善していくことが重要です。'
     good:
       - '毎週金曜に計測結果を確認し、悪化した指標を翌週の改善対象にします。'
+
+- id: translationese/koto-ni
+  severity: warn
+  pattern: '(興味深い|驚くべき|幸いな|不思議な)ことに、'
+  why: Interestingly, などの文頭副詞の直訳。評価を先に置いて根拠を後回しにする。
+  ask: 評価語を削り、興味深いと感じた事実そのものを書く。
+  examples:
+    bad:
+      - '興味深いことに、この手法は日本語でも機能します。'
+    good:
+      - 'この手法は日本語でも機能します。英語との違いは分かち書きの有無だけです。'
+  deny_examples:
+    - '困ったことに、鍵を忘れた。'
+
+- id: translationese/kanou-ni-shimasu
+  severity: warn
+  pattern: 'することを可能に(し|する)'
+  why: enable の直訳の冗長形。
+  ask: 「〜できます」に短くする。
+  examples:
+    bad:
+      - '大量の文書を横断検索することを可能にします。'
+    good:
+      - '大量の文書を横断検索できます。'
+
+- id: translationese/juuyou-yakuwari
+  severity: warn
+  pattern: '重要な役割を果た'
+  why: plays an important role の直訳。役割の中身が書かれない。
+  ask: 何を担っているのかを動詞で書く。
+  examples:
+    bad:
+      - 'テストは品質保証で重要な役割を果たします。'
+    good:
+      - 'テストは退行の検出を担います。リリース前の唯一の検出手段です。'
+
+- id: translationese/iu-made-mo-naku
+  severity: info
+  pattern: '言うまでもなく|言うまでもありませんが'
+  why: needless to say の直訳。言うまでもないなら書かなくてよい。
+  ask: 削るか、根拠として必要なら普通の文で書く。
+  examples:
+    bad:
+      - '言うまでもなく、テストは重要です。'
+    good:
+      - 'テストがないと、退行をリリース後まで検出できません。'

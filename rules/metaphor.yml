@@ -162,7 +162,7 @@
 
 - id: metaphor/treasure
   severity: warn
-  pattern: 'の宝庫'
+  pattern: 'の宝庫|宝の山'
   why: 価値があると言うだけで、何をどう取り出せるのかが書かれない。
   ask: そこから具体的に何が得られたか、1 つ例を書く。
   examples:
@@ -175,7 +175,7 @@
 
 - id: metaphor/key
   severity: warn
-  pattern: '成功の鍵|鍵を握る'
+  pattern: '成功の(鍵|カギ)|(鍵|カギ)を握る'
   why: 重要性の主張だけで、因果の中身が書かれない。
   ask: それがどう結果に効くのか、経路を書く。
   examples:
@@ -213,3 +213,146 @@
   deny_examples:
     - '信号が緑になってから渡った。'
     - '公園の緑が濃くなってきた。'
+
+- id: metaphor/north-star
+  severity: warn
+  pattern: '(組織|チーム|事業|経営|プロダクト|開発)の北極星'
+  why: North Star の直訳。方針の比喩として使われるが、何を判断するときに参照するのかが書かれない。
+  ask: どの判断で、何より優先する指標なのかを書く。
+  examples:
+    bad:
+      - 'この指標がチームの北極星です。'
+    good:
+      - '判断が分かれたときは、この指標の改善を他のすべてに優先します。'
+  deny_examples:
+    - '夜空で北極星を探した。'
+
+- id: metaphor/puzzle-piece
+  severity: warn
+  pattern: '最後のピース(です|とな|と言え)'
+  why: 「残っていた課題」の比喩で、何が欠けていたのかが書かれない。
+  ask: 欠けていた機能・工程を特定して書く。
+  examples:
+    bad:
+      - '生成AIは業務自動化の最後のピースです。'
+    good:
+      - '未対応だった請求書の読み取りを、生成AIが担います。'
+  deny_examples:
+    - 'ジグソーパズルの最後のピースをはめた。'
+
+- id: metaphor/weapon
+  severity: warn
+  pattern: '(最強|最大|強力)の武器|が武器に(なり|なる)'
+  why: 「強み」の比喩で、何に対してどう有利なのかが書かれない。
+  ask: どの場面で、何と比べて有利になるのかを書く。
+  examples:
+    bad:
+      - '英語力はエンジニア最強の武器です。'
+    good:
+      - '外資系の求人 6 割が英語要件を含み、選択肢が約 2 倍になります。'
+  deny_examples:
+    - '博物館で中世の武器を見た。'
+
+- id: metaphor/chemistry
+  severity: warn
+  pattern: '(チーム|組織|メンバー)の化学反応'
+  why: 「相互作用が良い」の比喩で、何が起きたのかが書かれない。
+  ask: 誰と誰の間で、何が生まれたのかを書く。
+  examples:
+    bad:
+      - '新メンバーの加入でチームの化学反応が生まれました。'
+    good:
+      - '設計とテストの担当が互いにレビューし、仕様の抜けを 3 件見つけました。'
+  deny_examples:
+    - '化学反応式の係数を合わせる問題を解いた。'
+
+- id: metaphor/irodoru
+  severity: warn
+  pattern: '(日常|生活|毎日|暮らし)を彩る'
+  why: 広告の常套句で、製品が何をするのかが書かれない。
+  ask: 使う場面と、使う前後で何が変わるのかを書く。
+  examples:
+    bad:
+      - '毎日を彩るアプリです。'
+    good:
+      - '毎朝の献立を、冷蔵庫の在庫から 3 分で提案します。'
+  deny_examples:
+    - '紅葉が庭園を彩る季節になった。'
+
+- id: metaphor/kiri-hiraku
+  severity: warn
+  pattern: '(未来|時代|新時代|可能性)を切り(拓|開)|フロンティアを開拓'
+  why: 前進の比喩で、次に何をするのかが書かれない。
+  ask: 具体的に何を始めるのか、最初の 1 手を書く。
+  examples:
+    bad:
+      - '両社の提携で新時代を切り拓きます。'
+    good:
+      - '両社は来期、共同で保守部品の在庫を一元化します。'
+  deny_examples:
+    - '山道を切り開いて進んだ。'
+
+- id: metaphor/jidai-tourai
+  severity: warn
+  pattern: '時代が(到来|やって来)|の波が押し寄せ'
+  why: 変化の大きさを演出する定型で、根拠となる事実が書かれない。
+  ask: 普及率・導入数など、変化を示す観測値を書く。
+  examples:
+    bad:
+      - 'AIの時代が到来しました。'
+    good:
+      - '国内企業の生成AI導入率は 4 割に達しました (2026 年調査)。'
+  deny_examples:
+    - '高波が押し寄せて堤防を越えた。'
+
+- id: metaphor/junkatsuyu
+  severity: warn
+  pattern: '(組織|チーム|職場)の潤滑油'
+  why: 「関係を円滑にする」の比喩で、実際の働きが書かれない。
+  ask: 誰の間の、どんな摩擦をどう減らしているのかを書く。
+  examples:
+    bad:
+      - '彼女は組織の潤滑油のような存在です。'
+    good:
+      - '部署間の依頼はすべて彼女が窓口になり、往復の確認が減りました。'
+  deny_examples:
+    - 'エンジンオイルなどの潤滑油を交換した。'
+
+- id: metaphor/engine
+  severity: warn
+  pattern: '(成長|事業|経済|変革)のエンジン'
+  why: 「推進力」の比喩で、因果の実体が書かれない。
+  ask: 何がどの数字を動かしているのかを書く。
+  examples:
+    bad:
+      - '新規事業が成長のエンジンとなっています。'
+    good:
+      - '売上の増加分の 7 割は新規事業によるものです。'
+  deny_examples:
+    - '車のエンジンを整備に出した。'
+
+- id: metaphor/recipe
+  severity: warn
+  pattern: '(成功|勝利)のレシピ'
+  why: 「手順化された方法」の比喩で、手順自体が書かれない。
+  ask: 再現可能な手順として書くか、手順の所在を示す。
+  examples:
+    bad:
+      - '本書には成功のレシピが詰まっています。'
+    good:
+      - '受注までの 5 工程を、各工程のチェックリスト付きで説明します。'
+  deny_examples:
+    - '祖母から煮物のレシピを教わった。'
+
+- id: metaphor/spice
+  severity: warn
+  pattern: '(会話|人生|日常|文章)のスパイス'
+  why: 「変化を加えるもの」の比喩で、何がどう変わるのかが書かれない。
+  ask: 加えた結果の変化を具体的に書く。
+  examples:
+    bad:
+      - 'ユーモアは文章のスパイスです。'
+    good:
+      - '導入に体験談を 1 つ入れると、離脱率が下がりました。'
+  deny_examples:
+    - 'カレーにスパイスを 3 種類加えた。'

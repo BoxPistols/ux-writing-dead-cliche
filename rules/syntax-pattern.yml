@@ -99,3 +99,104 @@
       - '実行するコマンド:'
   deny_examples:
     - '主な設定項目:'
+
+- id: syntax-pattern/sore-dake-dewa
+  severity: warn
+  pattern: 'それだけではありません'
+  why: 続きを演出する定型。並列で書けば足りる。
+  ask: 「AとBの両方」の形で 1 文にまとめる。
+  examples:
+    bad:
+      - '処理が速くなりました。しかし、それだけではありません。'
+    good:
+      - '処理速度に加えて、メモリ使用量も半分になりました。'
+
+- id: syntax-pattern/gozonji
+  severity: warn
+  pattern: 'をご存(知|じ)でしょうか'
+  why: 記事導入の定型の問いかけ。答えを書けば要らない。
+  ask: 問いをやめて、その事実から書き始める。
+  examples:
+    bad:
+      - 'この設定項目をご存知でしょうか。'
+    good:
+      - 'この設定項目は、検索結果の並び順を変えます。'
+
+- id: syntax-pattern/souzou-shite
+  severity: error
+  pattern: '想像してみてください'
+  why: Imagine の直訳。読者への指示で事実の提示を代替している。
+  ask: 想像させたい状態を、実績か仕様として書く。
+  examples:
+    bad:
+      - '想像してみてください。会議が 10 分で終わる世界を。'
+    good:
+      - '導入した部署では、定例会議が平均 25 分から 10 分になりました。'
+
+- id: syntax-pattern/youkoso
+  severity: error
+  pattern: 'の世界へようこそ'
+  why: 記事導入の定型。内容の説明になっていない。
+  ask: この文書で何を扱うのかを最初の文で書く。
+  examples:
+    bad:
+      - '3D プリントの世界へようこそ。'
+    good:
+      - '本連載は 3D プリントの始め方を扱います。今回は機種選びです。'
+
+- id: syntax-pattern/himotoku
+  severity: warn
+  pattern: '(謎|秘密|魅力|仕組み|舞台裏)を紐解'
+  why: メディアの定型。分析の中身が書かれない。
+  ask: 何をどう調べて、何が分かるのかを書く。
+  examples:
+    bad:
+      - '人気の秘密を紐解きます。'
+    good:
+      - 'リピート率の高い店舗 10 件を訪問し、共通する接客手順を記録しました。'
+  deny_examples:
+    - '江戸期の古文書を紐解いた。'
+
+- id: syntax-pattern/semaru
+  severity: info
+  pattern: '(魅力|実態|素顔|舞台裏)に迫(る|り)'
+  why: メディアの定型見出し。何が分かるのかが書かれない。
+  ask: 読み終えたときに分かることを書く。
+  examples:
+    bad:
+      - '開発現場の実態に迫ります。'
+    good:
+      - '開発チーム 5 人に、リリース前 1 週間の作業時間を聞きました。'
+
+- id: syntax-pattern/ichigai
+  severity: warn
+  pattern: '一概には言えません'
+  why: 条件を書かずに判断を保留する保険の定型。
+  ask: どの条件なら成り立ち、どの条件なら成り立たないのかを書く。
+  examples:
+    bad:
+      - '効果は一概には言えませんが、有効な手法です。'
+    good:
+      - 'データが 1 万件を超える場合に有効です。それ未満では差が出ませんでした。'
+
+- id: syntax-pattern/merit-demerit
+  severity: warn
+  pattern: 'メリットもあればデメリットも'
+  why: 両論あることを言うだけで、どちらの中身も書かれない。
+  ask: 主要な利点と欠点を 1 つずつ、具体的に書く。
+  examples:
+    bad:
+      - 'この方式にはメリットもあればデメリットもあります。'
+    good:
+      - 'この方式は設定が 1 分で済みます。一方、細かい権限管理はできません。'
+
+- id: syntax-pattern/opener
+  severity: warn
+  pattern: '(解説|紹介|深掘り)していきます'
+  why: Web 記事の定型の予告。予告より内容を先に出す方が読み手に残る。
+  ask: 「〜を扱います」と言い切るか、最初の情報をすぐ書く。
+  examples:
+    bad:
+      - '本記事では設定方法を解説していきます。'
+    good:
+      - '本記事は設定方法を扱います。手順は 3 段階です。'

@@ -30,6 +30,7 @@
   severity: info
   surface:
     - 'まさに'
+    - 'まさしく'
   why: 強調の常套句。削っても意味が変わらないことが多い。
   ask: 削って読み直す。強調が要るなら根拠を足す。
   examples:
@@ -128,6 +129,7 @@
   severity: warn
   surface:
     - '必見'
+    - '必読'
   why: 読者への価値の主張だけで、対象と理由がない。
   ask: 誰にとって、何の役に立つのかを書く。
   examples:
@@ -135,3 +137,149 @@
       - 'エンジニア必見の内容です。'
     good:
       - '対象読者は、初めて CI を設定する人です。'
+
+- id: overstatement/magic
+  severity: error
+  pattern: '魔法のよう|まるで魔法'
+  why: 仕組みの説明を放棄する誇張。何がどう動くのかが書かれない。
+  ask: 体験の実体 (何をしなくてよいのか、何が自動なのか) を書く。
+  examples:
+    bad:
+      - 'まるで魔法のような使い心地です。'
+    good:
+      - '初期設定なしで、起動直後から日本語入力を認識します。'
+  deny_examples:
+    - '児童書で魔法の呪文を覚える場面を読んだ。'
+
+- id: overstatement/kyuukyoku
+  severity: warn
+  pattern: '究極の(?!選択)'
+  why: 到達点の主張だけで、比較対象がない。
+  ask: 何と比べて、どこが優れているのかを書く。
+  examples:
+    bad:
+      - '究極の作業環境を紹介します。'
+    good:
+      - '手を離さず全操作ができる構成です。マウスへの持ち替えが 1 日 200 回減りました。'
+  deny_examples:
+    - '究極の選択を迫られた。'
+
+- id: overstatement/kanpeki
+  severity: warn
+  pattern: '完璧な(ソリューション|解決策|ツール|選択肢|ガイド|プラン)'
+  why: 欠点の検討を省く断定。
+  ask: 向いている条件と向いていない条件を書く。
+  examples:
+    bad:
+      - '小規模チームに完璧なソリューションです。'
+    good:
+      - '10 人以下のチームに向いています。承認フローが必要な組織には不向きです。'
+  deny_examples:
+    - '完璧な円を描く練習をした。'
+
+- id: overstatement/kyoui
+  severity: warn
+  pattern: '驚異的な(速度|性能|成長|進化|効率|精度)'
+  why: 程度の主張だけで、測定値がない。
+  ask: 数値と計測条件を書く。
+  examples:
+    bad:
+      - '驚異的な速度で動作します。'
+    good:
+      - '10 万行のファイルを 0.3 秒で解析します (M3 mac での実測)。'
+  deny_examples:
+    - '砂漠の植物は驚異的な生命力を持つ。'
+
+- id: overstatement/ijigen
+  severity: warn
+  pattern: '(異|別)次元の(速さ|速度|性能|強さ|うまさ|クオリティ|完成度)'
+  why: 比較を放棄した誇張。
+  ask: 同じ土俵の比較対象と差分を書く。
+  examples:
+    bad:
+      - '異次元の速さで応答します。'
+    good:
+      - '応答時間の中央値は 80ms で、旧版の 10 分の 1 です。'
+  deny_examples:
+    - 'SF小説で異次元の設定を読んだ。'
+
+- id: overstatement/chigainai
+  severity: warn
+  pattern: 'に違いありません'
+  why: 根拠を示さずに推量を断定に変える語尾。
+  ask: 根拠を書いて言い切るか、「見込みです」と推量のまま書く。
+  examples:
+    bad:
+      - 'ユーザーに喜ばれるに違いありません。'
+    good:
+      - '事前調査では対象者の 8 割が「使いたい」と回答しました。'
+  deny_examples:
+    - '刑事は犯人は彼に違いないと考えた。'
+
+- id: overstatement/machigainashi
+  severity: warn
+  pattern: '間違いなし'
+  why: 保証の根拠がない断定の定型。
+  ask: 何がそう言わせるのか、事実を書く。
+  examples:
+    bad:
+      - '満足すること間違いなしです。'
+    good:
+      - '返品率は 0.5 % です (直近 1 年)。'
+  deny_examples:
+    - '記載内容に間違いないことを確認した。'
+
+- id: overstatement/unlock
+  severity: warn
+  pattern: '可能性を解き放つ|潜在能力を(解き放|引き出す)'
+  why: unlock the potential の直訳。何ができるようになるのかが書かれない。
+  ask: できるようになることを列挙して書く。
+  examples:
+    bad:
+      - 'このツールはチームの可能性を解き放つでしょう。'
+    good:
+      - '依頼と承認が同じ画面で完結し、他部署を待たずに作業を始められます。'
+
+- id: overstatement/redefine
+  severity: warn
+  pattern: '(業界|市場|常識|ルール)を再定義'
+  why: redefine の直訳。何がどう変わるのかが書かれない。
+  ask: 変わる前と後の前提を並べて書く。
+  examples:
+    bad:
+      - 'このサービスは物流業界を再定義します。'
+    good:
+      - '再配達の指定を配達員ではなく受取人が行う方式に変えます。'
+
+- id: overstatement/mirai-kaeru
+  severity: warn
+  pattern: '未来を変え(る|ます)'
+  why: 変化の主張だけで、何がどう変わるのかが書かれない。
+  ask: 誰の、いつの、何が変わるのかを書く。
+  examples:
+    bad:
+      - 'テクノロジーが教育の未来を変えます。'
+    good:
+      - '採点の自動化で、教員の添削時間が週 5 時間減ります。'
+
+- id: overstatement/shin-kijun
+  severity: warn
+  pattern: '新たな(基準|スタンダード)を(打ち立て|設定|確立)'
+  why: set a new standard の直訳。基準の中身が書かれない。
+  ask: 何がどの水準になったのかを書く。
+  examples:
+    bad:
+      - '応答速度の新たなスタンダードを打ち立てました。'
+    good:
+      - '応答時間 100ms 未満を全 API で達成しました。'
+
+- id: overstatement/konpon-henkaku
+  severity: warn
+  pattern: '根本的に変革'
+  why: fundamentally transform の直訳。何が変わるのかが書かれない。
+  ask: 変わる工程・役割・数字を特定して書く。
+  examples:
+    bad:
+      - '働き方を根本的に変革します。'
+    good:
+      - '出社を前提とした承認印を廃止し、全決裁を電子化します。'
