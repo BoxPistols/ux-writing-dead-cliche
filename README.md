@@ -53,6 +53,20 @@ npm install textlint github:BoxPistols/ux-writing-dead-cliche
 }
 ```
 
+## 環境別の使い方
+
+| 使う場所 | 入れるもの | できること |
+| --- | --- | --- |
+| ターミナルの Claude Code / Desktop アプリの Code モード | プラグイン (上記 2 コマンド) | 全機能。チェック、PR レビュー、書き込み直後の自動フック |
+| CI (GitHub Actions 等) | CLI (`npx github:...`) | error 検出で落とすゲート |
+| エディタ・既存の校正基盤 | textlint ルール | prh や公式プリセットとの併用 |
+| Claude Desktop アプリのチャット / iPhone アプリ | claude.ai スキル ([Releases](https://github.com/BoxPistols/ux-writing-dead-cliche/releases) の dead-cliche-review.zip を設定 → 機能 → スキルへ) | 辞書に基づく検出とレビュー規律。判定は LLM が行う |
+| iPhone からのリポジトリ操作 | claude.ai/code のクラウドセッション (対象リポジトリの `.claude/settings.json` にプラグイン設定をコミット) | /dead-cliche:pr-review での投稿まで |
+
+PR レビューでは 3 つの役割を持ちます。相手の差分に含まれる文章・UI 文言の検査
+(/dead-cliche:pr-review)、自分が書くレビューコメントの文体規律 (plain-communication)、
+PR 本文自体の検査です。
+
 ## Claude Code プラグインの内容
 
 | 種類 | 名前 | 役割 |
