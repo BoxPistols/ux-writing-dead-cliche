@@ -1,16 +1,17 @@
 # 貢献の手引き
 
-貢献の単位は「辞書の 1 エントリ」である。プロンプトの文言ではなく YAML を直す。
+貢献の単位は「辞書の 1 エントリ」です。プロンプトの文言ではなく YAML を直します。
 
 ## ルールを追加する
 
-1. 該当カテゴリの `rules/*.yml` に 1 エントリ追加する。書式は `schema/rule.schema.json`。
-2. 必須フィールド: `id` (カテゴリ名/ルール名)、`severity`、`why`、`ask`、`examples.bad`、`examples.good`。
+1. 該当カテゴリの `rules/*.yml` に 1 エントリ追加します。書式は `schema/rule.schema.json` です。
+2. 必須フィールドは `id` (カテゴリ名/ルール名)、`severity`、`why`、`ask`、`examples.bad`、`examples.good` です。
 3. 正当な用法と衝突しうる語 (医学・化学・法律などの定訳を持つ語) は、共起条件で
-   パターンを絞り、`deny_examples` に検出してはいけない例を入れる。
-4. `npm test` を通す。悪い例が検出されること、良い例と負例が検出されないことが
-   自動で確認される。
-5. 機械判定できないルールは `manual: true` で登録する。pattern と surface は書かない。
+   パターンを絞り、`deny_examples` に検出してはいけない例を入れます。
+4. `npm test` を通します。悪い例が検出されること、良い例と負例が検出されないことが
+   自動で確認されます。
+5. 機械判定できないルールは `manual: true` で登録します。pattern と surface は書きません。
+6. `examples.good` の語尾は敬体 (です・ます) で書きます。良い例は書き直しの手本を兼ねるためです。
 
 ## severity の基準
 
@@ -20,9 +21,10 @@
 
 ## コーパスを追加する
 
-- `corpus/negative/` : 検出されてはいけない正当な日本語。誤検出の報告はまずここに
-  1 行追加して再現させてから、パターンを直す。
-- `corpus/golden/` : before と after の対。after は全ルールで 0 件になること。
+- `corpus/negative/` : 検出されてはいけない正当な日本語です。誤検出の報告はまずここに
+  1 行追加して再現させてから、パターンを直します。
+- `corpus/golden/` : before と after の対です。after は全ルールで 0 件になる必要があります。
+  変更したら `npm run docs:comparison` で比較表を再生成してください。
 
 ## 受け付けないもの
 
@@ -33,6 +35,6 @@
 ## プリセットの変更
 
 既定の判定を変えたい場合は、ルールの severity を変えるのではなく、まず
-`presets/*.yml` の overrides / disable で吸収できないかを検討する。流儀が
+`presets/*.yml` の overrides / disable で吸収できないかを検討してください。流儀が
 分かれる規範 (副詞の漢字・ひらがな等) はルール化せず、docs/design.md の
-未解決課題に記録する。
+未解決課題に記録します。

@@ -16,9 +16,9 @@ const pairs = fs
 const lines = [];
 lines.push('# 実施前・実施後の比較');
 lines.push('');
-lines.push('`corpus/golden/rewrite.jsonl` から `tools/render-comparison.mjs` が生成する。手で編集しない。');
-lines.push('実施前の列はチェッカーの検出対象になるためコード書式で示す。実施後の列は地の文であり、');
-lines.push('全ルールに対して検出 0 件であることを CI が保証している。');
+lines.push('この表は `corpus/golden/rewrite.jsonl` から `tools/render-comparison.mjs` が生成します。手で編集しないでください。');
+lines.push('実施前の列はチェッカーの検出対象になるためコード書式で示します。実施後の列は地の文のままで、');
+lines.push('全ルールに対して検出 0 件であることを CI が保証しています。');
 lines.push('');
 lines.push('| 実施前 | 検出されるルール | 実施後 |');
 lines.push('| --- | --- | --- |');

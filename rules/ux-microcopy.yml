@@ -63,7 +63,7 @@
     bad:
       - 'if (confirm("削除しますか？")) { remove(); }'
     good:
-      - '確認ダイアログコンポーネントを開き、ボタンは「削除」「キャンセル」にする。'
+      - '確認ダイアログコンポーネントを開き、ボタンは「削除」「キャンセル」にします。'
   deny_examples:
     - 'confirmButton.addEventListener("click", handler);'
 
