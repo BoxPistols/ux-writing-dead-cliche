@@ -20,7 +20,8 @@
   ],
   "scripts": {
     "test": "node --test",
-    "check:self": "node src/cli.mjs check README.md CONTRIBUTING.md"
+    "check:self": "node src/cli.mjs check README.md CONTRIBUTING.md",
+    "docs:comparison": "node tools/render-comparison.mjs > docs/before-after.md"
   },
   "keywords": [
     "japanese",

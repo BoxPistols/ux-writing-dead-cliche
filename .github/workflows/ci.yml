@@ -15,3 +15,5 @@ jobs:
       - run: npm test
       - name: self check (README と CONTRIBUTING が自らの検査を通ること)
         run: node src/cli.mjs check README.md CONTRIBUTING.md
+      - name: 比較表がコーパスと同期していること
+        run: node tools/render-comparison.mjs > /tmp/before-after.md && diff /tmp/before-after.md docs/before-after.md

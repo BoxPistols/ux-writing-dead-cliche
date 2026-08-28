@@ -118,6 +118,9 @@ npm install textlint github:BoxPistols/ux-writing-dead-cliche
 
 Markdown のコードフェンスとインラインコードは検査対象から除外される。
 
+実施前・実施後の比較は docs/before-after.md にある。golden コーパスから自動生成され、
+実施後の文が全ルールで検出 0 件であることを CI が保証する。表示とテストが同じデータから出る。
+
 ## PR・コミット文面について
 
 plain-communication スキルは、AI 生成の署名 (Generated with Claude Code、
