@@ -62,6 +62,7 @@ npm install textlint github:BoxPistols/ux-writing-dead-cliche
 | スキル | plain-communication | PR・コミット・Slack 文面の規律 (AI 署名と絵文字の禁止を含む) |
 | コマンド | /dead-cliche:check | ファイルまたは差分のチェックと修正 |
 | コマンド | /dead-cliche:review-request | Slack 用レビュー依頼文の生成 (プレーンテキスト) |
+| コマンド | /dead-cliche:pr-review | PR のレビュー (散文と UI 文言の検査、署名なしのコメント文面) |
 | コマンド | /dead-cliche:compose | 導入・説明・結論の 3 段落での文章生成 (チェッカー通過を保証) |
 | エージェント | dead-cliche-editor | 長文原稿の隔離推敲 |
 | フック | PostToolUse | Markdown を書いた直後に自動チェックし、検出時は書き直しを要求 |

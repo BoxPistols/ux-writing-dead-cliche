@@ -97,6 +97,14 @@ paper プリセットを使います。修辞疑問 (`〜ではないでしょ�
 CLI 単体でも `check src/components/*.tsx --preset ux-microcopy` で助詞のゆれ
 (が失敗しました) や責める表現 (不正な値) を拾えます。
 
+### PR レビュー
+
+`/dead-cliche:pr-review 1234` で PR 全体をレビューします。コードの観点に加えて、
+差分中の散文 (.md、PR 本文) を business プリセットで、UI 文言を ux-microcopy
+プリセットで検査し、must / should の 2 段階の指摘と、署名・絵文字なしのレビュー
+コメント文面を組み立てます。既定では文面の提示で止まり、`--post` を付けたときだけ
+確認のうえ `gh pr review` で投稿します。
+
 ### PR・コミット・レビューコメント
 
 `plain-communication` スキルが PR 作成・コミット・レビュー投稿時に常時効きます。
@@ -118,6 +126,33 @@ Claude Code 本体の署名も止める場合は `settings.json` に次を足し
 `/dead-cliche:compose テーマ` で、導入・説明・結論の 3 段落の文章を生成します。
 生成物は出力前にチェッカーを通し、0 件になるまで書き直されます。既存のプロンプト集の
 文章生成プロンプトを使う場合も、出力をこのゲートに通せば文体が揃います。
+
+### Claude Desktop アプリで使う
+
+Desktop アプリの Code モード (Claude Code セッション) は、この Mac の user スコープの
+プラグインをそのまま読み込みます。追加の設定は不要で、`/dead-cliche:check` や
+フックが同じように動きます。
+
+Code モードではない通常のチャットにはプラグインの仕組みがないため、claude.ai の
+スキルとして入れます。`npm run build:claude-ai-skill` で生成される
+`dist/dead-cliche-review.zip` (辞書 130 ルールを同梱) を claude.ai の
+設定 → 機能 → スキルからアップロードすると、Desktop のチャットでもクリシェ検出と
+レビュー規律が効きます。決定論的な CLI はチャット内では動かないため、厳密な検査は
+CI か Code モードに任せる位置付けです。
+
+### iPhone アプリでリポジトリをレビューする
+
+3 つの経路があります。
+
+1. claude.ai/code のクラウドセッション。対象リポジトリの `.claude/settings.json` に
+   marketplace とプラグインを書いてコミットしておくと、クラウド環境でも同じ
+   プラグインが読み込まれ、iPhone アプリから `/dead-cliche:pr-review` まで使えます。
+   投稿 (`gh pr review`) もクラウド側で実行できます。
+2. claude.ai スキル (上記の zip)。iPhone のチャットにも同期されるため、GitHub
+   コネクタで PR を読ませてレビューさせる使い方ができます。投稿は文面をコピーして
+   GitHub アプリから行います。
+3. リモートコントロール。Mac で起動した Claude Code セッションを iPhone アプリから
+   操作する方式で、ローカルのプラグイン・フック・CLI がすべてそのまま効きます。
 
 ### 辞書を育てる
 
