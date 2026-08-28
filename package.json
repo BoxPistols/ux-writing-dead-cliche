@@ -1,5 +1,5 @@
 {
-  "name": "ux-writing-dead-cliche",
+  "name": "textlint-rule-ux-writing-dead-cliche",
   "version": "0.1.0",
   "description": "AI が日本語文章に持ち込むクリシェを検出し、平易な文章へ直すための辞書とツール",
   "type": "module",
@@ -7,7 +7,8 @@
     "dead-cliche": "./src/cli.mjs"
   },
   "exports": {
-    ".": "./src/engine.mjs",
+    ".": "./src/index.mjs",
+    "./engine": "./src/engine.mjs",
     "./load-rules": "./src/load-rules.mjs",
     "./textlint-rule": "./src/textlint-rule.mjs"
   },

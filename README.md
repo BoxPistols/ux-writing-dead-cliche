@@ -25,9 +25,9 @@ rules/*.yml ─┬─ CLI (npx dead-cliche check)
 CLI として使う場合:
 
 ```
-npx ux-writing-dead-cliche check draft.md
-npx ux-writing-dead-cliche check draft.md --preset business
-cat draft.txt | npx ux-writing-dead-cliche check
+npx github:BoxPistols/ux-writing-dead-cliche check draft.md
+npx github:BoxPistols/ux-writing-dead-cliche check draft.md --preset business
+cat draft.txt | npx github:BoxPistols/ux-writing-dead-cliche check
 ```
 
 Claude Code プラグインとして使う場合:
@@ -37,12 +37,18 @@ Claude Code プラグインとして使う場合:
 /plugin install dead-cliche
 ```
 
-textlint と併用する場合 (.textlintrc):
+textlint と併用する場合 (パッケージ名は textlint の慣例に従い textlint-rule- 接頭辞):
+
+```
+npm install textlint github:BoxPistols/ux-writing-dead-cliche
+```
+
+.textlintrc.json:
 
 ```json
 {
   "rules": {
-    "ux-writing-dead-cliche": { "preset": "paper" }
+    "ux-writing-dead-cliche": { "preset": "paper", "minSeverity": "warn" }
   }
 }
 ```
