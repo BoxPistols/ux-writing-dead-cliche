@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules } from './load-rules.mjs';
+import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig } from './load-rules.mjs';
 import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
 
 const MD_EXT = new Set(['.md', '.mdx', '.markdown']);
@@ -64,7 +64,7 @@ function cmdCheck(args) {
       if (rc.ignore.some((pat) => rel.startsWith(pat) || rel.includes(`/${pat}`))) return;
     }
     const preset = args.flags.preset ?? rc?.preset ?? 'paper';
-    const rules = [...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)];
+    const rules = applyRcRuleConfig([...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)], rc);
     let violations = checkText(text, filePath, rules);
     const min = args.flags['min-severity'];
     if (min) {
@@ -139,7 +139,7 @@ function cmdClaudeHook() {
       const rel = path.relative(rc._dir, filePath);
       if (rc.ignore.some((pat) => rel.startsWith(pat) || rel.includes(`/${pat}`))) process.exit(0);
     }
-    const rules = [...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })];
+    const rules = applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc);
     const text = fs.readFileSync(filePath, 'utf8');
     const violations = checkText(text, filePath, rules);
     if (violations.length === 0) process.exit(0);
@@ -167,7 +167,7 @@ function cmdFix(args) {
   for (const f of files) {
     const rc = findRc(path.dirname(path.resolve(f)));
     const preset = args.flags.preset ?? rc?.preset ?? 'paper';
-    const rules = [...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)];
+    const rules = applyRcRuleConfig([...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)], rc);
     const text = fs.readFileSync(f, 'utf8');
     const masked = MD_EXT.has(path.extname(f)) ? maskMarkdownCode(text) : text;
     const { text: fixed, applied } = applyFixes(text, rules, { maskedText: masked });

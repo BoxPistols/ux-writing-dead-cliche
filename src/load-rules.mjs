@@ -35,6 +35,17 @@ export function rulesForPreset(preset, allRules = loadAllRules()) {
     .map((r) => (overrides[r.id] ? { ...r, severity: overrides[r.id] } : r));
 }
 
+// .deadclicherc.json のプロジェクト設定 (disable / overrides) をルール列に適用する。
+// 組版方針が分かれる規範 (和欧間スペース等) を、辞書を変えずにプロジェクト単位で調整するための層。
+export function applyRcRuleConfig(rules, rc) {
+  if (!rc) return rules;
+  const disable = new Set(rc.disable ?? []);
+  const overrides = rc.overrides ?? {};
+  return rules
+    .filter((r) => !disable.has(r.id))
+    .map((r) => (overrides[r.id] ? { ...r, severity: overrides[r.id] } : r));
+}
+
 // カスタムパターンの安全性検査。
 // 静的検査でReDoSを完全には排除できないため、これは最後の砦ではなく入口の門。
 // 信頼境界は「レビューを通ったか」に置く (docs/custom-rules-and-autofix.md)。

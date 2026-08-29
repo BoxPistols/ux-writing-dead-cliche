@@ -77,3 +77,16 @@ test('カスタム辞書: id が custom/ で始まらないものは拒否され
   const out = loadCustomRules({ _dir: dir, customRules: ['custom.yml'] }, { warn: () => {} });
   assert.equal(out.length, 0);
 });
+
+test('rc の disable と overrides がルール列に適用される', async () => {
+  const { applyRcRuleConfig } = await import('../src/load-rules.mjs');
+  const base = rules.filter((r) => ['formatting/jp-en-space', 'metaphor/compass'].includes(r.id));
+  const out = applyRcRuleConfig(base, {
+    disable: ['formatting/jp-en-space'],
+    overrides: { 'metaphor/compass': 'info' },
+  });
+  assert.equal(out.length, 1);
+  assert.equal(out[0].id, 'metaphor/compass');
+  assert.equal(out[0].severity, 'info');
+  assert.equal(applyRcRuleConfig(base, null).length, 2);
+});
