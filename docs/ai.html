@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dead-cliche AIで書き直す</title>
+<meta name="description" content="検出したクリシェを自分のAPIキーでClaudeに書き直させ、結果を同じ辞書で再検査するページ。">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%232A4B7C"/><path d="M8 11h16M8 21h16" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M8 16h11" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M22 13.4l5.2 5.2M27.2 13.4L22 18.6" stroke="%23E07A5F" stroke-width="2.6"/></svg>'>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./design-tokens.css">
+<style>
+header { border-bottom: 1px solid var(--line); padding: 16px 20px; }
+.wrap { max-width: 1160px; margin: 0 auto; }
+.head-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--font-mono); font-size: var(--fs-l); font-weight: 700; margin: 0; color: var(--indigo); }
+h1 a { color: inherit; text-decoration: none; }
+.head-row .sub { color: var(--ink-soft); font-size: var(--fs-s); }
+.head-row nav { margin-left: auto; font-size: var(--fs-s); display: flex; gap: 14px; }
+a { color: var(--indigo); }
+main { max-width: 1160px; margin: 0 auto; padding: 16px 20px 48px; }
+.notice { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 12px 16px; font-size: var(--fs-s); color: var(--ink); margin-bottom: 14px; }
+.notice p { margin: 0 0 6px; }
+.notice p:last-child { margin-bottom: 0; color: var(--ink-soft); }
+.setup { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-bottom: 14px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: var(--fs-min); color: var(--ink-soft); letter-spacing: .04em; }
+input, select { font: inherit; font-size: var(--fs-s); color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 7px 10px; }
+input[type="password"] { width: 320px; font-family: var(--font-mono); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+.pane { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pane-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pane-head strong { font-size: var(--fs-s); letter-spacing: .05em; color: var(--ink-soft); }
+textarea { width: 100%; min-height: 38vh; resize: vertical; font: inherit; font-size: var(--fs-base); line-height: 1.9; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: var(--fs-s); font-weight: 700; cursor: pointer; border-radius: var(--radius); padding: 8px 14px; border: 1px solid var(--indigo); }
+.primary { background: var(--indigo); color: var(--paper); }
+.ghost { background: transparent; color: var(--indigo); }
+button:disabled { opacity: .45; cursor: default; }
+.summary { font-size: var(--fs-s); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.summary .err { color: var(--shu); font-weight: 700; }
+.result { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 14px 16px; font-size: var(--fs-base); line-height: 1.9; white-space: pre-wrap; word-break: break-word; min-height: 38vh; }
+.status { font-size: var(--fs-s); color: var(--ink-soft); margin: 0; }
+.status.bad { color: var(--shu); }
+.status.ok { color: var(--green); }
+.left { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 10px 14px; font-size: var(--fs-s); }
+.left b { color: var(--ink-soft); font-weight: 500; font-size: var(--fs-min); letter-spacing: .04em; display: block; margin-bottom: 4px; }
+.left p { margin: 3px 0 0; }
+.expr { font-family: var(--font-mono); font-weight: 700; background: var(--mono-bg); border-radius: 3px; padding: 1px 8px; }
+footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(--ink-soft); font-size: var(--fs-min); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap head-row">
+    <h1><a href="./index.html">dead-cliche</a></h1>
+    <span class="sub">検出した表現をClaudeに書き直させ、返ってきた文を同じ辞書で検査し直します</span>
+    <nav><a href="./index.html">検出だけ使う</a><a href="./rules.html">辞書を引く</a></nav>
+  </div>
+</header>
+<main>
+  <div class="notice">
+    <p>このページは、あなたが入力した本文とAPIキーをAnthropicのAPIへ送信します。送信しないで使いたい場合は<a href="./index.html">検出だけのページ</a>を使ってください。</p>
+    <p>キーはこのタブのメモリにだけ置きます。保存しないので、再読み込みすると入れ直しになります。料金はあなたのAnthropicアカウントに請求されます。</p>
+  </div>
+
+  <div class="setup">
+    <div class="field">
+      <label for="key">APIキー</label>
+      <input type="password" id="key" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="model">モデル</label>
+      <select id="model">
+        <option value="claude-opus-5">Claude Opus 5</option>
+        <option value="claude-sonnet-5">Claude Sonnet 5</option>
+        <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="preset">プリセット</label>
+      <select id="preset"></select>
+    </div>
+  </div>
+
+  <div class="cols">
+    <section class="pane">
+      <div class="pane-head"><strong>本文</strong><span class="summary" id="summary"></span></div>
+      <textarea id="src" placeholder="ここに文章を貼ってください。検出はその場で走ります。"></textarea>
+      <div class="actions">
+        <button class="primary" id="run" disabled>AIに書き直させる</button>
+        <button class="ghost" id="apply" disabled>結果を本文に反映</button>
+        <button class="ghost" id="undo" disabled>元に戻す</button>
+      </div>
+      <p class="status" id="status"></p>
+    </section>
+    <section class="pane">
+      <div class="pane-head"><strong>書き直し</strong><span class="summary" id="after-summary"></span></div>
+      <div class="result" id="result"></div>
+      <div id="left"></div>
+    </section>
+  </div>
+</main>
+<footer>
+  判定は<a href="https://github.com/BoxPistols/ux-writing-dead-cliche">CLIと同じエンジン</a>がブラウザ内で実行します。書き直しだけがAPIを使います。
+</footer>
+<script type="module">
+import { check, maskMarkdownCode } from './engine.mjs';
+
+const $ = (id) => document.getElementById(id);
+let data = null;
+let preset = 'business';
+let before = '';      // 反映前の本文。元に戻すために持つ
+let rewritten = '';
+
+function activeRules() {
+  const ids = new Set(data.presets[preset]);
+  return data.rules.filter((r) => ids.has(r.id) && !r.manual);
+}
+
+function violationsOf(text) {
+  return check(maskMarkdownCode(text), activeRules());
+}
+
+function describe(list) {
+  return list.map((v) => `- 「${v.matched}」(${v.line}行目): ${v.why} 代わりに: ${v.ask}`).join('\n');
+}
+
+function renderSummary() {
+  const text = $('src').value;
+  const n = text.trim() ? violationsOf(text).length : 0;
+  $('summary').textContent = text.trim() ? (n ? `${n}件` : '検出なし') : '';
+  $('run').disabled = !(text.trim() && n > 0 && $('key').value.trim());
+}
+
+function showLeft(list) {
+  const box = $('left');
+  box.textContent = '';
+  if (!list.length) return;
+  const el = document.createElement('div');
+  el.className = 'left';
+  const b = document.createElement('b');
+  b.textContent = '書き直した後にも残っている検出';
+  el.appendChild(b);
+  for (const v of list) {
+    const p = document.createElement('p');
+    const s = document.createElement('span');
+    s.className = 'expr';
+    s.textContent = v.matched.replace(/\n/g, '\\n');
+    p.append(s, ' ', v.ask);
+    el.appendChild(p);
+  }
+  box.appendChild(el);
+}
+
+function setStatus(text, kind) {
+  const el = $('status');
+  el.textContent = text;
+  el.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+// Anthropic APIをブラウザから直接呼ぶ。公式SDKを使わないのは、このページが利用者の
+// APIキーを扱うため、CDN経由の外部スクリプトを1本も増やしたくないから (バンドラも無い)。
+// ブラウザから叩くには anthropic-dangerous-direct-browser-access が要る (無いとCORSで落ちる)
+async function ask(key, model, system, user) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 8000,
+      system,
+      messages: [{ role: 'user', content: user }],
+    }),
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json())?.error?.message || ''; } catch (e) {}
+    const known = { 401: 'APIキーが受け付けられませんでした', 429: 'レート制限に達しました。少し待って再実行してください', 400: 'リクエストが拒否されました' };
+    throw new Error(`${known[res.status] || `APIがHTTP ${res.status}を返しました`}${detail ? ' (' + detail + ')' : ''}`);
+  }
+  const body = await res.json();
+  // 拒否はHTTP 200で返る。content を読む前に stop_reason を見る
+  if (body.stop_reason === 'refusal') throw new Error('モデルがこの内容の生成を断りました');
+  if (body.stop_reason === 'max_tokens') throw new Error('出力が長さの上限に達しました。本文を分けて実行してください');
+  const text = (body.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  if (!text) throw new Error('本文が返りませんでした');
+  return text;
+}
+
+$('run').addEventListener('click', async () => {
+  const key = $('key').value.trim();
+  const model = $('model').value;
+  const original = $('src').value;
+  const guard = data.guards.find((g) => g.id === 'writing-guard-compact');
+  const system = `${guard.body}\n\n書き直した本文だけを出力してください。前置き・説明・コードフェンスを付けないでください。固有名詞・数値・否定は元の文と一致させ、事実を足したり削ったりしないでください。`;
+
+  $('run').disabled = true;
+  $('apply').disabled = $('undo').disabled = true;
+  $('result').textContent = '';
+  showLeft([]);
+  $('after-summary').textContent = '';
+  rewritten = '';
+
+  try {
+    let text = original;
+    let list = violationsOf(text);
+    const firstCount = list.length;
+    // 生成のたびに辞書で検査し直す。残っていれば残った指摘だけを添えてもう一度だけ書き直させる
+    for (let attempt = 1; attempt <= 2 && list.length; attempt++) {
+      setStatus(attempt === 1 ? '書き直しています…' : `${list.length}件が残ったので、もう一度書き直しています…`);
+      const user = `次の日本語テキストを、指摘された表現を使わない形に書き直してください。\n\n指摘:\n${describe(list)}\n\n--- テキスト ---\n${text}`;
+      text = await ask(key, model, system, user);
+      list = violationsOf(text);
+    }
+    rewritten = text;
+    $('result').textContent = text;
+    $('after-summary').textContent = list.length ? `${list.length}件` : '検出なし';
+    showLeft(list);
+    setStatus(
+      list.length
+        ? `検出は${firstCount}件から${list.length}件になりました。残りは辞書では直しきれていません。内容を確かめてから反映してください。`
+        : `検出は${firstCount}件から0件になりました。事実と数値が変わっていないか確かめてから反映してください。`,
+      list.length ? '' : 'ok',
+    );
+    $('apply').disabled = false;
+  } catch (e) {
+    setStatus(String(e.message || e), 'bad');
+  } finally {
+    renderSummary();
+  }
+});
+
+$('apply').addEventListener('click', () => {
+  before = $('src').value;
+  $('src').value = rewritten;
+  $('undo').disabled = false;
+  $('apply').disabled = true;
+  renderSummary();
+  setStatus('本文を書き直しの結果に置き換えました。');
+});
+
+$('undo').addEventListener('click', () => {
+  $('src').value = before;
+  $('undo').disabled = true;
+  $('apply').disabled = !rewritten;
+  renderSummary();
+  setStatus('反映前の本文に戻しました。');
+});
+
+$('src').addEventListener('input', renderSummary);
+$('key').addEventListener('input', renderSummary);
+
+fetch('./app-data.json').then((r) => r.json()).then((d) => {
+  data = d;
+  const sel = $('preset');
+  for (const name of Object.keys(d.presets)) {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = `${name} (${d.presetInfo[name].activeCount}規則)`;
+    o.selected = name === preset;
+    sel.appendChild(o);
+  }
+  sel.addEventListener('change', () => { preset = sel.value; renderSummary(); });
+  renderSummary();
+}).catch(() => {
+  setStatus('辞書データを読み込めませんでした。再読み込みしてください', 'bad');
+});
+</script>
+</body>
+</html>

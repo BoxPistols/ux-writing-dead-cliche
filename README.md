@@ -198,6 +198,17 @@ Co-Authored-By: Claude等) と絵文字を、コミットログ・PR本文・レ
 
 生成物なので手で編集せず、辞書の更新に追随します (`npm run docs:prompts`、CIで同期検証)。
 
+## ブラウザ内で書き直しまで済ませる
+
+[AIで書き直すページ](https://boxpistols.github.io/ux-writing-dead-cliche/ai.html)は、検出した表現を
+Claudeに書き直させ、返ってきた文を同じ辞書で検査し直します。残っていれば一度だけ書き直しをやり直し、
+それでも残った検出は件数と内容を表示します。書き直しの結果は本文に自動では入らず、反映するかどうかは
+利用者が決めます。
+
+このページだけはAnthropicのAPIへ本文を送信します。APIキーは利用者が自分で入力し、タブのメモリにだけ
+置きます (保存しないので再読み込みで消えます)。料金は入力したキーのアカウントに請求されます。
+送信せずに使う場合は、検出だけのページを使ってください。
+
 ## 禁止ワードをGUIから追加する
 
 YAMLを編集しない人向けに、[提案フォーム](https://boxpistols.github.io/ux-writing-dead-cliche/proposal-form.html)
