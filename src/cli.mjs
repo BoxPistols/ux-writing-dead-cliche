@@ -135,13 +135,28 @@ function extractPathsFromCommand(command, cwd) {
     const expanded = token.startsWith('~/') ? path.join(process.env.HOME ?? '', token.slice(2)) : token;
     const abs = path.isAbsolute(expanded) ? expanded : path.resolve(cwd, expanded);
     try {
-      if (fs.existsSync(abs) && fs.statSync(abs).isFile()) found.add(abs);
+      if (!fs.existsSync(abs)) continue;
+      const st = fs.statSync(abs);
+      // 言及されただけのファイル (sedで読んだ等) を検査しない。直近に書き込まれたものだけを対象にする
+      if (st.isFile() && Date.now() - st.mtimeMs < 120_000) found.add(abs);
     } catch {}
   }
   return [...found];
 }
 
+// 個人の設定・記憶ファイルは共有目的の文書ではないため、フックの既定では検査しない
+// (CLI での明示的な check は従来どおり通る)
+const HOOK_SKIP_PREFIXES = [
+  path.join(process.env.HOME ?? '', '.claude') + path.sep,
+  path.join(process.env.HOME ?? '', '.claude-memory') + path.sep,
+];
+
+function hookSkipped(filePath) {
+  return HOOK_SKIP_PREFIXES.some((prefix) => filePath.startsWith(prefix));
+}
+
 function hookCheckFile(filePath) {
+  if (hookSkipped(filePath)) return [];
   const rc = findRc(path.dirname(filePath));
   if (rc?.ignore) {
     const rel = path.relative(rc._dir, filePath);
@@ -173,7 +188,7 @@ function cmdClaudeHook() {
       process.exit(2);
     }
     const filePath = input?.tool_input?.file_path;
-    if (!filePath || !TEXT_EXT.has(path.extname(filePath))) process.exit(0);
+    if (!filePath || !TEXT_EXT.has(path.extname(filePath)) || hookSkipped(path.resolve(filePath))) process.exit(0);
     const rc = findRc(path.dirname(filePath));
     if (rc?.ignore) {
       const rel = path.relative(rc._dir, filePath);
