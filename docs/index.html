@@ -51,6 +51,12 @@ button.done { background: var(--green); border-color: var(--green); color: var(-
 .finding .ask b { color: var(--indigo); margin-right: 4px; }
 .allclear { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 16px; color: var(--green); font-weight: 700; }
 .preset-note { margin: 0; font-size: var(--fs-min); color: var(--ink-soft); }
+.example { font-size: var(--fs-s); color: var(--ink-soft); }
+.example b { color: var(--ink-soft); font-weight: 500; font-size: var(--fs-min); letter-spacing: .04em; }
+.example p { margin: 2px 0 0; padding-left: 1.4em; text-indent: -1.4em; }
+.example .ex-bad::before { content: "× "; color: var(--shu); font-weight: 700; }
+.example .ex-good::before { content: "○ "; color: var(--green); font-weight: 700; }
+.example .ex-good { color: var(--ink); }
 .empty { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px; align-items: start; }
 .empty p { margin: 0; font-size: var(--fs-s); color: var(--ink-soft); }
 .why { font-size: var(--fs-s); color: var(--ink-soft); }
@@ -238,6 +244,25 @@ function render() {
         ? `<p class="ask"><b>自動修正</b><span class="diffpair"></span></p>`
         : `<p class="ask"><b>AIで書き直し</b>${escapeHtml(v.ask)}</p>`);
     el.querySelector('.expr').textContent = v.matched.replace(/\n/g, '\\n');
+    // 置換で直せない検出は、辞書が持つ書き換え例を出す。言い換えの正解は書き手しか持たないので
+    // ブラウザ内では本文を書き換えられない。何を書けばよいのかを例で示す
+    if (v.fix === undefined) {
+      const rule = data.rules.find((r) => r.id === v.ruleId);
+      if (rule?.bad && rule?.good) {
+        const ex = document.createElement('div');
+        ex.className = 'example';
+        const label = document.createElement('b');
+        label.textContent = '辞書の書き換え例';
+        const bad = document.createElement('p');
+        bad.className = 'ex-bad';
+        bad.textContent = rule.bad;
+        const good = document.createElement('p');
+        good.className = 'ex-good';
+        good.textContent = rule.good;
+        ex.append(label, bad, good);
+        el.appendChild(ex);
+      }
+    }
     if (v.fix !== undefined) {
       const pair = el.querySelector('.diffpair');
       const del = document.createElement('del');
