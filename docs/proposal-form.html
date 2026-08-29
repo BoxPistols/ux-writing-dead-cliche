@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>dead-cliche 提案フォーム</title>
-<meta name="description" content="禁止ワード・クリシェを YAML の知識なしで提案するフォーム。入力はどこにも自動送信されません。">
+<title>dead-cliche提案フォーム</title>
+<meta name="description" content="禁止ワード・クリシェをYAMLの知識なしで提案するフォーム。入力はどこにも自動送信されません。">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="./design-tokens.css">
 <style>
@@ -134,14 +134,14 @@ footer a { color: var(--indigo); }
 <header>
   <div class="head-inner">
     <h1><span class="brand">dead-cliche</span> 提案フォーム</h1>
-    <p class="lede">禁止したい表現を、YAML の知識なしで辞書に提案できます。入力から提案用のファイルと GitHub の下書きを生成します。</p>
+    <p class="lede">禁止したい表現を、YAMLの知識なしで辞書に提案できます。入力から提案用のファイルとGitHubの下書きを生成します。</p>
     <span class="assure">このページは静的ファイルです。入力内容はどこにも自動送信されません</span>
   </div>
 </header>
 <main>
   <form id="f" autocomplete="off">
     <div class="mode" role="radiogroup" aria-label="出力先">
-      <label><input type="radio" name="mode" value="oss" checked> OSS 辞書へ提案</label>
+      <label><input type="radio" name="mode" value="oss" checked> OSS辞書へ提案</label>
       <label><input type="radio" name="mode" value="custom"> 自分のプロジェクト用</label>
     </div>
     <fieldset>
@@ -162,7 +162,7 @@ footer a { color: var(--indigo); }
           <option value="translationese">translationese (翻訳調)</option>
           <option value="closing">closing (締めの型)</option>
           <option value="formatting">formatting (書式)</option>
-          <option value="ux-microcopy">ux-microcopy (UI 文言)</option>
+          <option value="ux-microcopy">ux-microcopy (UI文言)</option>
         </select>
       </label>
     </fieldset>
@@ -176,30 +176,30 @@ footer a { color: var(--indigo); }
         <textarea id="ask" placeholder="例: 変換した内容と、反映した先を具体的に書く。"></textarea>
       </label>
       <label>悪い例 (実際に見た文)<span class="req">必須</span>
-        <span class="hint">1 行 1 例。業務文書由来の場合は内容を差し替えてください</span>
+        <span class="hint">1行1例。業務文書由来の場合は内容を差し替えてください</span>
         <textarea id="bad" placeholder="例: 学びを昇華させ、独自の世界観を確立しました。"></textarea>
       </label>
       <label>書き直すとどうなるか<span class="req">必須</span>
         <span class="hint">語尾は敬体 (です・ます)</span>
-        <textarea id="good" placeholder="例: 障害対応の再発防止策 3 件を設計要件に加えました。"></textarea>
+        <textarea id="good" placeholder="例: 障害対応の再発防止策3件を設計要件に加えました。"></textarea>
       </label>
       <label>検出してはいけない正当な用法 (任意)
         <span class="hint">同じ語が正当に使われる文。誤検出防止のテストになります</span>
         <textarea id="deny" placeholder="例: ドライアイスが昇華して気体になった。"></textarea>
       </label>
       <label class="consent"><input type="checkbox" id="consent">
-        <span>社名・製品名・顧客名・非公開 URL を含んでいません<span class="req">必須</span></span>
+        <span>社名・製品名・顧客名・非公開URLを含んでいません<span class="req">必須</span></span>
       </label>
     </fieldset>
   </form>
   <aside>
     <div class="panel">
-      <div class="panel-head"><strong id="yaml-title">生成された YAML</strong><span class="copied" id="copied" hidden>コピーしました</span></div>
+      <div class="panel-head"><strong id="yaml-title">生成されたYAML</strong><span class="copied" id="copied" hidden>コピーしました</span></div>
       <pre id="yaml" aria-live="polite"></pre>
     </div>
     <div class="actions">
-      <button type="button" class="ghost" id="copy">YAML をコピー</button>
-      <a class="button primary disabled" id="issue" target="_blank" rel="noopener">GitHub で提案する</a>
+      <button type="button" class="ghost" id="copy">YAMLをコピー</button>
+      <a class="button primary disabled" id="issue" target="_blank" rel="noopener">GitHubで提案する</a>
     </div>
     <p class="next" id="next-hint"></p>
   </aside>
@@ -259,7 +259,7 @@ footer a { color: var(--indigo); }
     var catLabel = { 'metaphor': 'metaphor (比喩)', 'overstatement': 'overstatement (誇張・断定)',
       'empty-abstraction': 'empty-abstraction (空虚な抽象)', 'syntax-pattern': 'syntax-pattern (構文の型)',
       'translationese': 'translationese (翻訳調)', 'closing': 'closing (締めの型)',
-      'formatting': 'formatting (書式)', 'ux-microcopy': 'ux-microcopy (UI 文言)' }[s.cat];
+      'formatting': 'formatting (書式)', 'ux-microcopy': 'ux-microcopy (UI文言)' }[s.cat];
     var p = new URLSearchParams({
       template: 'propose-rule.yml',
       title: '[rule] ' + s.expr,
@@ -277,7 +277,7 @@ footer a { color: var(--indigo); }
     var s = state();
     $('yaml').textContent = buildYaml(s);
     $('yaml-title').textContent = s.mode === 'custom'
-      ? '.deadcliche/custom-rules.yml に追記する内容'
+      ? '.deadcliche/custom-rules.ymlに追記する内容'
       : '提案されるルールの下書き (レビュー用)';
     var ready = s.expr && s.why && s.ask && s.bad.length && s.good.length && $('consent').checked;
     var issue = $('issue');
@@ -286,11 +286,11 @@ footer a { color: var(--indigo); }
       issue.classList.toggle('disabled', !ready);
       issue.href = ready ? buildIssueUrl(s) : '#';
       $('next-hint').textContent = ready
-        ? '「GitHub で提案する」を押すと、入力済みの Issue フォームが開きます。送信するかどうかはそこで決められます。'
-        : '必須項目と確認のチェックがそろうと、GitHub への提案ボタンが有効になります。';
+        ? '「GitHubで提案する」を押すと、入力済みのIssueフォームが開きます。送信するかどうかはそこで決められます。'
+        : '必須項目と確認のチェックがそろうと、GitHubへの提案ボタンが有効になります。';
     } else {
       issue.style.display = 'none';
-      $('next-hint').textContent = 'コピーした YAML を自分のリポジトリの .deadcliche/custom-rules.yml に追記し、.deadclicherc.json の customRules から参照して、PR としてレビューを受けてください。文字列一致 (surface) なのでこのままで安全に動きます。';
+      $('next-hint').textContent = 'コピーしたYAMLを自分のリポジトリの .deadcliche/custom-rules.ymlに追記し、.deadclicherc.jsonのcustomRulesから参照して、PRとしてレビューを受けてください。文字列一致 (surface) なのでこのままで安全に動きます。';
     }
   }
 

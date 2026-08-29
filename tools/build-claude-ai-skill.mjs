@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// claude.ai (Desktop / iPhone アプリのチャット) にアップロードできるスキル zip を生成します。
+// claude.ai (Desktop / iPhoneアプリのチャット) にアップロードできるスキルzipを生成します。
 //   npm run build:claude-ai-skill → dist/dead-cliche-review.zip
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,4 +14,4 @@ for (const f of fs.readdirSync(path.join(PACKAGE_ROOT, 'rules'))) {
   fs.copyFileSync(path.join(PACKAGE_ROOT, 'rules', f), path.join(out, 'rules', f));
 }
 execSync('zip -qr ../dead-cliche-review.zip .', { cwd: out });
-console.log('dist/dead-cliche-review.zip を生成しました');
+console.log('dist/dead-cliche-review.zipを生成しました');

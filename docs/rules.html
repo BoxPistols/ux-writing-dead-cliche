@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dead-cliche辞書</title>
+<meta name="description" content="AI特有の日本語クリシェの辞書と、貼るだけで効く指示文。検索してコピーするだけで使えます。">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%232A4B7C"/><path d="M8 11h16M8 21h16" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M8 16h11" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M22 13.4l5.2 5.2M27.2 13.4L22 18.6" stroke="%23E07A5F" stroke-width="2.6"/></svg>'>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./design-tokens.css">
+<style>
+header { border-bottom: 1px solid var(--line); padding: 26px 20px 20px; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+.head-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+h1 { font-family: var(--font-mono); font-size: var(--fs-xl); font-weight: 700; margin: 0; color: var(--indigo); }
+.count { color: var(--ink-soft); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+.lede { color: var(--ink-soft); margin: 6px 0 0; }
+.toolbar { position: sticky; top: 0; background: var(--paper); border-bottom: 1px solid var(--line); padding: 12px 20px; z-index: 5; }
+.toolbar-inner { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+#q {
+  font: inherit; width: 100%; max-width: 560px; padding: 9px 14px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--ink);
+}
+#q::placeholder { color: var(--ink-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font: inherit; font-size: var(--fs-s); cursor: pointer; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); padding: 4px 14px;
+}
+.chip[aria-pressed="true"] { background: var(--indigo); border-color: var(--indigo); color: var(--paper); }
+main { max-width: 1120px; margin: 0 auto; padding: 22px 20px; }
+h2 { font-size: var(--fs-m); font-weight: 700; margin: 20px 0 12px; letter-spacing: .01em; }
+h2 .sub { font-weight: 400; color: var(--ink-soft); font-size: var(--fs-s); margin-left: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 14px; }
+.card {
+  border: 1px solid var(--line); background: var(--card); border-radius: var(--radius);
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+}
+.meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: var(--fs-min); }
+.tag { border: 1px solid var(--line); border-radius: 3px; padding: 1px 8px; color: var(--ink-soft); letter-spacing: .03em; }
+.tag.err { color: var(--shu); }
+.tag.wrn { color: var(--amber); }
+.tag.fix { color: var(--green); }
+.expr { font-weight: 700; line-height: 1.9; }
+.expr code {
+  font-family: var(--font-mono); font-size: var(--fs-base); font-weight: 500;
+  background: var(--mono-bg); border-radius: 3px; padding: 2px 8px;
+}
+.guard-title { font-weight: 700; font-size: var(--fs-m); }
+.why { color: var(--ink-soft); font-size: var(--fs-s); margin: 0; }
+.ask { margin: 0; font-size: var(--fs-s); background: var(--indigo-soft); border-radius: var(--radius); padding: 8px 12px; }
+.ask b { color: var(--indigo); font-weight: 700; margin-right: 6px; }
+details { font-size: var(--fs-s); color: var(--ink-soft); }
+details summary { cursor: pointer; }
+details p { margin: 6px 0 0; }
+.card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
+button {
+  font: inherit; font-size: var(--fs-s); font-weight: 700; cursor: pointer;
+  border-radius: var(--radius); padding: 7px 14px; border: 1px solid var(--indigo);
+}
+.copy-btn { background: var(--indigo); color: var(--paper); flex: 1; }
+.copy-btn.done { background: var(--green); border-color: var(--green); }
+.fav-btn { background: transparent; color: var(--ink-soft); border-color: var(--line); width: 44px; }
+.fav-btn[aria-pressed="true"] { color: var(--shu); }
+.empty { color: var(--ink-soft); padding: 30px 0; }
+footer { max-width: 1120px; margin: 0 auto; padding: 10px 20px 44px; color: var(--ink-soft); font-size: var(--fs-s); }
+@media (prefers-reduced-motion: no-preference) { .copy-btn { transition: background .25s; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="head-row"><h1>dead-cliche辞書</h1><span class="count" id="count"></span></div>
+    <p class="lede"><a href="./">エディタへ戻る</a>。全ルールの検索と、AIチャットに貼る指示文のコピーができます。</p>
+  </div>
+</header>
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <input id="q" type="search" placeholder="検索 (表現・理由・カテゴリ)" aria-label="検索">
+    <div class="chips" id="chips" role="group" aria-label="カテゴリで絞り込み"></div>
+  </div>
+</div>
+<main>
+  <section id="guards-sec">
+    <h2>貼るだけの指示文</h2>
+    <div class="grid" id="guards"></div>
+  </section>
+  <section>
+    <h2>辞書を引く<span class="sub">1ルール = 1カード</span></h2>
+    <div class="grid" id="rules"></div>
+    <p class="empty" id="empty" hidden>該当するカードがありません。検索語を短くするか、絞り込みを外してください。</p>
+  </section>
+</main>
+<footer>
+  データは辞書 (rules/*.yml) から自動生成。厳密な検査は
+  <a href="https://github.com/BoxPistols/ux-writing-dead-cliche">CLI・CI・Claude Codeプラグイン</a>が担います。
+  追加の提案は<a href="./proposal-form.html">提案フォーム</a>から。デザインの規範は
+  <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/DESIGN.md">DESIGN.md</a>。
+</footer>
+<script>
+(function () {
+  var state = { q: '', cat: 'all', data: null };
+  var favs;
+  try { favs = new Set(JSON.parse(localStorage.getItem('dc-favs') || '[]')); } catch (e) { favs = new Set(); }
+  function saveFavs() { try { localStorage.setItem('dc-favs', JSON.stringify([...favs])); } catch (e) {} }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function ruleSnippet(r) {
+    return '次の日本語表現を使わないでください: ' + r.reprs.map(function (s) { return '「' + s + '」'; }).join(' ') +
+      '\n理由: ' + r.why + '\n代わりに: ' + r.ask;
+  }
+
+  function copyHandler(btn, text) {
+    btn.addEventListener('click', function () {
+      var done = function () {
+        var prev = btn.textContent;
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () { btn.textContent = prev; btn.classList.remove('done'); }, 1400);
+      };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+    });
+  }
+
+  function favHandler(btn, id) {
+    btn.addEventListener('click', function () {
+      if (favs.has(id)) favs.delete(id); else favs.add(id);
+      saveFavs();
+      btn.setAttribute('aria-pressed', favs.has(id));
+      if (state.cat === 'fav') render();
+    });
+  }
+
+  function render() {
+    var d = state.data;
+    var q = state.q.toLowerCase();
+    var guardsEl = document.getElementById('guards');
+    var rulesEl = document.getElementById('rules');
+    guardsEl.textContent = '';
+    rulesEl.textContent = '';
+
+    var guards = d.guards.filter(function (g) {
+      if (state.cat === 'fav') return favs.has(g.id);
+      if (state.cat !== 'all' && state.cat !== 'guard') return false;
+      return !q || (g.title + g.desc).toLowerCase().includes(q);
+    });
+    document.getElementById('guards-sec').style.display = guards.length ? '' : 'none';
+    guards.forEach(function (g) {
+      var el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML =
+        '<span class="guard-title">' + esc(g.title) + '</span>' +
+        '<div class="meta"><span class="tag">指示文</span><span class="tag">約' + (Math.round(g.body.length / 100) * 100).toLocaleString('ja-JP') + ' 字</span></div>' +
+        '<p class="why">' + esc(g.desc) + '</p>' +
+        '<div class="card-actions"><button class="copy-btn">全文をコピー</button><button class="fav-btn" aria-label="お気に入り" aria-pressed="' + favs.has(g.id) + '">&#9825;</button></div>';
+      copyHandler(el.querySelector('.copy-btn'), g.body);
+      favHandler(el.querySelector('.fav-btn'), g.id);
+      guardsEl.appendChild(el);
+    });
+
+    var rules = d.rules.filter(function (r) {
+      if (state.cat === 'fav' && !favs.has(r.id)) return false;
+      if (state.cat !== 'all' && state.cat !== 'fav' && state.cat !== 'guard' && r.cat !== state.cat) return false;
+      if (state.cat === 'guard') return false;
+      if (!q) return true;
+      return (r.id + r.catLabel + r.reprs.join(' ') + r.why + r.ask).toLowerCase().includes(q);
+    });
+    rules.forEach(function (r) {
+      var el = document.createElement('div');
+      el.className = 'card';
+      var sev = r.severity === 'error' ? '<span class="tag err">error</span>' : r.severity === 'warn' ? '<span class="tag wrn">warn</span>' : '<span class="tag">info</span>';
+      el.innerHTML =
+        '<div class="expr">' + r.reprs.map(function (s) { return '<code>' + esc(s) + '</code>'; }).join(' ') + '</div>' +
+        '<div class="meta"><span class="tag">' + esc(r.catLabel) + '</span>' + sev +
+          (r.fixable ? '<span class="tag fix">自動修正可</span>' : '') +
+          (r.manual ? '<span class="tag">人力判断</span>' : '') + '</div>' +
+        '<p class="why">' + esc(r.why) + '</p>' +
+        '<p class="ask"><b>代わりに</b>' + esc(r.ask) + '</p>' +
+        '<details><summary>例を見る</summary><p>悪い例: ' + esc(r.bad) + '</p><p>良い例: ' + esc(r.good) + '</p></details>' +
+        '<div class="card-actions"><button class="copy-btn">指示文をコピー</button><button class="fav-btn" aria-label="お気に入り" aria-pressed="' + favs.has(r.id) + '">&#9825;</button></div>';
+      copyHandler(el.querySelector('.copy-btn'), ruleSnippet(r));
+      favHandler(el.querySelector('.fav-btn'), r.id);
+      rulesEl.appendChild(el);
+    });
+    document.getElementById('empty').hidden = rules.length > 0 || guards.length > 0;
+    document.getElementById('count').textContent = 'v' + d.version + ' / ルール ' + d.rules.length + ' 件';
+  }
+
+  function buildChips(cats) {
+    var chips = [['all', 'すべて'], ['guard', '指示文'], ['fav', 'お気に入り']]
+      .concat(Object.entries(cats));
+    var box = document.getElementById('chips');
+    chips.forEach(function (c) {
+      var b = document.createElement('button');
+      b.className = 'chip';
+      b.textContent = c[1];
+      b.setAttribute('aria-pressed', state.cat === c[0]);
+      b.addEventListener('click', function () {
+        state.cat = c[0];
+        box.querySelectorAll('.chip').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+        b.setAttribute('aria-pressed', 'true');
+        render();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  document.getElementById('q').addEventListener('input', function (e) {
+    state.q = e.target.value.trim();
+    render();
+  });
+
+  fetch('./app-data.json').then(function (r) { return r.json(); }).then(function (d) {
+    state.data = d;
+    buildChips(d.categories);
+    render();
+  }).catch(function () {
+    document.getElementById('empty').hidden = false;
+    document.getElementById('empty').textContent = 'データを読み込めませんでした。再読み込みしてください。';
+  });
+})();
+</script>
+</body>
+</html>

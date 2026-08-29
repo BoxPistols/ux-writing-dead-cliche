@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// golden コーパスから実施前・実施後の比較表 (Markdown) を生成する。
-// after に検出が残っていれば exit 1。表示とテストを同じデータから出すための道具。
+// goldenコーパスから実施前・実施後の比較表 (Markdown) を生成する。
+// afterに検出が残っていればexit 1。表示とテストを同じデータから出すための道具。
 //   node tools/render-comparison.mjs > docs/before-after.md
 import fs from 'node:fs';
 import { loadAllRules } from '../src/load-rules.mjs';
@@ -18,7 +18,7 @@ lines.push('# 実施前・実施後の比較');
 lines.push('');
 lines.push('この表は `corpus/golden/rewrite.jsonl` から `tools/render-comparison.mjs` が生成します。手で編集しないでください。');
 lines.push('実施前の列はチェッカーの検出対象になるためコード書式で示します。実施後の列は地の文のままで、');
-lines.push('全ルールに対して検出 0 件であることを CI が保証しています。');
+lines.push('全ルールに対して検出0件であることをCIが保証しています。');
 lines.push('');
 lines.push('| 実施前 | 検出されるルール | 実施後 |');
 lines.push('| --- | --- | --- |');

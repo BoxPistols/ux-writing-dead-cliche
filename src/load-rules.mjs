@@ -36,13 +36,13 @@ export function rulesForPreset(preset, allRules = loadAllRules()) {
 }
 
 // カスタムパターンの安全性検査。
-// 静的検査で ReDoS を完全には排除できないため、これは最後の砦ではなく入口の門。
+// 静的検査でReDoSを完全には排除できないため、これは最後の砦ではなく入口の門。
 // 信頼境界は「レビューを通ったか」に置く (docs/custom-rules-and-autofix.md)。
 export function validateCustomPattern(pattern) {
   if (typeof pattern !== 'string' || pattern.length === 0) return { ok: false, reason: 'パターンが空' };
-  if (pattern.length > 200) return { ok: false, reason: '200 文字を超えている' };
+  if (pattern.length > 200) return { ok: false, reason: '200文字を超えている' };
   // (a+)+ / (a*)* / (a+)* 型の量指定子の入れ子を拒否する
-  if (/\([^)]*[+*][^)]*\)\s*[+*]/.test(pattern)) return { ok: false, reason: '量指定子の入れ子 (ReDoS の恐れ)' };
+  if (/\([^)]*[+*][^)]*\)\s*[+*]/.test(pattern)) return { ok: false, reason: '量指定子の入れ子 (ReDoSの恐れ)' };
   try {
     new RegExp(pattern, 'gmu');
   } catch (e) {
@@ -51,8 +51,8 @@ export function validateCustomPattern(pattern) {
   return { ok: true };
 }
 
-// .deadclicherc.json の customRules からプロジェクト固有辞書を読む。
-// surface (リテラル) は常に許可。pattern は trustCustomPatterns: true のときだけ、
+// .deadclicherc.jsonのcustomRulesからプロジェクト固有辞書を読む。
+// surface (リテラル) は常に許可。patternはtrustCustomPatterns: trueのときだけ、
 // 安全性検査を通ったものを許可する。
 export function loadCustomRules(rc, { warn = (msg) => console.error(msg) } = {}) {
   if (!rc?.customRules?.length) return [];
@@ -73,17 +73,17 @@ export function loadCustomRules(rc, { warn = (msg) => console.error(msg) } = {})
         ...entry,
       };
       if (!rule.id || !rule.id.startsWith('custom/')) {
-        warn(`dead-cliche: カスタムルールの id は custom/ で始めてください: ${rule.id ?? '(id なし)'}`);
+        warn(`dead-cliche: カスタムルールのidはcustom/ で始めてください: ${rule.id ?? '(idなし)'}`);
         continue;
       }
       if (rule.pattern) {
         if (!rc.trustCustomPatterns) {
-          warn(`dead-cliche: ${rule.id} の pattern は無視しました (trustCustomPatterns が無効)。surface を使ってください`);
+          warn(`dead-cliche: ${rule.id} のpatternは無視しました (trustCustomPatternsが無効)。surfaceを使ってください`);
           delete rule.pattern;
         } else {
           const v = validateCustomPattern(rule.pattern);
           if (!v.ok) {
-            warn(`dead-cliche: ${rule.id} の pattern を拒否しました: ${v.reason}`);
+            warn(`dead-cliche: ${rule.id} のpatternを拒否しました: ${v.reason}`);
             delete rule.pattern;
           }
         }
@@ -95,7 +95,7 @@ export function loadCustomRules(rc, { warn = (msg) => console.error(msg) } = {})
   return rules;
 }
 
-// ファイルの場所から上へ .deadclicherc.json を探す。
+// ファイルの場所から上へ .deadclicherc.jsonを探す。
 export function findRc(startDir) {
   let dir = path.resolve(startDir);
   for (;;) {

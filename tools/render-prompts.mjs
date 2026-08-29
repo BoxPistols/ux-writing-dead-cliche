@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// 辞書から、どの AI チャットにも貼れる指示文 (プロンプト) を生成します。
-// GitHub に依存しない配布形。出力は docs/prompts/ に置き、CI で同期を検証します。
+// 辞書から、どのAIチャットにも貼れる指示文 (プロンプト) を生成します。
+// GitHubに依存しない配布形。出力はdocs/prompts/ に置き、CIで同期を検証します。
 //   npm run docs:prompts
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,10 +18,10 @@ const CATEGORY_LABEL = {
   translationese: '翻訳調',
   closing: '締めの型',
   formatting: '書式',
-  'ux-microcopy': 'UI 文言',
+  'ux-microcopy': 'UI文言',
 };
 
-// ルールの代表表記。surface はそのまま、pattern は悪い例から実際の一致文字列を取る。
+// ルールの代表表記。surfaceはそのまま、patternは悪い例から実際の一致文字列を取る。
 function repr(rule) {
   if (rule.surface?.length) return rule.surface;
   const hits = check(rule.examples.bad[0], [rule]);
@@ -41,7 +41,7 @@ function principles() {
     '- 比喩で情報を省かない。比喩が隠している「誰が・何を・どうする」を書く',
     '- 段落中の太字散布、絵文字見出し、感嘆符の連打をしない',
     '- 見出し名で参照する。章番号やセクション番号でページ内参照しない',
-    '- AI が書いたことを示す署名・定型文を一切入れない',
+    '- AIが書いたことを示す署名・定型文を一切入れない',
   ].join('\n');
 }
 
@@ -50,7 +50,7 @@ function fullGuard() {
   const lines = [];
   lines.push('# 日本語ライティング規律 (dead-cliche)');
   lines.push('');
-  lines.push(`このテキストを AI チャットのシステムプロンプト・カスタム指示・プロジェクト設定に貼ると、AI 特有の日本語クリシェを避けた文章になります。辞書 v${version} から自動生成されています。`);
+  lines.push(`このテキストをAIチャットのシステムプロンプト・カスタム指示・プロジェクト設定に貼ると、AI特有の日本語クリシェを避けた文章になります。辞書v${version} から自動生成されています。`);
   lines.push('');
   lines.push('## 原則');
   lines.push('');
@@ -80,7 +80,7 @@ function compactGuard() {
   const lines = [];
   lines.push('# 日本語クリシェ禁止 (短縮版)');
   lines.push('');
-  lines.push('文字数制限のあるカスタム指示欄向けの短縮版です。次の日本語表現を使わず、誇張や比喩が省いている事実 (誰が・何を・どれだけ) を代わりに書いてください。語尾は敬体。太字散布・絵文字見出し・AI 署名は禁止。');
+  lines.push('文字数制限のあるカスタム指示欄向けの短縮版です。次の日本語表現を使わず、誇張や比喩が省いている事実 (誰が・何を・どれだけ) を代わりに書いてください。語尾は敬体。太字散布・絵文字見出し・AI署名は禁止。');
   lines.push('');
   const cats = ['metaphor', 'overstatement', 'empty-abstraction', 'syntax-pattern', 'translationese', 'closing'];
   for (const cat of cats) {
@@ -96,9 +96,9 @@ function compactGuard() {
 function uxGuard() {
   const rules = rulesForPreset(loadPreset('ux-microcopy'), all);
   const lines = [];
-  lines.push('# UI 文言規律 (dead-cliche)');
+  lines.push('# UI文言規律 (dead-cliche)');
   lines.push('');
-  lines.push(`画面テキスト (ボタン・エラー・プレースホルダー・空状態) を書く AI への指示文です。辞書 v${version} から自動生成されています。`);
+  lines.push(`画面テキスト (ボタン・エラー・プレースホルダー・空状態) を書くAIへの指示文です。辞書v${version} から自動生成されています。`);
   lines.push('');
   lines.push('## 使ってはいけない形');
   lines.push('');
@@ -113,12 +113,37 @@ function uxGuard() {
   return lines.join('\n') + '\n';
 }
 
+function cleanSheetGuard() {
+  const lines = [];
+  lines.push('# 白紙から書かせる指示文(クリーンシート)');
+  lines.push('');
+  lines.push(`これから書かせる文章のための指示文です。AIチャットに貼り、続けてテーマと読者を伝えてください。辞書v${version}から自動生成されています。`);
+  lines.push('');
+  lines.push('あなたは日本語の書き手です。次の規律で書いてください。');
+  lines.push('');
+  lines.push('- 構成は導入・説明・結論の3段落。各段落3〜5文で、論理の接続を保つ');
+  lines.push('- 読者が対象を知らない前提で、対象そのものの説明から入る');
+  lines.push(principles());
+  lines.push('- 日本語と英数字の間に半角スペースを入れない');
+  lines.push('- 事実に基づかない情報を作らない。確認できない点は書かないか「未確認」と明示する');
+  lines.push('- 書き終えたら、次の禁止表現が混ざっていないか自分で確認してから出す');
+  lines.push('');
+  const cats = ['metaphor', 'overstatement', 'empty-abstraction', 'syntax-pattern', 'translationese', 'closing'];
+  for (const cat of cats) {
+    const reprs = all.filter((r) => r.category === cat && !r.manual).flatMap((r) => repr(r).slice(0, 1));
+    lines.push(`${CATEGORY_LABEL[cat]}: ${reprs.map((s) => '\`' + s + '\`').join(' ')}`);
+    lines.push('');
+  }
+  return lines.join('\n') + '\n';
+}
+
 const outDir = path.join(PACKAGE_ROOT, 'docs', 'prompts');
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, 'writing-guard.md'), fullGuard());
 fs.writeFileSync(path.join(outDir, 'writing-guard-compact.md'), compactGuard());
 fs.writeFileSync(path.join(outDir, 'ux-writing-guard.md'), uxGuard());
-for (const f of ['writing-guard.md', 'writing-guard-compact.md', 'ux-writing-guard.md']) {
+fs.writeFileSync(path.join(outDir, 'clean-sheet-writing.md'), cleanSheetGuard());
+for (const f of ['writing-guard.md', 'writing-guard-compact.md', 'ux-writing-guard.md', 'clean-sheet-writing.md']) {
   const size = fs.statSync(path.join(outDir, f)).size;
   console.log(`${f}: ${size} bytes`);
 }

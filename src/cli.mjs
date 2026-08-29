@@ -3,7 +3,7 @@
 //   dead-cliche check [files...] [--preset name] [--format pretty|json] [--min-severity warn]
 //   dead-cliche list [--preset name] [--manual]
 //   dead-cliche explain <rule-id>
-//   dead-cliche claude-hook   (Claude Code の PostToolUse フックから stdin JSON で呼ばれる)
+//   dead-cliche claude-hook   (Claude CodeのPostToolUseフックからstdin JSONで呼ばれる)
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -123,7 +123,7 @@ function cmdExplain(args) {
   for (const d of rule.deny_examples ?? []) console.log(`  検出しない例: ${d}`);
 }
 
-// Claude Code PostToolUse フック。失敗しても編集を妨げない (常に握りつぶして exit 0)。
+// Claude Code PostToolUseフック。失敗しても編集を妨げない (常に握りつぶしてexit 0)。
 function cmdClaudeHook() {
   let input;
   try {
@@ -156,7 +156,7 @@ function cmdClaudeHook() {
   }
 }
 
-// 決定論的修正。既定は dry-run で、--write を付けたときだけ書き込む。
+// 決定論的修正。既定はdry-runで、--writeを付けたときだけ書き込む。
 function cmdFix(args) {
   const files = args._;
   if (files.length === 0) {
@@ -178,7 +178,7 @@ function cmdFix(args) {
     if (args.flags.write && applied.length > 0) fs.writeFileSync(f, fixed);
   }
   if (totalEdits === 0) {
-    console.log('決定論的に修正できる検出はありません (fix を持たないルールは書き直しが必要です)');
+    console.log('決定論的に修正できる検出はありません (fixを持たないルールは書き直しが必要です)');
   } else {
     console.log(`\n${totalEdits} 件${args.flags.write ? 'を書き込みました' : ' (dry-run。書き込むには --write)'}`);
   }
@@ -205,7 +205,7 @@ switch (cmd) {
   default:
     console.log('使い方: dead-cliche <check|fix|list|explain|claude-hook> [options]');
     console.log('  check [files...] [--preset paper|business|chat|ux-microcopy] [--format json] [--min-severity warn]');
-    console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定は dry-run)');
+    console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
     console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');
     process.exit(cmd ? 2 : 0);

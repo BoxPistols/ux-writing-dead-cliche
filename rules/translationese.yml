@@ -28,7 +28,7 @@
 - id: translationese/watashitachi
   severity: warn
   pattern: '^私たちは'
-  why: 英語の We に由来する書き出し。主体がぼやける。
+  why: 英語のWeに由来する書き出し。主体がぼやける。
   ask: 主語を組織名・チーム名など具体にするか、省く。
   examples:
     bad:
@@ -47,7 +47,7 @@
     bad:
       - 'この施策は成功だったと言えるでしょう。'
     good:
-      - '目標の登録数 1,000 件に対し、実績は 1,240 件でした。'
+      - '目標の登録数1,000件に対し、実績は1,240件でした。'
 
 - id: translationese/mono-to-narimasu
   severity: warn
@@ -58,7 +58,7 @@
     bad:
       - '本機能は今後の開発の土台となるものとなります。'
     good:
-      - '今後の機能は本機能の API を使って実装します。'
+      - '今後の機能は本機能のAPIを使って実装します。'
 
 - id: translationese/teiku-juyou
   severity: error
@@ -87,7 +87,7 @@
 - id: translationese/kanou-ni-shimasu
   severity: warn
   pattern: 'することを可能に(し|する)'
-  why: enable の直訳の冗長形。
+  why: enableの直訳の冗長形。
   ask: 「〜できます」に短くする。
   examples:
     bad:
@@ -98,7 +98,7 @@
 - id: translationese/juuyou-yakuwari
   severity: warn
   pattern: '重要な役割を果た'
-  why: plays an important role の直訳。役割の中身が書かれない。
+  why: plays an important roleの直訳。役割の中身が書かれない。
   ask: 何を担っているのかを動詞で書く。
   examples:
     bad:
@@ -109,7 +109,7 @@
 - id: translationese/iu-made-mo-naku
   severity: info
   pattern: '言うまでもなく|言うまでもありませんが'
-  why: needless to say の直訳。言うまでもないなら書かなくてよい。
+  why: needless to sayの直訳。言うまでもないなら書かなくてよい。
   ask: 削るか、根拠として必要なら普通の文で書く。
   examples:
     bad:
