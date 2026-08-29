@@ -63,6 +63,8 @@ npm install textlint github:BoxPistols/ux-writing-dead-cliche
 | Claude Desktop アプリのチャット / iPhone アプリ | claude.ai スキル ([Releases](https://github.com/BoxPistols/ux-writing-dead-cliche/releases) の dead-cliche-review.zip を設定 → 機能 → スキルへ) | 辞書に基づく検出とレビュー規律。判定は LLM が行う |
 | iPhone からのリポジトリ操作 | claude.ai/code のクラウドセッション (対象リポジトリの `.claude/settings.json` にプラグイン設定をコミット) | /dead-cliche:pr-review での投稿まで |
 
+既存プロダクトへの導入手順は docs/adoption-guide.md にまとまっています。
+
 PR レビューでは 3 つの役割を持ちます。相手の差分に含まれる文章・UI 文言の検査
 (/dead-cliche:pr-review)、自分が書くレビューコメントの文体規律 (plain-communication)、
 PR 本文自体の検査です。
