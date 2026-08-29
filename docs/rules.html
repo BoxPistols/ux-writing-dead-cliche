@@ -53,6 +53,10 @@ h2 .sub { font-weight: 400; color: var(--ink-soft); font-size: var(--fs-s); marg
 details { font-size: var(--fs-s); color: var(--ink-soft); }
 details summary { cursor: pointer; }
 details p { margin: 6px 0 0; }
+/* コピーされる文字列そのものを、コピーする前に読めるようにする */
+pre.clip { margin: 6px 0 0; max-height: 240px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  font-family: var(--font-mono); font-size: var(--fs-s); line-height: 1.7; color: var(--ink);
+  background: var(--mono-bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
 .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
 button {
   font: inherit; font-size: var(--fs-s); font-weight: 700; cursor: pointer;
@@ -152,6 +156,7 @@ footer { max-width: 1120px; margin: 0 auto; padding: 10px 20px 44px; color: var(
         '<span class="guard-title">' + esc(g.title) + '</span>' +
         '<div class="meta"><span class="tag">指示文</span><span class="tag">約' + (Math.round(g.body.length / 100) * 100).toLocaleString('ja-JP') + ' 字</span></div>' +
         '<p class="why">' + esc(g.desc) + '</p>' +
+        '<details><summary>コピーされる全文を見る</summary><pre class="clip">' + esc(g.body) + '</pre></details>' +
         '<div class="card-actions"><button class="copy-btn">全文をコピー</button><button class="fav-btn" aria-label="お気に入り" aria-pressed="' + favs.has(g.id) + '">&#9825;</button></div>';
       copyHandler(el.querySelector('.copy-btn'), g.body);
       favHandler(el.querySelector('.fav-btn'), g.id);
@@ -177,6 +182,7 @@ footer { max-width: 1120px; margin: 0 auto; padding: 10px 20px 44px; color: var(
         '<p class="why">' + esc(r.why) + '</p>' +
         '<p class="ask"><b>代わりに</b>' + esc(r.ask) + '</p>' +
         '<details><summary>例を見る</summary><p>悪い例: ' + esc(r.bad) + '</p><p>良い例: ' + esc(r.good) + '</p></details>' +
+        '<details><summary>コピーされる指示文を見る</summary><pre class="clip">' + esc(ruleSnippet(r)) + '</pre></details>' +
         '<div class="card-actions"><button class="copy-btn">指示文をコピー</button><button class="fav-btn" aria-label="お気に入り" aria-pressed="' + favs.has(r.id) + '">&#9825;</button></div>';
       copyHandler(el.querySelector('.copy-btn'), ruleSnippet(r));
       favHandler(el.querySelector('.fav-btn'), r.id);

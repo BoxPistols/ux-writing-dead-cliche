@@ -66,8 +66,18 @@ ins { color: var(--green); text-decoration: none; font-family: var(--font-mono);
 .applied { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 10px 14px; font-size: var(--fs-s); }
 .applied summary { cursor: pointer; color: var(--green); font-weight: 700; }
 .applied p { margin: 6px 0 0; }
-.guards { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.guards span { font-size: var(--fs-min); color: var(--ink-soft); letter-spacing: .04em; }
+.guards { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.guards > span { font-size: var(--fs-min); color: var(--ink-soft); letter-spacing: .04em; }
+details.guard { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 8px 12px; }
+details.guard summary { cursor: pointer; font-size: var(--fs-s); font-weight: 700; color: var(--indigo); }
+details.guard .desc { margin: 6px 0 0; font-size: var(--fs-min); color: var(--ink-soft); }
+details.guard button { margin-top: 8px; }
+/* コピーされる文字列そのものを、コピーする前に読めるようにする */
+pre.clip { margin: 8px 0 0; max-height: 260px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  font-family: var(--font-mono); font-size: var(--fs-s); line-height: 1.7; color: var(--ink);
+  background: var(--mono-bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+details.inst { margin: 0; font-size: var(--fs-s); }
+details.inst summary { cursor: pointer; color: var(--indigo); font-weight: 700; }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 20px 40px; color: var(--ink-soft); font-size: var(--fs-min); }
 footer a { color: var(--indigo); }
 @media (prefers-reduced-motion: no-preference) { button { transition: background .2s; } }
@@ -94,6 +104,10 @@ footer a { color: var(--indigo); }
       <button class="ghost" id="copy-text" disabled>本文をコピー</button>
       <button class="ghost" id="copy-inst" disabled>残りをAIに直させる指示文をコピー</button>
     </div>
+    <details class="inst" id="inst-preview" hidden>
+      <summary>コピーされる指示文を先に読む</summary>
+      <pre class="clip" id="inst-text"></pre>
+    </details>
     <p class="hint" id="hint"></p>
     <div class="guards" id="guards"><span>貼るだけの指示文</span></div>
   </section>
@@ -190,6 +204,9 @@ function render() {
   $('copy-inst').textContent = fixables > 0
     ? `残り${rest}件をAIに直させる指示文をコピー`
     : `${rest}件をAIに直させる指示文をコピー`;
+  // コピーされる文字列は、コピーする前に読める状態にしておく
+  $('inst-preview').hidden = rest === 0;
+  $('inst-text').textContent = rest === 0 ? '' : instText();
   // 自動修正できるものが無いときは、AIへの導線を主ボタンにする
   $('autofix').classList.toggle('primary', fixables > 0);
   $('autofix').classList.toggle('ghost', fixables === 0);
@@ -336,11 +353,22 @@ fetch('./app-data.json').then((r) => r.json()).then((d) => {
   }
   const g = $('guards');
   for (const guard of d.guards) {
+    const box = document.createElement('details');
+    box.className = 'guard';
+    const sum = document.createElement('summary');
+    sum.textContent = `${guard.title} — 約${(Math.round(guard.body.length / 100) * 100).toLocaleString('ja-JP')}字`;
+    const desc = document.createElement('p');
+    desc.className = 'desc';
+    desc.textContent = guard.desc;
+    const pre = document.createElement('pre');
+    pre.className = 'clip';
+    pre.textContent = guard.body;
     const b = document.createElement('button');
     b.className = 'ghost';
-    b.textContent = guard.title;
+    b.textContent = 'この内容をコピー';
     copyBtn(b, () => guard.body, 'コピーしました');
-    g.appendChild(b);
+    box.append(sum, desc, pre, b);
+    g.appendChild(box);
   }
   setPresetNote();
   render();
