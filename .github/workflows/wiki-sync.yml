@@ -1,0 +1,50 @@
+name: Wiki sync
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/wiki-sync.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wiki リポジトリを取得 (未初期化ならスキップ)
+        run: |
+          if git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" wiki 2>/dev/null; then
+            echo "SKIP=0" >> "$GITHUB_ENV"
+          else
+            echo "Wiki が未初期化のためスキップします。Wiki タブで最初のページを保存すると次回から同期されます"
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+      - name: docs を書き出す
+        if: env.SKIP == '0'
+        run: |
+          for f in docs/*.md; do
+            name=$(basename "$f")
+            # docs 内の相対リンク (foo.md) を Wiki のページ名 (foo) に書き換える
+            sed -E 's/\]\(([a-z-]+)\.md\)/](\1)/g' "$f" > "wiki/$name"
+          done
+          {
+            echo "本体リポジトリの docs/ から自動同期されています。修正は docs/ への PR でお願いします。この Wiki を直接編集しても、次回の同期で上書きされます。"
+            echo ""
+            echo "- [[導入マニュアル|adoption-guide]] — 既存プロダクトに入れる手順書"
+            echo "- [[導入方法とユースケース|usage]] — 機能別の使い方"
+            echo "- [[類似ツールとの比較|comparison]] — textlint との使い分けと併用構成"
+            echo "- [[実施前・実施後の比較|before-after]] — 書き直しコーパスの対訳表"
+            echo "- [[設計ドキュメント|design]] — アーキテクチャと未解決課題"
+            echo "- [[GUI と自動修正の設計|custom-rules-and-autofix]] — カスタム辞書と脅威モデル"
+            echo "- [[クリシェ調査ノート|research-notes]] — 採否の基準と不採用理由"
+          } > wiki/Home.md
+      - name: 変更があれば push
+        if: env.SKIP == '0'
+        run: |
+          cd wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || { git commit -m "docs から同期"; git push; }
