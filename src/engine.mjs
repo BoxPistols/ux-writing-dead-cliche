@@ -32,7 +32,7 @@ function lineCol(text, index) {
 export function maskMarkdownCode(text) {
   return text
     .replace(/```[\s\S]*?(?:```|$)/g, (m) => m.replace(/[^\n]/g, ' '))
-    .replace(/`[^`\n]+`/g, (m) => ' '.repeat(m.length));
+    .replace(/`[^`\n]+`/g, (m) => '\u220E'.repeat(m.length)); // 非空白: 空白依存ルール(崩れ太字等)と干渉させない
 }
 
 const SEVERITY_ORDER = { info: 0, warn: 1, error: 2 };

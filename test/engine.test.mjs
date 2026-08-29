@@ -97,3 +97,12 @@ test('感嘆符ルールのかぎかっこ除外は行を跨がない', () => {
   assert.equal(check(unclosedQuoteOnPreviousLine, rules).length, 1, '前の行の閉じていない「で無効化された');
   assert.equal(check('タイトルは「絶対合格!!」だ。', rules).length, 0, '同一行のかぎかっこ内は除外されるべき');
 });
+
+test('インラインコードのマスクは空白ではなく、太字対の内側を壊さない', () => {
+  const md = '**グローバルの `~/.claude/CLAUDE.md` を読む**\n';
+  const masked = maskMarkdownCode(md);
+  assert.equal(masked.length, md.length);
+  const rules = loadAllRules().filter((r) => r.id === 'formatting/broken-emphasis');
+  assert.equal(check(masked, rules).length, 0, 'マスク後の正しい太字が誤検出された');
+  assert.equal(check(maskMarkdownCode('** 壊れた**太字です。\n'), rules).length, 1, '本物の崩れが検出されない');
+});

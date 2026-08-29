@@ -124,6 +124,34 @@ function cmdExplain(args) {
 }
 
 // Claude Code PostToolUseフック。失敗しても編集を妨げない (常に握りつぶしてexit 0)。
+// Bashコマンド文字列から、書き込まれた可能性のある文書パスを拾う。
+// bypass permissionsのセッションはheredocで書くため、Write|Editだけでは素通りする。
+function extractPathsFromCommand(command, cwd) {
+  const found = new Set();
+  const re = new RegExp("[^\\s'\"`;|&()<>]+\\.(?:md|mdx|markdown|txt)\\b", 'g');
+  for (const m of String(command).matchAll(re)) {
+    const token = m[0];
+    if (/^https?:/.test(token)) continue;
+    const expanded = token.startsWith('~/') ? path.join(process.env.HOME ?? '', token.slice(2)) : token;
+    const abs = path.isAbsolute(expanded) ? expanded : path.resolve(cwd, expanded);
+    try {
+      if (fs.existsSync(abs) && fs.statSync(abs).isFile()) found.add(abs);
+    } catch {}
+  }
+  return [...found];
+}
+
+function hookCheckFile(filePath) {
+  const rc = findRc(path.dirname(filePath));
+  if (rc?.ignore) {
+    const rel = path.relative(rc._dir, filePath);
+    if (rc.ignore.some((pat) => rel.startsWith(pat) || rel.includes(`/${pat}`))) return [];
+  }
+  const rules = applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc);
+  const text = fs.readFileSync(filePath, 'utf8');
+  return checkText(text, filePath, rules).map((v) => ({ ...v, file: path.basename(filePath) }));
+}
+
 function cmdClaudeHook() {
   let input;
   try {
@@ -132,6 +160,18 @@ function cmdClaudeHook() {
     process.exit(0);
   }
   try {
+    if (input?.tool_name === 'Bash' || (!input?.tool_input?.file_path && input?.tool_input?.command)) {
+      const files = extractPathsFromCommand(input?.tool_input?.command ?? '', input?.cwd ?? process.cwd());
+      const all = files.flatMap((f) => {
+        try { return hookCheckFile(f); } catch { return []; }
+      });
+      if (all.length === 0) process.exit(0);
+      const lines = all.slice(0, 15).map((v) => `- ${v.file}:${v.line} [${v.ruleId}] 「${v.matched.replace(/\n/g, '\\n')}」 → ${v.ask}`);
+      console.error(
+        `dead-cliche: Bash で書かれた文書にクリシェがあります (${all.length} 件)。意味を保ったまま書き直してください。\n` + lines.join('\n')
+      );
+      process.exit(2);
+    }
     const filePath = input?.tool_input?.file_path;
     if (!filePath || !TEXT_EXT.has(path.extname(filePath))) process.exit(0);
     const rc = findRc(path.dirname(filePath));
