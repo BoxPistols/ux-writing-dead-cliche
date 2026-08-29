@@ -50,6 +50,12 @@ button.done { background: var(--green); border-color: var(--green); color: var(-
 .finding .ask { font-size: var(--fs-s); margin: 0; }
 .finding .ask b { color: var(--indigo); margin-right: 4px; }
 .allclear { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 16px; color: var(--green); font-weight: 700; }
+.hint { margin: 0; font-size: var(--fs-s); color: var(--ink-soft); }
+del { color: var(--shu); text-decoration: line-through; font-family: var(--font-mono); background: var(--mono-bg); border-radius: 3px; padding: 0 5px; }
+ins { color: var(--green); text-decoration: none; font-family: var(--font-mono); background: var(--mono-bg); border-radius: 3px; padding: 0 5px; }
+.applied { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 10px 14px; font-size: var(--fs-s); }
+.applied summary { cursor: pointer; color: var(--green); font-weight: 700; }
+.applied p { margin: 6px 0 0; }
 .guards { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .guards span { font-size: var(--fs-min); color: var(--ink-soft); letter-spacing: .04em; }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 20px 40px; color: var(--ink-soft); font-size: var(--fs-min); }
@@ -77,6 +83,7 @@ footer a { color: var(--indigo); }
       <button class="ghost" id="copy-text" disabled>修正後をコピー</button>
       <button class="ghost" id="copy-inst" disabled>残りをAIに直させる指示文をコピー</button>
     </div>
+    <p class="hint" id="hint"></p>
     <div class="guards" id="guards"><span>貼るだけの指示文</span></div>
   </section>
   <section class="pane">
@@ -95,6 +102,7 @@ const $ = (id) => document.getElementById(id);
 let data = null;
 let preset = 'business';
 let violations = [];
+let lastApplied = [];
 try { const d = localStorage.getItem('dc-draft'); if (d) $('src').value = d; } catch (e) {}
 try { const p = localStorage.getItem('dc-preset'); if (p) preset = p; } catch (e) {}
 
@@ -127,9 +135,39 @@ function render() {
   $('summary').innerHTML = violations.length
     ? `${violations.length}件 (<span class="err">error ${errors}</span> / 自動修正可 ${fixables})`
     : '';
+  const rest = violations.length - fixables;
   $('autofix').disabled = fixables === 0;
+  $('autofix').textContent = `自動修正を適用(${fixables}件)`;
   $('copy-text').disabled = false;
-  $('copy-inst').disabled = violations.length === 0;
+  $('copy-inst').disabled = rest === 0;
+  $('copy-inst').textContent = `残り${rest}件をAIに直させる指示文をコピー`;
+  // 自動修正できるものが無いときは、AIへの導線を主ボタンにする
+  $('autofix').classList.toggle('primary', fixables > 0);
+  $('autofix').classList.toggle('ghost', fixables === 0);
+  $('copy-inst').classList.toggle('primary', fixables === 0 && rest > 0);
+  $('copy-inst').classList.toggle('ghost', !(fixables === 0 && rest > 0));
+  $('hint').textContent = violations.length === 0 ? '' :
+    rest === 0 ? 'すべて表記の置換で直せます。適用後にコピーしてください。'
+    : fixables === 0 ? '表記の置換で直せる検出はありません。指示文をコピーして、お使いのAIチャットに貼ると書き直されます。'
+    : '手順: まず自動修正(表記の置換)を適用し、残りは指示文をAIチャットに貼って書き直します。';
+  if (lastApplied.length) {
+    const d = document.createElement('details');
+    d.className = 'applied';
+    d.open = true;
+    const sum = document.createElement('summary');
+    sum.textContent = `適用した置換 ${lastApplied.length}件`;
+    d.appendChild(sum);
+    for (const e of lastApplied) {
+      const row = document.createElement('p');
+      const del = document.createElement('del');
+      del.textContent = e.before.replace(/\n/g, '\\n');
+      const ins = document.createElement('ins');
+      ins.textContent = e.after === '' ? '(削除)' : e.after.replace(/\n/g, '\\n');
+      row.append(del, ' → ', ins);
+      d.appendChild(row);
+    }
+    box.appendChild(d);
+  }
   if (!violations.length) {
     const ok = document.createElement('div');
     ok.className = 'allclear';
@@ -145,15 +183,27 @@ function render() {
       `<div class="top"><span class="expr"></span><span class="tag ${sev}">${v.severity}</span>` +
       (v.fix !== undefined ? '<span class="tag fix">自動修正可</span>' : '') +
       `<span class="loc">${v.line}行:${v.col}</span></div>` +
-      `<p class="ask"><b>代わりに</b>${escapeHtml(v.ask)}</p>`;
+      (v.fix !== undefined
+        ? `<p class="ask"><b>自動修正</b><span class="diffpair"></span></p>`
+        : `<p class="ask"><b>AIで書き直し</b>${escapeHtml(v.ask)}</p>`);
     el.querySelector('.expr').textContent = v.matched.replace(/\n/g, '\\n');
+    if (v.fix !== undefined) {
+      const pair = el.querySelector('.diffpair');
+      const del = document.createElement('del');
+      del.textContent = v.matched.replace(/\n/g, '\\n');
+      const ins = document.createElement('ins');
+      ins.textContent = v.fix === '' ? '(削除)' : v.fix.replace(/\n/g, '\\n');
+      pair.append(del, ' → ', ins);
+    }
     box.appendChild(el);
   }
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 let timer = null;
+
 $('src').addEventListener('input', () => {
+  lastApplied = [];
   clearTimeout(timer);
   timer = setTimeout(() => {
     try { localStorage.setItem('dc-draft', $('src').value); } catch (e) {}
@@ -165,6 +215,7 @@ $('autofix').addEventListener('click', () => {
   const text = $('src').value;
   const { text: fixed, applied } = applyFixes(text, activeRules(), { maskedText: maskMarkdownCode(text) });
   $('src').value = fixed;
+  lastApplied = applied;
   try { localStorage.setItem('dc-draft', fixed); } catch (e) {}
   flash($('autofix'), `${applied.length}件を置換しました`);
   render();

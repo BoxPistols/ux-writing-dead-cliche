@@ -1,5 +1,5 @@
 name: business
-description: 社内外のビジネス文書・PR・レビューコメント向け。慣用の強調は許容しつつ、比喩と誇張は検出する。
+description: 社内外のビジネス文書・PR・レビューコメント向け。比喩と誇張を検出する。まさに等の常套句もinfoで表示する。
 include:
   - metaphor
   - overstatement
@@ -9,5 +9,4 @@ include:
   - closing
   - formatting
 overrides: {}
-disable:
-  - overstatement/masani
+disable: []
