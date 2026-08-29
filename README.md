@@ -62,6 +62,7 @@ npm install textlint github:BoxPistols/ux-writing-dead-cliche
 | エディタ・既存の校正基盤 | textlint ルール | prh や公式プリセットとの併用 |
 | Claude Desktop アプリのチャット / iPhone アプリ | claude.ai スキル ([Releases](https://github.com/BoxPistols/ux-writing-dead-cliche/releases) の dead-cliche-review.zip を設定 → 機能 → スキルへ) | 辞書に基づく検出とレビュー規律。判定は LLM が行う |
 | iPhone からのリポジトリ操作 | claude.ai/code のクラウドセッション (対象リポジトリの `.claude/settings.json` にプラグイン設定をコミット) | /dead-cliche:pr-review での投稿まで |
+| ChatGPT・Gemini・その他あらゆる AI チャット | 貼り付け用の指示文 (docs/prompts/、辞書から自動生成) | クリシェを避けた文章の生成。ツールのインストール不要 |
 
 既存プロダクトへの導入手順は docs/adoption-guide.md にまとまっています。
 
@@ -149,6 +150,17 @@ Co-Authored-By: Claude 等) と絵文字を、コミットログ・PR 本文・�
 すべてで禁止します。あわせて Claude Code の `settings.json` に
 `"attribution": { "commit": "", "pr": "", "sessionUrl": false }` を設定すると、
 ツール側の自動署名も止まります。
+
+## GitHub を使わない環境で使う (貼り付け用の指示文)
+
+辞書から自動生成された指示文が docs/prompts/ にあります。どの AI チャットにも
+コピーして貼るだけで効き、ツールのインストールは不要です。
+
+- [writing-guard.md](docs/prompts/writing-guard.md) — フル版 (約 12KB)。システムプロンプト・プロジェクト設定向け
+- [writing-guard-compact.md](docs/prompts/writing-guard-compact.md) — 短縮版 (約 3KB)。文字数制限のあるカスタム指示欄向け
+- [ux-writing-guard.md](docs/prompts/ux-writing-guard.md) — UI 文言版。画面テキストを書かせるとき向け
+
+生成物なので手で編集せず、辞書の更新に追随します (`npm run docs:prompts`、CI で同期検証)。
 
 ## 禁止ワードを GUI から追加する
 
