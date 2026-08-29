@@ -82,7 +82,7 @@
 
 - id: formatting/section-symbol
   severity: error
-  pattern: '(?<!法)§ ?\d|セクション ?\d'
+  pattern: '(?<!法)§ ?\d|(?<![0-9〇一二三四五六七八九十全])セクション ?\d'
   why: 「§3」「セクション2」は英語文書の参照記法の直訳で、日本語の本文では見出し名の方が読み手に残る。
   ask: 参照先の見出し名で書く (「検出の設計方針」の節を参照、のように)。
   examples:
@@ -92,6 +92,7 @@
       - '詳細は「検出の設計方針」の節を参照してください。'
   deny_examples:
     - '米国特許法§102に基づく主張である。'
+    - '4セクション10ページの構成です。'
 
 - id: formatting/chapter-number-ref
   severity: error
