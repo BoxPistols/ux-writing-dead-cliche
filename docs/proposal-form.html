@@ -426,11 +426,25 @@ import { check } from './engine.mjs';
     var expr = $('expr').value.trim();
     if (!dict || !expr) { box.hidden = true; return; }
     var hits = check(expr, machineRules());
-    if (!hits.length) { box.hidden = true; return; }
-    var r = dict.rules.find(function (x) { return x.id === hits[0].ruleId; });
-    box.hidden = false;
-    box.innerHTML = '<b>この表現は既に辞書で検出されます</b>: ' + r.id + ' (' + r.severity + ')。' +
-      esc(r.why) + ' <a href="./rules.html">辞書で確認する</a>。検出範囲を広げる提案なら、悪い例にその文を足して提案してください。';
+    if (hits.length) {
+      var r = dict.rules.find(function (x) { return x.id === hits[0].ruleId; });
+      box.hidden = false;
+      box.innerHTML = '<b>この表現は既に辞書で検出されます</b>: ' + r.id + ' (' + r.severity + ')。' +
+        esc(r.why) + ' <a href="./rules.html">辞書で確認する</a>。検出範囲を広げる提案なら、悪い例にその文を足して提案してください。';
+      return;
+    }
+    var related = dict.rules.filter(function (r) {
+      return r.reprs.some(function (x) { return x.indexOf(expr) >= 0 || expr.indexOf(x) >= 0; }) ||
+        (r.pattern || '').indexOf(expr) >= 0;
+    }).slice(0, 3);
+    if (related.length) {
+      box.hidden = false;
+      box.innerHTML = '<b>関連する既存ルールがあります</b>: ' +
+        related.map(function (r) { return r.id + ' (' + esc(r.reprs.join('、')) + ')'; }).join(' / ') +
+        '。 <a href="./rules.html">辞書で確認する</a>。同じ語でも検出条件が違えば、別ルールとして提案する価値があります。';
+      return;
+    }
+    box.hidden = true;
   }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
