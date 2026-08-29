@@ -91,7 +91,7 @@ footer a { color: var(--indigo); }
     <textarea id="src" autofocus placeholder="ここに文章を貼ってください。PR本文、issue、Wiki、記事、コミットメッセージ、何でも検査できます。"></textarea>
     <div class="actions">
       <button class="primary" id="autofix" disabled>自動修正を適用</button>
-      <button class="ghost" id="copy-text" disabled>修正後をコピー</button>
+      <button class="ghost" id="copy-text" disabled>本文をコピー</button>
       <button class="ghost" id="copy-inst" disabled>残りをAIに直させる指示文をコピー</button>
     </div>
     <p class="hint" id="hint"></p>
@@ -186,7 +186,10 @@ function render() {
   $('autofix').textContent = `自動修正を適用(${fixables}件)`;
   $('copy-text').disabled = false;
   $('copy-inst').disabled = rest === 0;
-  $('copy-inst').textContent = `残り${rest}件をAIに直させる指示文をコピー`;
+  // 「残り」は自動修正の後に使う語。置換で直せる検出が無いときは最初から全件が対象になる
+  $('copy-inst').textContent = fixables > 0
+    ? `残り${rest}件をAIに直させる指示文をコピー`
+    : `${rest}件をAIに直させる指示文をコピー`;
   // 自動修正できるものが無いときは、AIへの導線を主ボタンにする
   $('autofix').classList.toggle('primary', fixables > 0);
   $('autofix').classList.toggle('ghost', fixables === 0);
@@ -194,7 +197,7 @@ function render() {
   $('copy-inst').classList.toggle('ghost', !(fixables === 0 && rest > 0));
   $('hint').textContent = violations.length === 0 ? '' :
     rest === 0 ? '「自動修正を適用」を押すと、このテキストエリアの本文がその場で書き換わります。'
-    : fixables === 0 ? '表記の置換で直せる検出はありません。手順: (1)青いボタンで指示文をコピー、(2)お使いのAIチャットに貼ると書き直した本文が返る、(3)返ってきた本文をここに貼り直すと再検査できます。検出なしになれば完成です。'
+    : fixables === 0 ? 'この検出は表記の置換では直せないので、この画面では本文は書き換わりません。書き直すのはAIチャットの役目です。手順: (1)青いボタンで指示文をコピー、(2)お使いのAIチャットに貼ると書き直した本文が返る、(3)返ってきた本文をここに貼り直すと再検査できます。検出なしになれば完成です。'
     : '手順: まず「自動修正を適用」(本文がその場で書き換わります)。残りは指示文をAIチャットに貼り、返ってきた本文をここに貼り直して再検査してください。';
   if (lastApplied.length) {
     const d = document.createElement('details');
