@@ -50,6 +50,10 @@ button.done { background: var(--green); border-color: var(--green); color: var(-
 .finding .ask { font-size: var(--fs-s); margin: 0; }
 .finding .ask b { color: var(--indigo); margin-right: 4px; }
 .allclear { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 16px; color: var(--green); font-weight: 700; }
+.preset-note { margin: 0; font-size: var(--fs-min); color: var(--ink-soft); }
+.empty { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px; align-items: start; }
+.empty p { margin: 0; font-size: var(--fs-s); color: var(--ink-soft); }
+.why { font-size: var(--fs-s); color: var(--ink-soft); }
 .hint { margin: 0; font-size: var(--fs-s); color: var(--ink-soft); }
 del { color: var(--shu); text-decoration: line-through; font-family: var(--font-mono); background: var(--mono-bg); border-radius: 3px; padding: 0 5px; }
 ins { color: var(--green); text-decoration: none; font-family: var(--font-mono); background: var(--mono-bg); border-radius: 3px; padding: 0 5px; }
@@ -77,6 +81,7 @@ footer a { color: var(--indigo); }
       <strong>テキスト</strong>
       <div class="chips" id="presets" role="group" aria-label="プリセット"></div>
     </div>
+    <p class="preset-note" id="preset-note"></p>
     <textarea id="src" autofocus placeholder="ここに文章を貼ってください。PR本文、issue、Wiki、記事、コミットメッセージ、何でも検査できます。"></textarea>
     <div class="actions">
       <button class="primary" id="autofix" disabled>自動修正を適用</button>
@@ -106,9 +111,33 @@ let lastApplied = [];
 try { const d = localStorage.getItem('dc-draft'); if (d) $('src').value = d; } catch (e) {}
 try { const p = localStorage.getItem('dc-preset'); if (p) preset = p; } catch (e) {}
 
-function activeRules() {
-  const ids = new Set(data.presets[preset]);
+function activeRules(name = preset) {
+  const ids = new Set(data.presets[name]);
   return data.rules.filter((r) => ids.has(r.id) && !r.manual);
+}
+
+// 検出0件のとき、他のプリセットなら当たるかを調べる。プリセットで検出範囲が変わることを
+// 画面から分かるようにするため (ux-microcopyは19規則しか使わないので、比喩や誇張は素通りする)
+function wider(text) {
+  for (const name of ['business', 'paper', 'chat']) {
+    if (name === preset) continue;
+    const n = check(maskMarkdownCode(text), activeRules(name)).length;
+    if (n > 0) return { name, n };
+  }
+  return null;
+}
+
+function setPresetNote() {
+  const info = data.presetInfo[preset];
+  $('preset-note').textContent = `${info.description} このプリセットは${info.activeCount}規則で検査します。`;
+}
+
+function loadSample() {
+  $('src').value = data.presetInfo[preset].sample;
+  try { localStorage.setItem('dc-draft', $('src').value); } catch (e) {}
+  lastApplied = [];
+  render();
+  $('src').focus();
 }
 
 function instText() {
@@ -126,7 +155,18 @@ function render() {
   box.textContent = '';
   if (!text.trim()) {
     $('summary').textContent = '';
+    $('hint').textContent = '';
     $('autofix').disabled = $('copy-text').disabled = $('copy-inst').disabled = true;
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    const p = document.createElement('p');
+    p.textContent = '左に文章を貼ると、辞書にある言い回しをその場で検出します。動きを見るなら例文から始められます。';
+    const b = document.createElement('button');
+    b.className = 'ghost';
+    b.textContent = '例文を入れる';
+    b.addEventListener('click', loadSample);
+    empty.append(p, b);
+    box.appendChild(empty);
     return;
   }
   violations = check(maskMarkdownCode(text), activeRules());
@@ -169,14 +209,21 @@ function render() {
     box.appendChild(d);
   }
   if (!violations.length) {
+    const info = data.presetInfo[preset];
     const ok = document.createElement('div');
     ok.className = 'allclear';
-    ok.textContent = '既知のパターンは見つかりませんでした';
+    ok.textContent = `${preset}の${info.activeCount}規則には一致しませんでした`;
     const note = document.createElement('p');
     note.className = 'why';
     note.textContent = 'この検査は辞書にある表現の有無だけを見ます。文章が読みやすいか、内容が正しいかは判定していません。';
-    box.appendChild(ok);
-    box.appendChild(note);
+    box.append(ok, note);
+    const other = wider(text);
+    if (other) {
+      const alt = document.createElement('p');
+      alt.className = 'why';
+      alt.textContent = `${other.name}に切り替えると${other.n}件見つかります。プリセットごとに検査する規則が違います。`;
+      box.appendChild(alt);
+    }
     return;
   }
   for (const v of violations) {
@@ -242,6 +289,7 @@ copyBtn($('copy-inst'), instText, 'コピーしました。AIの返答をここ�
 
 fetch('./app-data.json').then((r) => r.json()).then((d) => {
   data = d;
+  if (!data.presetInfo[preset]) preset = 'business'; // 保存済みの名前が辞書から消えた場合
   const box = $('presets');
   for (const name of ['business', 'paper', 'chat', 'ux-microcopy']) {
     const b = document.createElement('button');
@@ -253,6 +301,7 @@ fetch('./app-data.json').then((r) => r.json()).then((d) => {
       try { localStorage.setItem('dc-preset', name); } catch (e) {}
       box.querySelectorAll('.chip').forEach((x) => x.setAttribute('aria-pressed', 'false'));
       b.setAttribute('aria-pressed', 'true');
+      setPresetNote();
       render();
     });
     box.appendChild(b);
@@ -265,6 +314,7 @@ fetch('./app-data.json').then((r) => r.json()).then((d) => {
     copyBtn(b, () => guard.body, 'コピーしました');
     g.appendChild(b);
   }
+  setPresetNote();
   render();
 }).catch(() => {
   $('summary').textContent = 'データを読み込めませんでした。再読み込みしてください';
