@@ -157,6 +157,22 @@ button, .button {
 .ai-status { font-size: var(--fs-s); margin: 8px 0 0; }
 .ai-status.ok { color: var(--green); }
 .ai-status.err { color: var(--shu); }
+.tour-dim { position: fixed; inset: 0; z-index: 30; background: color-mix(in srgb, var(--paper) 45%, transparent); }
+.tour-dim[hidden] { display: none; }
+.tour-ring {
+  position: absolute; z-index: 31; pointer-events: none;
+  outline: 3px solid var(--indigo); outline-offset: 4px; border-radius: var(--radius);
+}
+.tour-bubble {
+  position: absolute; z-index: 32; max-width: 340px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px;
+}
+.tour-bubble .step { font-size: var(--fs-min); color: var(--indigo); font-weight: 700; letter-spacing: .06em; }
+.tour-bubble p { margin: 6px 0 10px; font-size: var(--fs-s); }
+.tour-bubble .row { display: flex; gap: 8px; }
+.flow-svg { width: 100%; height: auto; margin: 10px 0 4px; }
 .next {
   font-size: 13px; color: var(--ink-soft);
   background: var(--indigo-soft); border-radius: var(--radius);
@@ -263,6 +279,30 @@ footer a { color: var(--indigo); }
 <div class="help-overlay" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
   <div class="help-modal">
     <h2 id="help-title">この画面でできること</h2>
+    <svg class="flow-svg" viewBox="0 0 560 120" role="img" aria-label="提案の流れ: 入力、下書き、GitHubで提案、レビューを経て辞書へ">
+      <g fill="none" stroke="var(--line)" stroke-width="1.5">
+        <rect x="4" y="14" width="112" height="44" rx="5" fill="var(--indigo-soft)"/>
+        <rect x="152" y="14" width="112" height="44" rx="5" fill="var(--indigo-soft)"/>
+        <rect x="300" y="14" width="112" height="44" rx="5" fill="var(--indigo-soft)"/>
+        <rect x="448" y="14" width="108" height="44" rx="5" fill="var(--indigo)"/>
+      </g>
+      <g stroke="var(--ink-soft)" stroke-width="1.5" fill="none">
+        <path d="M118 36h30m-8-5 8 5-8 5"/>
+        <path d="M266 36h30m-8-5 8 5-8 5"/>
+        <path d="M414 36h30m-8-5 8 5-8 5"/>
+      </g>
+      <g font-size="13" fill="var(--ink)" text-anchor="middle" font-family="inherit">
+        <text x="60" y="33">1. 表現と理由を</text><text x="60" y="49">入力する</text>
+        <text x="208" y="33">2. 右に下書きが</text><text x="208" y="49">組み上がる</text>
+        <text x="356" y="33">3. GitHubで提案</text><text x="356" y="49">(送信は自分で)</text>
+        <text x="502" y="33" fill="var(--paper)">4. レビュー後</text><text x="502" y="49" fill="var(--paper)">辞書に入る</text>
+      </g>
+      <g font-size="12" fill="var(--ink-soft)" font-family="inherit">
+        <text x="4" y="86">自分のプロジェクト用タブの場合: 2の下書きをコピーして、自分のリポジトリの</text>
+        <text x="4" y="104">.deadcliche/custom-rules.yml に貼るだけ (どこにも提案されません)</text>
+      </g>
+    </svg>
+    <p><button type="button" class="button primary" id="tour-start">画面の案内を再生する (30秒)</button></p>
     <p>dead-clicheは「AIっぽい日本語表現」を検出して直すツールで、判定の元は約130件の辞書です。この画面は、その辞書にあなたが見つけた表現を追加するためのフォームです。</p>
     <h3>OSS辞書へ提案 (左のタブ)</h3>
     <ol>
@@ -496,7 +536,67 @@ import { check } from './engine.mjs';
   $('help-close').addEventListener('click', closeHelp);
   helpEl.addEventListener('click', function (e) { if (e.target === helpEl) closeHelp(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !helpEl.hidden) closeHelp(); });
-  try { if (!localStorage.getItem('dc-form-help-seen')) openHelp(); } catch (e) { openHelp(); }
+  var TOUR = [
+    ['.mode', 'まず目的を選びます。OSSの辞書へ提案するか、自分のプロジェクト専用の禁止ワードを作るか。'],
+    ['#expr', '見つけた表現をそのまま入力します。既に辞書にある表現なら、この下に通知が出ます。'],
+    ['#yaml', '入力に合わせて、提案の下書きがここに自動で組み上がります。レビューされるのはこの内容です。'],
+    ['#issue', '必須項目がそろうと押せます。入力済みのGitHub Issueが開き、送信するかはGitHub上であなたが決めます。'],
+    ['#ai-panel', '任意: あなたのOpenAI APIキーで、空欄の下書きをAIに作らせることもできます。キーは保存されません。']
+  ];
+  var tourDim = document.createElement('div');
+  tourDim.className = 'tour-dim';
+  tourDim.hidden = true;
+  var ring = document.createElement('div');
+  ring.className = 'tour-ring';
+  var bubble = document.createElement('div');
+  bubble.className = 'tour-bubble';
+  tourDim.appendChild(ring);
+  tourDim.appendChild(bubble);
+  document.body.appendChild(tourDim);
+  var tourIdx = 0;
+  function endTour() {
+    tourDim.hidden = true;
+    try { localStorage.setItem('dc-form-help-seen', '1'); } catch (e) {}
+  }
+  function showTourStep() {
+    var conf = TOUR[tourIdx];
+    var el = document.querySelector(conf[0]);
+    if (!el) { endTour(); return; }
+    if (conf[0] === '#ai-panel') el.open = true;
+    el.scrollIntoView({ block: 'center' });
+    requestAnimationFrame(function () {
+      var r = el.getBoundingClientRect();
+      ring.style.left = (r.left + window.scrollX) + 'px';
+      ring.style.top = (r.top + window.scrollY) + 'px';
+      ring.style.width = r.width + 'px';
+      ring.style.height = r.height + 'px';
+      var below = r.bottom + 12 + window.scrollY;
+      bubble.innerHTML = '<span class="step">' + (tourIdx + 1) + ' / ' + TOUR.length + '</span>' +
+        '<p>' + conf[1] + '</p>' +
+        '<div class="row"><button type="button" class="button primary" id="tour-next">' +
+        (tourIdx === TOUR.length - 1 ? '終了' : '次へ') + '</button>' +
+        '<button type="button" class="button ghost" id="tour-skip">閉じる</button></div>';
+      bubble.style.left = Math.max(16, Math.min(r.left + window.scrollX, window.innerWidth - 380)) + 'px';
+      bubble.style.top = below + 'px';
+      document.getElementById('tour-next').addEventListener('click', function () {
+        tourIdx++;
+        if (tourIdx >= TOUR.length) endTour(); else showTourStep();
+      });
+      document.getElementById('tour-skip').addEventListener('click', endTour);
+      document.getElementById('tour-next').focus();
+    });
+  }
+  function startTour() {
+    helpEl.hidden = true;
+    tourIdx = 0;
+    tourDim.hidden = false;
+    showTourStep();
+  }
+  document.getElementById('tour-start').addEventListener('click', startTour);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !tourDim.hidden) endTour(); });
+  tourDim.addEventListener('click', function (e) { if (e.target === tourDim) endTour(); });
+  window.addEventListener('resize', function () { if (!tourDim.hidden) showTourStep(); });
+  try { if (!localStorage.getItem('dc-form-help-seen')) startTour(); } catch (e) {}
 })();
 </script>
 </body>
