@@ -150,7 +150,7 @@ footer { max-width: 1120px; margin: 0 auto; padding: 10px 20px 44px; color: var(
       el.className = 'card';
       el.innerHTML =
         '<span class="guard-title">' + esc(g.title) + '</span>' +
-        '<div class="meta"><span class="tag">指示文</span><span class="tag">' + (g.body.length / 1000).toFixed(1) + ' KB</span></div>' +
+        '<div class="meta"><span class="tag">指示文</span><span class="tag">約' + (Math.round(g.body.length / 100) * 100).toLocaleString('ja-JP') + ' 字</span></div>' +
         '<p class="why">' + esc(g.desc) + '</p>' +
         '<div class="card-actions"><button class="copy-btn">全文をコピー</button><button class="fav-btn" aria-label="お気に入り" aria-pressed="' + favs.has(g.id) + '">&#9825;</button></div>';
       copyHandler(el.querySelector('.copy-btn'), g.body);
