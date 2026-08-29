@@ -6,7 +6,7 @@
 
 | 実施前 | 検出されるルール | 実施後 |
 | --- | --- | --- |
-| `この文書はチームの羅針盤です。まさに開発の心臓部と言える内容を解説していきます。` | metaphor/compass<br>overstatement/masani<br>metaphor/heart | この文書は、実装方針に迷ったときの判断基準を定めます。対象は認証と決済の 2 モジュールです。 |
+| `この文書はチームの羅針盤です。まさに開発の心臓部と言える内容を解説していきます。` | metaphor/compass<br>overstatement/masani<br>metaphor/heart<br>syntax-pattern/opener | この文書は、実装方針に迷ったときの判断基準を定めます。対象は認証と決済の 2 モジュールです。 |
 | `データは新しい石油であり、活用の可能性は無限に広がっています。まずは小さく始めてみましょう。` | metaphor/blood-oil<br>closing/mugen<br>closing/mashou | データ活用は、まず問い合わせログの分類から着手します。初月の目標は誤分類率の計測です。 |
 | `本機能は単なる検索ではなく、体験のパラダイムシフトにほかなりません。` | syntax-pattern/not-just<br>empty-abstraction/paradigm<br>overstatement/nothing-but | 本機能は、検索結果を閲覧履歴で並べ替えます。従来の全文検索とはこの点が異なります。 |
 | `極めて重要なのはユーザー理解です。それはUXの本質と言えるでしょう。` | overstatement/kiwamete<br>empty-abstraction/essence<br>translationese/to-ieru | ユーザーの誤操作を週次で観察し、画面ごとの離脱率と合わせて仕様を見直します。 |
