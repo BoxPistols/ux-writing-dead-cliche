@@ -35,8 +35,8 @@ claude plugin update dead-cliche@ux-writing-dead-cliche
 npx github:BoxPistols/ux-writing-dead-cliche check test-dc.md --preset business
 ```
 
-期待値: 7 件 (error 3 件) で exit 1。ゲームチェンジャー・我々のDNA・圧倒的・
-することができます・期待が高まり・ぜひお試しください・！！ が並びます。
+期待値: 7 件 (error 3 件) で exit 1。`ゲームチェンジャー` `我々のDNA` `圧倒的`
+`することができます` `期待が高まり` `ぜひお試しください` `！！` が並びます。
 (paper プリセットだとさらに増えます。0 件になった場合はファイルの保存し忘れか、
 `.deadclicherc.json` の ignore に当たっています)
 
