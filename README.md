@@ -7,6 +7,32 @@ AIが日本語文章に持ち込むクリシェを検出し、平易な文章へ
 誰がどの判断を何を基準に行うのかが書かれていません。本ツールの辞書は、
 検出した表現ごとに「なぜ避けるか (why)」と「代わりに何を書くべきか (ask)」を返します。
 
+## 毎日の使い方 (最短)
+
+文章を検査する:
+
+```
+npx github:BoxPistols/ux-writing-dead-cliche check 文書.md --preset business
+npx github:BoxPistols/ux-writing-dead-cliche fix 文書.md --write   # 表記系を自動修正 (既定はdry-run)
+echo "確認したい文章" | npx github:BoxPistols/ux-writing-dead-cliche check
+```
+
+プリセットは記事・設計書がpaper、issue・PR・Wikiがbusiness、画面文言がux-microcopyです。
+clone済みなら `npm link` で `dead-cliche` の短いコマンド名になります。
+
+PRを書く・レビューする (Claude Codeプラグイン導入後):
+
+```
+/dead-cliche:pr-review 123          # PRのレビュー。差分の文章とUI文言も検査。--postで確認後に投稿
+/dead-cliche:review-request 123     # Slack用のレビュー依頼文 (プレーンテキスト)
+/dead-cliche:check 対象.md --fix    # 下書きの検査と書き直し
+```
+
+PR本文・レビューコメント・コミットの文面規律 (AI署名と絵文字の禁止、端的な文体) は、
+プラグインを入れるだけでスキルとして常時効きます。ClaudeがMarkdownを書いた瞬間の
+自動検査 (フック) も同様です。ブラウザで試すだけなら
+https://boxpistols.github.io/ux-writing-dead-cliche/ に貼ってください。
+
 ## 構成
 
 辞書 (`rules/*.yml`) を単一の情報源とし、3つの経路から同じルールが効きます。
