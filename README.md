@@ -148,6 +148,32 @@ Co-Authored-By: Claude 等) と絵文字を、コミットログ・PR 本文・�
 `"attribution": { "commit": "", "pr": "", "sessionUrl": false }` を設定すると、
 ツール側の自動署名も止まります。
 
+## 禁止ワードを GUI から追加する
+
+YAML を編集しない人向けに、[提案フォーム](https://boxpistols.github.io/ux-writing-dead-cliche/proposal-form.html)
+を用意しています。静的ページで、入力はどこにも自動送信されません。OSS 辞書への提案は
+入力済みの Issue フォームが開き、レビューを経て辞書に入ります。チーム固有の禁止ワードは
+同じフォームで `.deadcliche/custom-rules.yml` 用の YAML を生成できます。
+
+```json
+{
+  "preset": "business",
+  "customRules": [".deadcliche/custom-rules.yml"]
+}
+```
+
+カスタム辞書のリテラル (surface) は常に安全に読み込まれます。正規表現は
+`"trustCustomPatterns": true` を明示し、安全性検査を通ったものだけが有効になります。
+設計と脅威モデルは docs/custom-rules-and-autofix.md にあります。
+
+## 自動修正
+
+`dead-cliche fix <files>` は、意味を変えずに機械置換できる検出 (補助動詞の漢字、
+助詞のゆれ、冗長形など) を修正します。既定は dry-run で、`--write` を付けたときだけ
+書き込みます。textlint 経由でも `npx textlint --fix` で同じ置換が効きます。
+機械置換できないクリシェは書き直しが必要なため、Claude のフックと
+`/dead-cliche:check --fix` が担当します。
+
 ## 貢献
 
 ルールの追加・修正は 1 エントリ単位の PR で受け付けます。CONTRIBUTING.md を

@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dead-cliche 提案フォーム</title>
+<meta name="description" content="禁止ワード・クリシェを YAML の知識なしで提案するフォーム。入力はどこにも自動送信されません。">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --paper: #F8F7F3;
+  --card: #FFFFFF;
+  --ink: #24282B;
+  --ink-soft: #5A6167;
+  --line: #DCDAD2;
+  --indigo: #2A4B7C;
+  --indigo-soft: #E7EDF6;
+  --shu: #B8432C;
+  --ok: #2E6E4E;
+  --mono-bg: #F1EFE9;
+  --focus: #2A4B7C;
+}
+:root:not([data-theme="light"]) { color-scheme: light dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #16191C;
+    --card: #1E2226;
+    --ink: #E6E4DD;
+    --ink-soft: #9AA1A6;
+    --line: #343A3F;
+    --indigo: #8FB0DE;
+    --indigo-soft: #24303F;
+    --shu: #E07A5F;
+    --ok: #79B795;
+    --mono-bg: #14171A;
+    --focus: #8FB0DE;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #16191C;
+  --card: #1E2226;
+  --ink: #E6E4DD;
+  --ink-soft: #9AA1A6;
+  --line: #343A3F;
+  --indigo: #8FB0DE;
+  --indigo-soft: #24303F;
+  --shu: #E07A5F;
+  --ok: #79B795;
+  --mono-bg: #14171A;
+  --focus: #8FB0DE;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.75;
+  font-size: 15px;
+}
+header {
+  border-bottom: 1px solid var(--line);
+  padding: 28px 24px 22px;
+}
+.head-inner { max-width: 1080px; margin: 0 auto; }
+h1 {
+  font-family: "Shippori Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: .02em;
+  text-wrap: balance;
+}
+h1 .brand { color: var(--indigo); }
+.lede { color: var(--ink-soft); margin: 0; max-width: 46em; }
+.assure {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+  border-radius: 3px;
+  padding: 3px 10px;
+  letter-spacing: .04em;
+}
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+form { display: flex; flex-direction: column; gap: 18px; }
+fieldset {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 4px;
+  padding: 18px 20px 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+legend {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 0 8px;
+  color: var(--indigo);
+}
+label { display: flex; flex-direction: column; gap: 5px; font-weight: 500; }
+label .hint { font-weight: 400; font-size: 12.5px; color: var(--ink-soft); }
+label .req { color: var(--shu); font-size: 12px; margin-left: 4px; }
+input[type="text"], textarea, select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 8px 10px;
+}
+textarea { min-height: 64px; resize: vertical; }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.mode { display: flex; gap: 0; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; width: fit-content; }
+.mode label {
+  flex-direction: row; gap: 8px; align-items: center;
+  padding: 8px 16px; cursor: pointer; font-weight: 500; margin: 0;
+}
+.mode label + label { border-left: 1px solid var(--line); }
+.mode label:has(input:checked) { background: var(--indigo-soft); color: var(--indigo); }
+.mode input { accent-color: var(--indigo); }
+.consent { flex-direction: row; align-items: baseline; gap: 8px; font-weight: 400; }
+.consent input { accent-color: var(--shu); }
+aside { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 14px; }
+.panel { border: 1px solid var(--line); background: var(--card); border-radius: 4px; }
+.panel-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+}
+.panel-head strong { font-size: 13px; letter-spacing: .06em; color: var(--ink-soft); font-weight: 700; }
+pre {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--mono-bg);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+  border-radius: 0 0 4px 4px;
+  min-height: 180px;
+}
+button, .button {
+  font: inherit; font-weight: 700; cursor: pointer;
+  border-radius: 3px; padding: 9px 18px; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 1px solid var(--indigo);
+}
+.primary { background: var(--indigo); color: var(--paper); }
+.ghost { background: transparent; color: var(--indigo); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions .disabled { opacity: .45; pointer-events: none; }
+.copied { color: var(--ok); font-size: 12.5px; }
+.next {
+  font-size: 13px; color: var(--ink-soft);
+  border-left: 3px solid var(--indigo);
+  padding: 2px 0 2px 12px; margin: 0;
+}
+footer {
+  max-width: 1080px; margin: 0 auto; padding: 0 24px 40px;
+  color: var(--ink-soft); font-size: 12.5px;
+}
+footer a { color: var(--indigo); }
+@media (prefers-reduced-motion: no-preference) {
+  .copied { transition: opacity .3s; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner">
+    <h1><span class="brand">dead-cliche</span> 提案フォーム</h1>
+    <p class="lede">禁止したい表現を、YAML の知識なしで辞書に提案できます。入力から提案用のファイルと GitHub の下書きを生成します。</p>
+    <span class="assure">このページは静的ファイルです。入力内容はどこにも自動送信されません</span>
+  </div>
+</header>
+<main>
+  <form id="f" autocomplete="off">
+    <div class="mode" role="radiogroup" aria-label="出力先">
+      <label><input type="radio" name="mode" value="oss" checked> OSS 辞書へ提案</label>
+      <label><input type="radio" name="mode" value="custom"> 自分のプロジェクト用</label>
+    </div>
+    <fieldset>
+      <legend>検出したい表現</legend>
+      <label>表現そのもの<span class="req">必須</span>
+        <span class="hint">正規表現は書けません。文字列そのままで検出されます (安全のための仕様です)</span>
+        <input type="text" id="expr" placeholder="例: 世界観を昇華">
+      </label>
+      <label>ルール名 (半角英数とハイフン)<span class="req">必須</span>
+        <input type="text" id="slug" placeholder="例: sekaikan-shouka" pattern="[a-z0-9-]+">
+      </label>
+      <label>カテゴリ
+        <select id="cat">
+          <option value="metaphor">metaphor (比喩)</option>
+          <option value="overstatement">overstatement (誇張・断定)</option>
+          <option value="empty-abstraction">empty-abstraction (空虚な抽象)</option>
+          <option value="syntax-pattern">syntax-pattern (構文の型)</option>
+          <option value="translationese">translationese (翻訳調)</option>
+          <option value="closing">closing (締めの型)</option>
+          <option value="formatting">formatting (書式)</option>
+          <option value="ux-microcopy">ux-microcopy (UI 文言)</option>
+        </select>
+      </label>
+    </fieldset>
+    <fieldset>
+      <legend>理由と書き直し</legend>
+      <label>なぜ避けるべきか<span class="req">必須</span>
+        <span class="hint">この表現で何の情報が欠けるのかを書きます</span>
+        <textarea id="why" placeholder="例: 質の向上を主張するだけで、何をどう変えたのかが書かれない。"></textarea>
+      </label>
+      <label>代わりに何を書くべきか<span class="req">必須</span>
+        <textarea id="ask" placeholder="例: 変換した内容と、反映した先を具体的に書く。"></textarea>
+      </label>
+      <label>悪い例 (実際に見た文)<span class="req">必須</span>
+        <span class="hint">1 行 1 例。業務文書由来の場合は内容を差し替えてください</span>
+        <textarea id="bad" placeholder="例: 学びを昇華させ、独自の世界観を確立しました。"></textarea>
+      </label>
+      <label>書き直すとどうなるか<span class="req">必須</span>
+        <span class="hint">語尾は敬体 (です・ます)</span>
+        <textarea id="good" placeholder="例: 障害対応の再発防止策 3 件を設計要件に加えました。"></textarea>
+      </label>
+      <label>検出してはいけない正当な用法 (任意)
+        <span class="hint">同じ語が正当に使われる文。誤検出防止のテストになります</span>
+        <textarea id="deny" placeholder="例: ドライアイスが昇華して気体になった。"></textarea>
+      </label>
+      <label class="consent"><input type="checkbox" id="consent">
+        <span>社名・製品名・顧客名・非公開 URL を含んでいません<span class="req">必須</span></span>
+      </label>
+    </fieldset>
+  </form>
+  <aside>
+    <div class="panel">
+      <div class="panel-head"><strong id="yaml-title">生成された YAML</strong><span class="copied" id="copied" hidden>コピーしました</span></div>
+      <pre id="yaml" aria-live="polite"></pre>
+    </div>
+    <div class="actions">
+      <button type="button" class="ghost" id="copy">YAML をコピー</button>
+      <a class="button primary disabled" id="issue" target="_blank" rel="noopener">GitHub で提案する</a>
+    </div>
+    <p class="next" id="next-hint"></p>
+  </aside>
+</main>
+<footer>
+  提案はレビューを経て辞書に入ります。採否の基準は
+  <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/docs/research-notes.md">調査ノート</a>、
+  この仕組みの設計は
+  <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/docs/custom-rules-and-autofix.md">設計文書</a>
+  にあります。
+</footer>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var fields = ['expr', 'slug', 'cat', 'why', 'ask', 'bad', 'good', 'deny'];
+
+  function yq(s) { return "'" + String(s).replace(/'/g, "''") + "'"; }
+  function lines(s) {
+    return String(s).split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+  }
+  function listBlock(indent, items) {
+    return items.map(function (l) { return indent + '- ' + yq(l); }).join('\n');
+  }
+
+  function state() {
+    var mode = document.querySelector('input[name="mode"]:checked').value;
+    return {
+      mode: mode,
+      expr: $('expr').value.trim(),
+      slug: ($('slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') || 'rule-name'),
+      cat: $('cat').value,
+      why: $('why').value.trim(),
+      ask: $('ask').value.trim(),
+      bad: lines($('bad').value),
+      good: lines($('good').value),
+      deny: lines($('deny').value)
+    };
+  }
+
+  function buildYaml(s) {
+    var prefix = s.mode === 'custom' ? 'custom' : s.cat;
+    var y = '- id: ' + prefix + '/' + s.slug + '\n' +
+      '  severity: warn\n' +
+      '  surface:\n' + listBlock('    ', [s.expr || '表現を入力']) + '\n' +
+      '  why: ' + yq(s.why || 'なぜ避けるかを入力') + '\n' +
+      '  ask: ' + yq(s.ask || '代わりに何を書くべきかを入力');
+    if (s.mode === 'oss') {
+      y += '\n  examples:\n    bad:\n' + listBlock('      ', s.bad.length ? s.bad : ['悪い例を入力']) +
+        '\n    good:\n' + listBlock('      ', s.good.length ? s.good : ['良い例を入力']);
+      if (s.deny.length) y += '\n  deny_examples:\n' + listBlock('    ', s.deny);
+    }
+    return y;
+  }
+
+  function buildIssueUrl(s) {
+    var base = 'https://github.com/BoxPistols/ux-writing-dead-cliche/issues/new';
+    var catLabel = { 'metaphor': 'metaphor (比喩)', 'overstatement': 'overstatement (誇張・断定)',
+      'empty-abstraction': 'empty-abstraction (空虚な抽象)', 'syntax-pattern': 'syntax-pattern (構文の型)',
+      'translationese': 'translationese (翻訳調)', 'closing': 'closing (締めの型)',
+      'formatting': 'formatting (書式)', 'ux-microcopy': 'ux-microcopy (UI 文言)' }[s.cat];
+    var p = new URLSearchParams({
+      template: 'propose-rule.yml',
+      title: '[rule] ' + s.expr,
+      expression: s.expr,
+      category: catLabel,
+      why: s.why + (s.ask ? '\n\n代わりに書くべきこと: ' + s.ask : ''),
+      bad: s.bad.join('\n'),
+      good: s.good.join('\n')
+    });
+    if (s.deny.length) p.set('deny', s.deny.join('\n'));
+    return base + '?' + p.toString();
+  }
+
+  function render() {
+    var s = state();
+    $('yaml').textContent = buildYaml(s);
+    $('yaml-title').textContent = s.mode === 'custom'
+      ? '.deadcliche/custom-rules.yml に追記する内容'
+      : '提案されるルールの下書き (レビュー用)';
+    var ready = s.expr && s.why && s.ask && s.bad.length && s.good.length && $('consent').checked;
+    var issue = $('issue');
+    if (s.mode === 'oss') {
+      issue.style.display = '';
+      issue.classList.toggle('disabled', !ready);
+      issue.href = ready ? buildIssueUrl(s) : '#';
+      $('next-hint').textContent = ready
+        ? '「GitHub で提案する」を押すと、入力済みの Issue フォームが開きます。送信するかどうかはそこで決められます。'
+        : '必須項目と確認のチェックがそろうと、GitHub への提案ボタンが有効になります。';
+    } else {
+      issue.style.display = 'none';
+      $('next-hint').textContent = 'コピーした YAML を自分のリポジトリの .deadcliche/custom-rules.yml に追記し、.deadclicherc.json の customRules から参照して、PR としてレビューを受けてください。文字列一致 (surface) なのでこのままで安全に動きます。';
+    }
+  }
+
+  fields.forEach(function (id) { $(id).addEventListener('input', render); });
+  $('consent').addEventListener('change', render);
+  document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener('change', render); });
+
+  $('copy').addEventListener('click', function () {
+    var done = function () {
+      $('copied').hidden = false;
+      setTimeout(function () { $('copied').hidden = true; }, 1600);
+    };
+    if (navigator.clipboard) { navigator.clipboard.writeText($('yaml').textContent).then(done, done); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
