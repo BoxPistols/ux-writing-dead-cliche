@@ -67,6 +67,9 @@ PR・コミット・レビューの文面規律 (AI 署名と絵文字の禁止�
 これで、チームメンバーの Claude Code と、iPhone から使う claude.ai/code の
 クラウドセッションにも同じプラグインが読み込まれます。
 
+Claude Code を使わないメンバーには、ブラウザ版アプリ
+https://boxpistols.github.io/ux-writing-dead-cliche/ を案内してください (辞書の検索と指示文のコピーができます)。
+
 プロダクト固有の禁止ワード (旧名称・社内で禁止された言い回しなど) は
 [提案フォーム](https://boxpistols.github.io/ux-writing-dead-cliche/proposal-form.html)の
 「自分のプロジェクト用」で YAML を作り、`.deadcliche/custom-rules.yml` に置いて

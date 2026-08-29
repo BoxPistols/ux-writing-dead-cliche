@@ -1,5 +1,5 @@
 name: chat
-description: チャット・カジュアルな文章向け。呼びかけ・感嘆・締めの型は許容し、比喩と空虚な抽象だけを検出する。
+description: チャット・カジュアルな文章向け。呼びかけ・感嘆・締めの型は許容し、比喩・誇張・空虚な抽象・翻訳調を検出する。
 include:
   - metaphor
   - overstatement
