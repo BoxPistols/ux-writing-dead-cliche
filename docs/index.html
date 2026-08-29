@@ -147,9 +147,9 @@ function render() {
   $('copy-inst').classList.toggle('primary', fixables === 0 && rest > 0);
   $('copy-inst').classList.toggle('ghost', !(fixables === 0 && rest > 0));
   $('hint').textContent = violations.length === 0 ? '' :
-    rest === 0 ? 'すべて表記の置換で直せます。適用後にコピーしてください。'
-    : fixables === 0 ? '表記の置換で直せる検出はありません。指示文をコピーして、お使いのAIチャットに貼ると書き直されます。'
-    : '手順: まず自動修正(表記の置換)を適用し、残りは指示文をAIチャットに貼って書き直します。';
+    rest === 0 ? '「自動修正を適用」を押すと、このテキストエリアの本文がその場で書き換わります。'
+    : fixables === 0 ? '表記の置換で直せる検出はありません。手順: (1)青いボタンで指示文をコピー、(2)お使いのAIチャットに貼ると書き直した本文が返る、(3)返ってきた本文をここに貼り直すと再検査できます。検出なしになれば完成です。'
+    : '手順: まず「自動修正を適用」(本文がその場で書き換わります)。残りは指示文をAIチャットに貼り、返ってきた本文をここに貼り直して再検査してください。';
   if (lastApplied.length) {
     const d = document.createElement('details');
     d.className = 'applied';
@@ -234,7 +234,7 @@ function flash(btn, label) {
   setTimeout(() => { btn.textContent = prev; btn.classList.remove('done'); }, 1500);
 }
 copyBtn($('copy-text'), () => $('src').value, 'コピーしました');
-copyBtn($('copy-inst'), instText, 'コピーしました');
+copyBtn($('copy-inst'), instText, 'コピーしました。AIの返答をここに貼り直すと再検査できます');
 
 fetch('./app-data.json').then((r) => r.json()).then((d) => {
   data = d;
