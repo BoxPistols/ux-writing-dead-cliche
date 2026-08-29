@@ -118,3 +118,18 @@ test('check は既定でwarn以上をexit 1にし、--fail-on error で従来挙
   assert.equal(spawnSync('node', ['src/cli.mjs', 'check', f], { encoding: 'utf8' }).status, 1);
   assert.equal(spawnSync('node', ['src/cli.mjs', 'check', f, '--fail-on', 'error'], { encoding: 'utf8' }).status, 0);
 });
+
+test('fixはコードフェンス内を絶対に書き換えない (全fixableルールで確認)', () => {
+  const inside = [
+    '入力して下さい。',
+    '保存が失敗しました。',
+    '削除することができます。',
+    'すごい！！',
+    'Claude Code の設定',
+  ];
+  const md = `本文です。\n\`\`\`\n${inside.join('\n')}\n\`\`\`\n`;
+  const { text: fixed, applied } = applyFixes(md, fixable, { maskedText: maskMarkdownCode(md) });
+  assert.equal(applied.length, 0, `フェンス内が置換された: ${JSON.stringify(applied)}`);
+  assert.equal(fixed, md);
+  for (const line of inside) assert.ok(fixed.includes(line), `フェンス内の行が変化した: ${line}`);
+});
