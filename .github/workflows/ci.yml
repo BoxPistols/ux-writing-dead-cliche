@@ -19,3 +19,5 @@ jobs:
         run: node tools/render-comparison.mjs > /tmp/before-after.md && diff /tmp/before-after.md docs/before-after.md
       - name: プロンプト配布物が辞書と同期していること
         run: cp -r docs/prompts /tmp/prompts-before && node tools/render-prompts.mjs && diff -r /tmp/prompts-before docs/prompts
+      - name: Web アプリのデータが辞書と同期していること
+        run: cp docs/app-data.json /tmp/app-data.json && node tools/render-webdata.mjs && diff /tmp/app-data.json docs/app-data.json

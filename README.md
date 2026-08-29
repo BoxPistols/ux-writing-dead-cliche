@@ -153,8 +153,11 @@ Co-Authored-By: Claude 等) と絵文字を、コミットログ・PR 本文・�
 
 ## GitHub を使わない環境で使う (貼り付け用の指示文)
 
-辞書から自動生成された指示文が docs/prompts/ にあります。どの AI チャットにも
-コピーして貼るだけで効き、ツールのインストールは不要です。
+ブラウザから使えるアプリがあります: https://boxpistols.github.io/ux-writing-dead-cliche/
+指示文と全ルールを検索し、カードのコピーボタンで AI チャットに貼れます。
+お気に入りはブラウザに保存されます。インストールは不要です。
+
+元データの Markdown は docs/prompts/ にあります。
 
 - [writing-guard.md](docs/prompts/writing-guard.md) — フル版 (約 12KB)。システムプロンプト・プロジェクト設定向け
 - [writing-guard-compact.md](docs/prompts/writing-guard-compact.md) — 短縮版 (約 3KB)。文字数制限のあるカスタム指示欄向け
