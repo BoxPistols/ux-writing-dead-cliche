@@ -89,7 +89,7 @@ function cmdCheck(args) {
   if ((args.flags.format ?? 'pretty') === 'json') {
     console.log(JSON.stringify({ results, total, errors }, null, 2));
   } else if (total === 0) {
-    console.log('検出なし');
+    console.log('既知のパターンは見つかりませんでした (辞書にある表現の有無だけを見ています)');
   } else {
     console.log(`\n${total} 件 (error ${errors} 件)`);
   }

@@ -67,7 +67,7 @@ footer a { color: var(--indigo); }
 <header>
   <div class="wrap head-row">
     <h1>dead-cliche</h1>
-    <span class="sub">貼ると、AI特有の日本語クリシェを検出して直せます。入力はどこにも送信されません</span>
+    <span class="sub">辞書にあるAI特有の言い回しだけを検出します (文章の良し悪しは判定しません)。入力はどこにも送信されません</span>
     <nav><a href="./rules.html">辞書を引く</a><a href="./proposal-form.html">提案</a></nav>
   </div>
 </header>
@@ -171,8 +171,12 @@ function render() {
   if (!violations.length) {
     const ok = document.createElement('div');
     ok.className = 'allclear';
-    ok.textContent = '検出なし。このまま使えます';
+    ok.textContent = '既知のパターンは見つかりませんでした';
+    const note = document.createElement('p');
+    note.className = 'why';
+    note.textContent = 'この検査は辞書にある表現の有無だけを見ます。文章が読みやすいか、内容が正しいかは判定していません。';
     box.appendChild(ok);
+    box.appendChild(note);
     return;
   }
   for (const v of violations) {
