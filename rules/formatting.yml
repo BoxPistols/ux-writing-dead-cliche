@@ -121,7 +121,7 @@
 
 - id: formatting/jp-en-space
   severity: error
-  pattern: '([ぁ-んァ-ヶ一-龥々〆ー]) (?!https?://)(?=[A-Za-z0-9])|([A-Za-z0-9]) (?=[ぁ-んァ-ヶ一-龥々〆ー])'
+  pattern: '([ぁ-んァ-ヶ一-龥々〆ー]) (?!https?://)(?=[A-Za-z0-9])|(?<!https?://\S*)([A-Za-z0-9]) (?=[ぁ-んァ-ヶ一-龥々〆ー])'
   fix: '$1$2'
   why: 日本語と英数字の間の半角スペースは機械生成の書式の癖で、日本語の組版では入れない。
   ask: スペースを削る(fixで自動修正できる)。
@@ -131,7 +131,8 @@
     good:
       - 'Claude Codeの設定を3分で終わらせます。'
   deny_examples:
-    - '参照は https://example.comにあります。'
+    - '参照は https://example.com にあります。'
+    - '手順は https://example.com/v2 の節を見てください。'
 
 - id: formatting/broken-emphasis
   severity: error
