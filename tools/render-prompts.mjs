@@ -50,7 +50,7 @@ function fullGuard() {
   const lines = [];
   lines.push('# 日本語ライティング規律 (dead-cliche)');
   lines.push('');
-  lines.push(`このテキストをAIチャットのシステムプロンプト・カスタム指示・プロジェクト設定に貼ると、AI特有の日本語クリシェを避けた文章になります。辞書v${version} から自動生成されています。`);
+  lines.push(`このテキストをAIチャットのシステムプロンプト・カスタム指示・プロジェクト設定に貼ると、AI特有の日本語クリシェを避けた文章になります。辞書v${version}から自動生成されています。`);
   lines.push('');
   lines.push('## 原則');
   lines.push('');
@@ -98,7 +98,7 @@ function uxGuard() {
   const lines = [];
   lines.push('# UI文言規律 (dead-cliche)');
   lines.push('');
-  lines.push(`画面テキスト (ボタン・エラー・プレースホルダー・空状態) を書くAIへの指示文です。辞書v${version} から自動生成されています。`);
+  lines.push(`画面テキスト (ボタン・エラー・プレースホルダー・空状態) を書くAIへの指示文です。辞書v${version}から自動生成されています。`);
   lines.push('');
   lines.push('## 使ってはいけない形');
   lines.push('');
