@@ -108,6 +108,6 @@ fix を持たないルールは ask (何を書くべきかの問い) に答え�
 | フェーズ | 内容 | 状態 |
 | --- | --- | --- |
 | 1 | custom-rules 機構、fix フィールド、Issue Form、提案ページ | 実装済み (v0.7.0) |
-| 2 | 提案 Issue から下書き PR を生成する Action | 未着手 |
-| 3 | `dead-cliche ui` (ローカル編集フォーム) | 未着手 |
+| 2 | 提案 Issue から下書き PR を生成する Action | [#4](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/4) |
+| 3 | `dead-cliche ui` (ローカル編集フォーム) | [#5](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/5) |
 | 4 | 組織ダッシュボード (検出統計・辞書の採用状況) | 構想のみ |

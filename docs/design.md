@@ -69,6 +69,14 @@ src/engine.mjs の check() を通ります。
 
 ## ロードマップ
 
-- GitHub Action (PR の差分に対する自動チェックとコメント)
-- VS Code 拡張 (エディタ内での波線表示)
-- ルール数の拡充よりも、negative コーパスの拡充を優先します
+計画は roadmap ラベルの [issue](https://github.com/BoxPistols/ux-writing-dead-cliche/issues?q=label%3Aroadmap) で管理します。
+
+- Web 版エディタ (貼り付けて検出・修正) [#1](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/1) /
+  スニペット機構 [#2](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/2) /
+  PWA 化 [#3](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/3)
+- 提案 Issue の自動 PR 化 [#4](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/4) /
+  ローカル編集フォーム [#5](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/5)
+- 候補採掘 [#6](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/6) /
+  GitHub Action [#7](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/7) /
+  形態素解析 [#8](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/8)
+- 方針: ルール数の拡充よりも、negative コーパスの拡充を優先します
