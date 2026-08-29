@@ -22,7 +22,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith('--')) {
       const key = a.slice(2);
-      if (['preset', 'format', 'min-severity', 'rules-dir'].includes(key)) {
+      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on'].includes(key)) {
         args.flags[key] = argv[++i];
       } else {
         args.flags[key] = true;
@@ -93,7 +93,11 @@ function cmdCheck(args) {
   } else {
     console.log(`\n${total} 件 (error ${errors} 件)`);
   }
-  process.exit(errors > 0 ? 1 : 0);
+  // errorとwarnは修正必須 (既定)。--fail-on error で従来挙動、--fail-on info で全件必須にできる
+  const order = { info: 0, warn: 1, error: 2 };
+  const failOn = order[args.flags['fail-on']] ?? order.warn;
+  const failing = results.reduce((n, r) => n + r.violations.filter((v) => order[v.severity] >= failOn).length, 0);
+  process.exit(failing > 0 ? 1 : 0);
 }
 
 function cmdList(args) {
@@ -200,7 +204,7 @@ function cmdClaudeHook() {
       if (files.length && hookDedup(input?.session_id ?? '', files)) process.exit(0);
       const all = files.flatMap((f) => {
         try { return hookCheckFile(f); } catch { return []; }
-      });
+      }).filter((v) => v.severity !== 'info'); // errorとwarnは修正必須、infoは止めない
       if (all.length === 0) process.exit(0);
       const lines = all.slice(0, 15).map((v) => `- ${v.file}:${v.line} [${v.ruleId}] 「${v.matched.replace(/\n/g, '\\n')}」 → ${v.ask}`);
       console.error(
@@ -218,7 +222,7 @@ function cmdClaudeHook() {
     }
     const rules = applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc);
     const text = fs.readFileSync(filePath, 'utf8');
-    const violations = checkText(text, filePath, rules);
+    const violations = checkText(text, filePath, rules).filter((v) => v.severity !== 'info'); // errorとwarnは修正必須、infoは止めない
     if (violations.length === 0) process.exit(0);
     const lines = violations
       .slice(0, 15)
@@ -286,7 +290,7 @@ switch (cmd) {
     break;
   default:
     console.log('使い方: dead-cliche <check|fix|list|explain|claude-hook> [options]');
-    console.log('  check [files...] [--preset paper|business|chat|ux-microcopy] [--format json] [--min-severity warn]');
+    console.log('  check [files...] [--preset name] [--format json] [--min-severity warn] [--fail-on info|warn|error]  (既定: warn以上でexit 1)');
     console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
     console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');

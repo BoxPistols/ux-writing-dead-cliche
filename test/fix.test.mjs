@@ -90,3 +90,31 @@ test('rc の disable と overrides がルール列に適用される', async () 
   assert.equal(out[0].severity, 'info');
   assert.equal(applyRcRuleConfig(base, null).length, 2);
 });
+
+test('フックはerrorとwarnで止まり、infoだけでは止まらない', async () => {
+  const { execSync, spawnSync } = await import('node:child_process');
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dc-sev-'));
+  const runHook = (file, session) => spawnSync('node', ['src/cli.mjs', 'claude-hook'], {
+    input: JSON.stringify({ session_id: session, tool_input: { file_path: file } }),
+    encoding: 'utf8',
+  });
+  const infoFile = path.join(dir, 'info.md');
+  fs.writeFileSync(infoFile, 'まさにそのとおりでした。\n');
+  assert.equal(runHook(infoFile, 'sevtest-a').status, 0, 'infoのみで止まった');
+  const warnFile = path.join(dir, 'warn.md');
+  fs.writeFileSync(warnFile, '生産性が劇的に向上します。\n');
+  const r = runHook(warnFile, 'sevtest-b');
+  assert.equal(r.status, 2, 'warnで止まらなかった');
+  assert.match(r.stderr, /劇的に/);
+});
+
+test('check は既定でwarn以上をexit 1にし、--fail-on error で従来挙動になる', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dc-fail-'));
+  const f = path.join(dir, 'w.md');
+  fs.writeFileSync(f, '生産性が劇的に向上します。\n'); // warnのみ
+  assert.equal(spawnSync('node', ['src/cli.mjs', 'check', f], { encoding: 'utf8' }).status, 1);
+  assert.equal(spawnSync('node', ['src/cli.mjs', 'check', f, '--fail-on', 'error'], { encoding: 'utf8' }).status, 0);
+});

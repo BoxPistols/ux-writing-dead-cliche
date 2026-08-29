@@ -18,6 +18,8 @@ echo "確認したい文章" | npx github:BoxPistols/ux-writing-dead-cliche chec
 ```
 
 プリセットは記事・設計書がpaper、issue・PR・Wikiがbusiness、画面文言がux-microcopyです。
+errorとwarnは修正必須です (CIとフックが止めます)。infoは注意喚起で止めません。
+従来のerrorのみで止める挙動には `--fail-on error` で戻せます。
 clone済みなら `npm link` で `dead-cliche` の短いコマンド名になります。
 
 PRを書く・レビューする (Claude Codeプラグイン導入後):
