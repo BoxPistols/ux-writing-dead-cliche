@@ -2,7 +2,7 @@
 
 ## 導入方法
 
-インストールせずに試す場合は、ブラウザ版アプリがあります:
+インストールせずに試す場合のブラウザ版アプリ:
 https://boxpistols.github.io/ux-writing-dead-cliche/ (辞書の検索と、AI チャットに貼る指示文のコピー)
 
 ### Claude Code プラグインとして (推奨)
