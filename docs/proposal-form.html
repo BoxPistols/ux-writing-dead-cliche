@@ -5,79 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dead-cliche 提案フォーム</title>
 <meta name="description" content="禁止ワード・クリシェを YAML の知識なしで提案するフォーム。入力はどこにも自動送信されません。">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./design-tokens.css">
 <style>
-:root {
-  --paper: #F8F7F3;
-  --card: #FFFFFF;
-  --ink: #24282B;
-  --ink-soft: #5A6167;
-  --line: #DCDAD2;
-  --indigo: #2A4B7C;
-  --indigo-soft: #E7EDF6;
-  --shu: #B8432C;
-  --ok: #2E6E4E;
-  --mono-bg: #F1EFE9;
-  --focus: #2A4B7C;
-}
-:root:not([data-theme="light"]) { color-scheme: light dark; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #16191C;
-    --card: #1E2226;
-    --ink: #E6E4DD;
-    --ink-soft: #9AA1A6;
-    --line: #343A3F;
-    --indigo: #8FB0DE;
-    --indigo-soft: #24303F;
-    --shu: #E07A5F;
-    --ok: #79B795;
-    --mono-bg: #14171A;
-    --focus: #8FB0DE;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #16191C;
-  --card: #1E2226;
-  --ink: #E6E4DD;
-  --ink-soft: #9AA1A6;
-  --line: #343A3F;
-  --indigo: #8FB0DE;
-  --indigo-soft: #24303F;
-  --shu: #E07A5F;
-  --ok: #79B795;
-  --mono-bg: #14171A;
-  --focus: #8FB0DE;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-  line-height: 1.75;
-  font-size: 15px;
-}
 header {
   border-bottom: 1px solid var(--line);
   padding: 28px 24px 22px;
 }
 .head-inner { max-width: 1080px; margin: 0 auto; }
 h1 {
-  font-family: "Shippori Mincho", "Hiragino Mincho ProN", serif;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   margin: 0 0 6px;
   letter-spacing: .02em;
   text-wrap: balance;
 }
-h1 .brand { color: var(--indigo); }
+h1 .brand { color: var(--indigo); font-family: var(--font-mono); }
 .lede { color: var(--ink-soft); margin: 0; max-width: 46em; }
 .assure {
   display: inline-block;
   margin-top: 12px;
   font-size: 12.5px;
-  color: var(--ok);
+  color: var(--green);
   border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
   border-radius: 3px;
   padding: 3px 10px;
@@ -105,8 +54,7 @@ fieldset {
   gap: 14px;
 }
 legend {
-  font-family: "Shippori Mincho", serif;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 15px;
   padding: 0 8px;
   color: var(--indigo);
@@ -148,7 +96,7 @@ pre {
   margin: 0;
   padding: 14px 16px;
   background: var(--mono-bg);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 12.5px;
   line-height: 1.7;
   overflow-x: auto;
@@ -166,11 +114,11 @@ button, .button {
 .ghost { background: transparent; color: var(--indigo); }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .actions .disabled { opacity: .45; pointer-events: none; }
-.copied { color: var(--ok); font-size: 12.5px; }
+.copied { color: var(--green); font-size: 12.5px; }
 .next {
   font-size: 13px; color: var(--ink-soft);
-  border-left: 3px solid var(--indigo);
-  padding: 2px 0 2px 12px; margin: 0;
+  background: var(--indigo-soft); border-radius: var(--radius);
+  padding: 10px 14px; margin: 0;
 }
 footer {
   max-width: 1080px; margin: 0 auto; padding: 0 24px 40px;

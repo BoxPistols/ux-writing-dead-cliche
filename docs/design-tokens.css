@@ -1,0 +1,52 @@
+/* dead-cliche デザイントークン。判断理由は DESIGN.md。ここが実装の単一の情報源 */
+:root {
+  --paper: #F6F6F3;
+  --card: #FFFFFF;
+  --ink: #22262A;
+  --ink-soft: #545C63;
+  --line: #DDDBD3;
+  --indigo: #2A4B7C;
+  --indigo-soft: #E9EEF5;
+  --shu: #B8432C;
+  --amber: #8A6A1F;
+  --green: #2E6E4E;
+  --mono-bg: #EFEEE8;
+  --focus: #2A4B7C;
+  --radius: 5px;
+  --fs-min: 12px;
+  --fs-s: 13px;
+  --fs-base: 14.5px;
+  --fs-m: 16px;
+  --fs-l: 18px;
+  --fs-xl: 22px;
+  --font-ui: "IBM Plex Sans JP", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+}
+:root:not([data-theme="light"]) { color-scheme: light dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #15181B; --card: #1D2125; --ink: #E7E6E1; --ink-soft: #A2A9AF;
+    --line: #333A40; --indigo: #8FB0DE; --indigo-soft: #253141;
+    --shu: #E07A5F; --amber: #D3B265; --green: #7FBD9A;
+    --mono-bg: #121517; --focus: #8FB0DE;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #15181B; --card: #1D2125; --ink: #E7E6E1; --ink-soft: #A2A9AF;
+  --line: #333A40; --indigo: #8FB0DE; --indigo-soft: #253141;
+  --shu: #E07A5F; --amber: #D3B265; --green: #7FBD9A;
+  --mono-bg: #121517; --focus: #8FB0DE;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: 1.75;
+}
+a { color: var(--indigo); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.prose, p, li, dd, blockquote, figcaption { word-break: auto-phrase; line-break: strict; }
+.brand { font-family: var(--font-mono); font-weight: 700; letter-spacing: -0.01em; }

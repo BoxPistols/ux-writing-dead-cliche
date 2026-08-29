@@ -21,3 +21,7 @@ jobs:
         run: cp -r docs/prompts /tmp/prompts-before && node tools/render-prompts.mjs && diff -r /tmp/prompts-before docs/prompts
       - name: Web アプリのデータが辞書と同期していること
         run: cp docs/app-data.json /tmp/app-data.json && node tools/render-webdata.mjs && diff /tmp/app-data.json docs/app-data.json
+      - name: デザイン規範の走査 (12px 未満の文字と 1 辺太ボーダーの禁止)
+        run: |
+          ! grep -RnE 'font-size: *(1[01]|[0-9])(\.[0-9]+)?px' docs/*.html docs/*.css
+          ! grep -RnE 'border-(left|right|top|bottom): *[2-9]' docs/*.html docs/*.css

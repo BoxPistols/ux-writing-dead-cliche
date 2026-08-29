@@ -5,98 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dead-cliche</title>
 <meta name="description" content="AI 特有の日本語クリシェの辞書と、貼るだけで効く指示文。検索してコピーするだけで使えます。">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%232A4B7C"/><path d="M8 11h16M8 21h16" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M8 16h11" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M22 13.4l5.2 5.2M27.2 13.4L22 18.6" stroke="%23E07A5F" stroke-width="2.6"/></svg>'>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./design-tokens.css">
 <style>
-:root {
-  --paper: #F8F7F3; --card: #FFFFFF; --ink: #24282B; --ink-soft: #5A6167;
-  --line: #DCDAD2; --indigo: #2A4B7C; --indigo-soft: #E7EDF6;
-  --shu: #B8432C; --ok: #2E6E4E; --mono-bg: #F1EFE9; --focus: #2A4B7C;
-  --warn-chip: #8A6A1F;
-}
-:root:not([data-theme="light"]) { color-scheme: light dark; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #16191C; --card: #1E2226; --ink: #E6E4DD; --ink-soft: #9AA1A6;
-    --line: #343A3F; --indigo: #8FB0DE; --indigo-soft: #24303F;
-    --shu: #E07A5F; --ok: #79B795; --mono-bg: #14171A; --focus: #8FB0DE;
-    --warn-chip: #D3B265;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #16191C; --card: #1E2226; --ink: #E6E4DD; --ink-soft: #9AA1A6;
-  --line: #343A3F; --indigo: #8FB0DE; --indigo-soft: #24303F;
-  --shu: #E07A5F; --ok: #79B795; --mono-bg: #14171A; --focus: #8FB0DE;
-  --warn-chip: #D3B265;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--paper); color: var(--ink);
-  font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-  font-size: 14.5px; line-height: 1.7;
-}
-a { color: var(--indigo); }
-header { border-bottom: 1px solid var(--line); padding: 22px 20px 16px; }
-.wrap { max-width: 1100px; margin: 0 auto; }
+header { border-bottom: 1px solid var(--line); padding: 26px 20px 20px; }
+.wrap { max-width: 1120px; margin: 0 auto; }
 .head-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
-h1 { font-family: "Shippori Mincho", serif; font-size: 24px; margin: 0; letter-spacing: .02em; }
-h1 span { color: var(--indigo); }
-.count { color: var(--ink-soft); font-size: 13px; font-variant-numeric: tabular-nums; }
-.lede { color: var(--ink-soft); margin: 4px 0 0; }
+h1 { font-family: var(--font-mono); font-size: var(--fs-xl); font-weight: 700; margin: 0; color: var(--indigo); }
+.count { color: var(--ink-soft); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+.lede { color: var(--ink-soft); margin: 6px 0 0; }
 .toolbar { position: sticky; top: 0; background: var(--paper); border-bottom: 1px solid var(--line); padding: 12px 20px; z-index: 5; }
-.toolbar-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.toolbar-inner { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
 #q {
   font: inherit; width: 100%; max-width: 560px; padding: 9px 14px;
-  border: 1px solid var(--line); border-radius: 4px; background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--ink);
 }
+#q::placeholder { color: var(--ink-soft); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
-  font: inherit; font-size: 13px; cursor: pointer; border-radius: 999px;
+  font: inherit; font-size: var(--fs-s); cursor: pointer; border-radius: 999px;
   border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); padding: 4px 14px;
 }
 .chip[aria-pressed="true"] { background: var(--indigo); border-color: var(--indigo); color: var(--paper); }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-main { max-width: 1100px; margin: 0 auto; padding: 20px; }
-h2 { font-family: "Shippori Mincho", serif; font-size: 17px; margin: 18px 0 12px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+main { max-width: 1120px; margin: 0 auto; padding: 22px 20px; }
+h2 { font-size: var(--fs-m); font-weight: 700; margin: 20px 0 12px; letter-spacing: .01em; }
+h2 .sub { font-weight: 400; color: var(--ink-soft); font-size: var(--fs-s); margin-left: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 14px; }
 .card {
-  border: 1px solid var(--line); background: var(--card); border-radius: 6px;
-  padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid var(--line); background: var(--card); border-radius: var(--radius);
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
 }
-.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.card .meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11.5px; }
+.meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: var(--fs-min); }
 .tag { border: 1px solid var(--line); border-radius: 3px; padding: 1px 8px; color: var(--ink-soft); letter-spacing: .03em; }
-.tag.err { color: var(--shu); border-color: color-mix(in srgb, var(--shu) 50%, transparent); }
-.tag.wrn { color: var(--warn-chip); border-color: color-mix(in srgb, var(--warn-chip) 50%, transparent); }
-.tag.fix { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); }
-.expr { font-weight: 700; font-size: 15.5px; }
+.tag.err { color: var(--shu); }
+.tag.wrn { color: var(--amber); }
+.tag.fix { color: var(--green); }
+.expr { font-weight: 700; line-height: 1.9; }
 .expr code {
-  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13.5px;
-  background: var(--mono-bg); border-radius: 3px; padding: 1px 6px;
+  font-family: var(--font-mono); font-size: var(--fs-base); font-weight: 500;
+  background: var(--mono-bg); border-radius: 3px; padding: 2px 8px;
 }
-.guard-title { font-weight: 700; font-size: 15.5px; }
-.why { color: var(--ink-soft); font-size: 13px; margin: 0; }
-.ask { margin: 0; font-size: 13px; border-left: 3px solid var(--indigo); padding-left: 10px; }
-details { font-size: 12.5px; color: var(--ink-soft); }
+.guard-title { font-weight: 700; font-size: var(--fs-m); }
+.why { color: var(--ink-soft); font-size: var(--fs-s); margin: 0; }
+.ask { margin: 0; font-size: var(--fs-s); background: var(--indigo-soft); border-radius: var(--radius); padding: 8px 12px; }
+.ask b { color: var(--indigo); font-weight: 700; margin-right: 6px; }
+details { font-size: var(--fs-s); color: var(--ink-soft); }
 details summary { cursor: pointer; }
 details p { margin: 6px 0 0; }
 .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
 button {
-  font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
-  border-radius: 4px; padding: 6px 14px; border: 1px solid var(--indigo);
+  font: inherit; font-size: var(--fs-s); font-weight: 700; cursor: pointer;
+  border-radius: var(--radius); padding: 7px 14px; border: 1px solid var(--indigo);
 }
 .copy-btn { background: var(--indigo); color: var(--paper); flex: 1; }
-.copy-btn.done { background: var(--ok); border-color: var(--ok); }
-.fav-btn { background: transparent; color: var(--ink-soft); border-color: var(--line); width: 42px; }
-.fav-btn[aria-pressed="true"] { color: var(--shu); border-color: color-mix(in srgb, var(--shu) 50%, transparent); }
+.copy-btn.done { background: var(--green); border-color: var(--green); }
+.fav-btn { background: transparent; color: var(--ink-soft); border-color: var(--line); width: 44px; }
+.fav-btn[aria-pressed="true"] { color: var(--shu); }
 .empty { color: var(--ink-soft); padding: 30px 0; }
-footer { max-width: 1100px; margin: 0 auto; padding: 10px 20px 44px; color: var(--ink-soft); font-size: 12.5px; }
+footer { max-width: 1120px; margin: 0 auto; padding: 10px 20px 44px; color: var(--ink-soft); font-size: var(--fs-s); }
 @media (prefers-reduced-motion: no-preference) { .copy-btn { transition: background .25s; } }
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="head-row"><h1><span>dead-cliche</span></h1><span class="count" id="count"></span></div>
+    <div class="head-row"><h1>dead-cliche</h1><span class="count" id="count"></span></div>
     <p class="lede">AI 特有の日本語クリシェの辞書と、貼るだけで効く指示文。カードのコピーを押して、お使いの AI チャットに貼ってください。</p>
   </div>
 </header>
@@ -112,7 +86,7 @@ footer { max-width: 1100px; margin: 0 auto; padding: 10px 20px 44px; color: var(
     <div class="grid" id="guards"></div>
   </section>
   <section>
-    <h2>辞書を引く (1 ルール = 1 カード)</h2>
+    <h2>辞書を引く<span class="sub">1 ルール = 1 カード</span></h2>
     <div class="grid" id="rules"></div>
     <p class="empty" id="empty" hidden>該当するカードがありません。検索語を短くするか、絞り込みを外してください。</p>
   </section>
@@ -120,7 +94,8 @@ footer { max-width: 1100px; margin: 0 auto; padding: 10px 20px 44px; color: var(
 <footer>
   データは辞書 (rules/*.yml) から自動生成。厳密な検査は
   <a href="https://github.com/BoxPistols/ux-writing-dead-cliche">CLI・CI・Claude Code プラグイン</a>が担います。
-  追加の提案は<a href="./proposal-form.html">提案フォーム</a>から。
+  追加の提案は<a href="./proposal-form.html">提案フォーム</a>から。デザインの規範は
+  <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/DESIGN.md">DESIGN.md</a>。
 </footer>
 <script>
 (function () {
@@ -147,6 +122,15 @@ footer { max-width: 1100px; margin: 0 auto; padding: 10px 20px 44px; color: var(
     });
   }
 
+  function favHandler(btn, id) {
+    btn.addEventListener('click', function () {
+      if (favs.has(id)) favs.delete(id); else favs.add(id);
+      saveFavs();
+      btn.setAttribute('aria-pressed', favs.has(id));
+      if (state.cat === 'fav') render();
+    });
+  }
+
   function render() {
     var d = state.data;
     var q = state.q.toLowerCase();
@@ -165,7 +149,7 @@ footer { max-width: 1100px; margin: 0 auto; padding: 10px 20px 44px; color: var(
       var el = document.createElement('div');
       el.className = 'card';
       el.innerHTML =
-        '<div class="card-top"><span class="guard-title">' + esc(g.title) + '</span></div>' +
+        '<span class="guard-title">' + esc(g.title) + '</span>' +
         '<div class="meta"><span class="tag">指示文</span><span class="tag">' + (g.body.length / 1000).toFixed(1) + ' KB</span></div>' +
         '<p class="why">' + esc(g.desc) + '</p>' +
         '<div class="card-actions"><button class="copy-btn">全文をコピー</button><button class="fav-btn" aria-label="お気に入り" aria-pressed="' + favs.has(g.id) + '">&#9825;</button></div>';
@@ -191,7 +175,7 @@ footer { max-width: 1100px; margin: 0 auto; padding: 10px 20px 44px; color: var(
           (r.fixable ? '<span class="tag fix">自動修正可</span>' : '') +
           (r.manual ? '<span class="tag">人力判断</span>' : '') + '</div>' +
         '<p class="why">' + esc(r.why) + '</p>' +
-        '<p class="ask">' + esc(r.ask) + '</p>' +
+        '<p class="ask"><b>代わりに</b>' + esc(r.ask) + '</p>' +
         '<details><summary>例を見る</summary><p>悪い例: ' + esc(r.bad) + '</p><p>良い例: ' + esc(r.good) + '</p></details>' +
         '<div class="card-actions"><button class="copy-btn">指示文をコピー</button><button class="fav-btn" aria-label="お気に入り" aria-pressed="' + favs.has(r.id) + '">&#9825;</button></div>';
       copyHandler(el.querySelector('.copy-btn'), ruleSnippet(r));
@@ -200,15 +184,6 @@ footer { max-width: 1100px; margin: 0 auto; padding: 10px 20px 44px; color: var(
     });
     document.getElementById('empty').hidden = rules.length > 0 || guards.length > 0;
     document.getElementById('count').textContent = 'v' + d.version + ' / ルール ' + d.rules.length + ' 件';
-  }
-
-  function favHandler(btn, id) {
-    btn.addEventListener('click', function () {
-      if (favs.has(id)) favs.delete(id); else favs.add(id);
-      saveFavs();
-      btn.setAttribute('aria-pressed', favs.has(id));
-      if (state.cat === 'fav') render();
-    });
   }
 
   function buildChips(cats) {
