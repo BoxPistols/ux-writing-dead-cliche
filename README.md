@@ -48,13 +48,7 @@ rules/*.yml ─┬─ CLI (npx dead-cliche check)
 
 ## インストール
 
-CLIとして使う場合:
-
-```
-npx github:BoxPistols/ux-writing-dead-cliche check draft.md
-npx github:BoxPistols/ux-writing-dead-cliche check draft.md --preset business
-cat draft.txt | npx github:BoxPistols/ux-writing-dead-cliche check
-```
+CLIの実行例は冒頭の「毎日の使い方」を参照してください。
 
 Claude Codeプラグインとして使う場合:
 

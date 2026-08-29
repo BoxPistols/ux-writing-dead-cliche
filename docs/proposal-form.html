@@ -172,7 +172,11 @@ button, .button {
 .tour-bubble .step { font-size: var(--fs-min); color: var(--indigo); font-weight: 700; letter-spacing: .06em; }
 .tour-bubble p { margin: 6px 0 10px; font-size: var(--fs-s); }
 .tour-bubble .row { display: flex; gap: 8px; }
-.flow-svg { width: 100%; height: auto; margin: 10px 0 4px; }
+.flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0 4px; }
+.flow-box { background: var(--indigo-soft); border-radius: var(--radius); padding: 5px 10px; font-size: var(--fs-s); }
+.flow-goal { background: var(--indigo); color: var(--paper); }
+.flow-arrow { color: var(--ink-soft); }
+.flow-note { font-size: var(--fs-s); color: var(--ink-soft); margin: 6px 0 0; }
 .next {
   font-size: 13px; color: var(--ink-soft);
   background: var(--indigo-soft); border-radius: var(--radius);
@@ -279,29 +283,13 @@ footer a { color: var(--indigo); }
 <div class="help-overlay" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
   <div class="help-modal">
     <h2 id="help-title">この画面でできること</h2>
-    <svg class="flow-svg" viewBox="0 0 560 120" role="img" aria-label="提案の流れ: 入力、下書き、GitHubで提案、レビューを経て辞書へ">
-      <g fill="none" stroke="var(--line)" stroke-width="1.5">
-        <rect x="4" y="14" width="112" height="44" rx="5" fill="var(--indigo-soft)"/>
-        <rect x="152" y="14" width="112" height="44" rx="5" fill="var(--indigo-soft)"/>
-        <rect x="300" y="14" width="112" height="44" rx="5" fill="var(--indigo-soft)"/>
-        <rect x="448" y="14" width="108" height="44" rx="5" fill="var(--indigo)"/>
-      </g>
-      <g stroke="var(--ink-soft)" stroke-width="1.5" fill="none">
-        <path d="M118 36h30m-8-5 8 5-8 5"/>
-        <path d="M266 36h30m-8-5 8 5-8 5"/>
-        <path d="M414 36h30m-8-5 8 5-8 5"/>
-      </g>
-      <g font-size="13" fill="var(--ink)" text-anchor="middle" font-family="inherit">
-        <text x="60" y="33">1. 表現と理由を</text><text x="60" y="49">入力する</text>
-        <text x="208" y="33">2. 右に下書きが</text><text x="208" y="49">組み上がる</text>
-        <text x="356" y="33">3. GitHubで提案</text><text x="356" y="49">(送信は自分で)</text>
-        <text x="502" y="33" fill="var(--paper)">4. レビュー後</text><text x="502" y="49" fill="var(--paper)">辞書に入る</text>
-      </g>
-      <g font-size="12" fill="var(--ink-soft)" font-family="inherit">
-        <text x="4" y="86">自分のプロジェクト用タブの場合: 2の下書きをコピーして、自分のリポジトリの</text>
-        <text x="4" y="104">.deadcliche/custom-rules.yml に貼るだけ (どこにも提案されません)</text>
-      </g>
-    </svg>
+    <div class="flow" role="img" aria-label="提案の流れ: 入力、下書き、GitHubで提案、レビューを経て辞書へ">
+      <span class="flow-box">1. 表現と理由を入力</span><span class="flow-arrow">→</span>
+      <span class="flow-box">2. 右に下書きが組み上がる</span><span class="flow-arrow">→</span>
+      <span class="flow-box">3. GitHubで提案 (送信は自分で)</span><span class="flow-arrow">→</span>
+      <span class="flow-box flow-goal">4. レビュー後、辞書に入る</span>
+    </div>
+    <p class="flow-note">自分のプロジェクト用タブの場合: 2の下書きをコピーして、自分のリポジトリの .deadcliche/custom-rules.yml に貼るだけです (どこにも提案されません)。</p>
     <p><button type="button" class="button primary" id="tour-start">画面の案内を再生する (30秒)</button></p>
     <p>dead-clicheは「AIっぽい日本語表現」を検出して直すツールで、判定の元は約130件の辞書です。この画面は、その辞書にあなたが見つけた表現を追加するためのフォームです。</p>
     <h3>OSS辞書へ提案 (左のタブ)</h3>
@@ -326,7 +314,23 @@ footer a { color: var(--indigo); }
   <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/docs/custom-rules-and-autofix.md">設計文書</a>
   にあります。
 </footer>
+<script>
+window.__dcBoot = false;
+window.addEventListener('DOMContentLoaded', function () {
+  setTimeout(function () {
+    if (!window.__dcBoot) {
+      var n = document.createElement('p');
+      n.className = 'assure';
+      n.style.color = 'var(--shu)';
+      n.style.borderColor = 'currentColor';
+      n.textContent = 'このページはfile://では動きません。https://boxpistols.github.io/ux-writing-dead-cliche/proposal-form.html で開いてください。';
+      document.querySelector('.head-inner').appendChild(n);
+    }
+  }, 800);
+});
+</script>
 <script type="module">
+window.__dcBoot = true;
 import { check } from './engine.mjs';
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -415,10 +419,16 @@ import { check } from './engine.mjs';
     dict = d;
     renderTemplates();
     dupCheck();
-  }).catch(function () {});
+  }).catch(function () {
+    var box = $('dup');
+    box.hidden = false;
+    box.innerHTML = '<b>辞書データを読み込めませんでした</b>。重複確認・関連候補・AI検査が動いていません。再読み込みしてください。';
+  });
 
-  function machineRules() {
-    return dict ? dict.rules.filter(function (r) { return !r.manual; }) : [];
+  function machineRules(presetName) {
+    if (!dict) return [];
+    var ids = presetName && dict.presets ? new Set(dict.presets[presetName]) : null;
+    return dict.rules.filter(function (r) { return !r.manual && (!ids || ids.has(r.id)); });
   }
 
   function dupCheck() {
@@ -457,6 +467,7 @@ import { check } from './engine.mjs';
     var h = 0;
     for (var i = 0; i < expr.length; i++) h = (h * 31 + expr.charCodeAt(i)) >>> 0;
     $('slug').value = $('cat').value.replace('empty-abstraction', 'abst').replace('syntax-pattern', 'syntax') + '-' + h.toString(36).slice(0, 4);
+    render();
   }
 
   function renderTemplates() {
@@ -483,11 +494,14 @@ import { check } from './engine.mjs';
   $('expr').addEventListener('input', function () { autoSlug(); dupCheck(); });
 
   $('ai-suggest').addEventListener('click', async function () {
+    var btn = $('ai-suggest');
+    if (btn.disabled) return;
     var st = $('ai-status');
     var key = $('ai-key').value.trim();
     if (!key) { st.className = 'ai-status err'; st.textContent = 'APIキーを入力してください (保存はされません)'; return; }
     var expr = $('expr').value.trim();
     if (!expr) { st.className = 'ai-status err'; st.textContent = '先に「表現そのもの」を入力してください'; return; }
+    btn.disabled = true;
     st.className = 'ai-status'; st.textContent = '生成中…';
     var prompt = '日本語ライティング検査ツールの辞書エントリの下書きを作ります。対象の表現:「' + expr + '」(カテゴリ: ' + $('cat').value + ')。' +
       'JSONだけを返してください: {"why": "なぜ避けるべきか(この表現で何の情報が欠けるか、常体で1文)", "ask": "代わりに何を書くべきかの指示(常体で1文)", "bad": "その表現を使った悪い例文1つ", "good": "同じ内容を具体的な事実で書き直した良い例文1つ(語尾は敬体)", "deny": "同じ語が正当に使われる別分野の例文1つ(無ければ空文字)"}。' +
@@ -496,6 +510,7 @@ import { check } from './engine.mjs';
       var res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        signal: AbortSignal.timeout(60000),
         body: JSON.stringify({
           model: $('ai-model').value.trim() || 'gpt-4o-mini',
           messages: [{ role: 'user', content: prompt }],
@@ -509,19 +524,24 @@ import { check } from './engine.mjs';
       var filled = [];
       [['why', 'why'], ['ask', 'ask'], ['bad', 'bad'], ['good', 'good'], ['deny', 'deny']].forEach(function (m) {
         var el = $(m[0]);
-        if (out[m[1]] && !el.value.trim()) { el.value = out[m[1]]; filled.push(m[0]); }
+        if (typeof out[m[1]] === 'string' && out[m[1]] && !el.value.trim()) { el.value = out[m[1]]; filled.push(m[0]); }
       });
       render();
       var verdict = '';
-      if (out.good && dict) {
-        var hits = check(out.good, machineRules());
-        verdict = hits.length ? ' 注意: AIの良い例に検出が' + hits.length + '件あります。手直ししてください。' : ' 良い例は辞書検査を通過しています。';
+      var goodNow = $('good').value.trim();
+      if (goodNow && dict) {
+        var hits = check(goodNow, machineRules('business'));
+        verdict = hits.length
+          ? ' 注意: 現在の良い例欄に検出が' + hits.length + '件あります (businessプリセット)。手直ししてください。'
+          : ' 現在の良い例欄はbusinessプリセットの検査を通過しています。';
       }
       st.className = 'ai-status ok';
       st.textContent = (filled.length ? '空欄' + filled.length + '項目に下書きを入れました。内容は必ず確認してください。' : '空欄がないため何も変更していません。') + verdict;
     } catch (e) {
       st.className = 'ai-status err';
-      st.textContent = '生成に失敗しました: ' + e.message;
+      st.textContent = '生成に失敗しました: ' + (e.name === 'TimeoutError' ? '60秒でタイムアウトしました' : e.message);
+    } finally {
+      btn.disabled = false;
     }
   });
 
@@ -568,40 +588,59 @@ import { check } from './engine.mjs';
   tourDim.appendChild(bubble);
   document.body.appendChild(tourDim);
   var tourIdx = 0;
-  function endTour() {
-    tourDim.hidden = true;
-    try { localStorage.setItem('dc-form-help-seen', '1'); } catch (e) {}
+  function markSeen() { try { localStorage.setItem('dc-form-help-seen', '1'); } catch (e) {} }
+  function endTour() { tourDim.hidden = true; markSeen(); }
+  function stepVisible(el) {
+    if (!el || el.offsetParent === null) return false;
+    var r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  }
+  function currentTarget() {
+    while (tourIdx < TOUR.length) {
+      var el = document.querySelector(TOUR[tourIdx][0]);
+      if (TOUR[tourIdx][0] === '#ai-panel' && el) el.open = true;
+      if (stepVisible(el)) return el;
+      tourIdx++; // 非表示のステップ (自分のプロジェクト用モードの提案ボタン等) はスキップ
+    }
+    return null;
+  }
+  // オーバーレイはposition:fixedなので、座標はviewport基準 (rectの値をそのまま使う)
+  function positionTour() {
+    var el = currentTarget();
+    if (!el) { endTour(); return; }
+    var r = el.getBoundingClientRect();
+    ring.style.left = r.left + 'px';
+    ring.style.top = r.top + 'px';
+    ring.style.width = r.width + 'px';
+    ring.style.height = r.height + 'px';
+    bubble.style.left = Math.max(16, Math.min(r.left, window.innerWidth - 380)) + 'px';
+    bubble.style.top = Math.min(r.bottom + 12, window.innerHeight - 40) + 'px';
+    var br = bubble.getBoundingClientRect();
+    if (br.bottom > window.innerHeight - 8) {
+      bubble.style.top = Math.max(16, r.top - br.height - 12) + 'px';
+    }
   }
   function showTourStep() {
-    var conf = TOUR[tourIdx];
-    var el = document.querySelector(conf[0]);
+    var el = currentTarget();
     if (!el) { endTour(); return; }
-    if (conf[0] === '#ai-panel') el.open = true;
+    var conf = TOUR[tourIdx];
+    bubble.innerHTML = '<span class="step">' + (tourIdx + 1) + ' / ' + TOUR.length + '</span>' +
+      '<p>' + conf[1] + '</p>' +
+      '<div class="row"><button type="button" class="button primary" id="tour-next">' +
+      (tourIdx === TOUR.length - 1 ? '終了' : '次へ') + '</button>' +
+      '<button type="button" class="button ghost" id="tour-skip">閉じる</button></div>';
     el.scrollIntoView({ block: 'center' });
-    requestAnimationFrame(function () {
-      var r = el.getBoundingClientRect();
-      ring.style.left = (r.left + window.scrollX) + 'px';
-      ring.style.top = (r.top + window.scrollY) + 'px';
-      ring.style.width = r.width + 'px';
-      ring.style.height = r.height + 'px';
-      var below = r.bottom + 12 + window.scrollY;
-      bubble.innerHTML = '<span class="step">' + (tourIdx + 1) + ' / ' + TOUR.length + '</span>' +
-        '<p>' + conf[1] + '</p>' +
-        '<div class="row"><button type="button" class="button primary" id="tour-next">' +
-        (tourIdx === TOUR.length - 1 ? '終了' : '次へ') + '</button>' +
-        '<button type="button" class="button ghost" id="tour-skip">閉じる</button></div>';
-      bubble.style.left = Math.max(16, Math.min(r.left + window.scrollX, window.innerWidth - 380)) + 'px';
-      bubble.style.top = below + 'px';
-      document.getElementById('tour-next').addEventListener('click', function () {
-        tourIdx++;
-        if (tourIdx >= TOUR.length) endTour(); else showTourStep();
-      });
-      document.getElementById('tour-skip').addEventListener('click', endTour);
-      document.getElementById('tour-next').focus();
+    requestAnimationFrame(positionTour);
+    document.getElementById('tour-next').addEventListener('click', function () {
+      tourIdx++;
+      if (tourIdx >= TOUR.length) endTour(); else showTourStep();
     });
+    document.getElementById('tour-skip').addEventListener('click', endTour);
+    document.getElementById('tour-next').focus();
   }
   function startTour() {
     helpEl.hidden = true;
+    markSeen(); // リロードで壊れたツアーが再開しないよう、開始時点で既読にする
     tourIdx = 0;
     tourDim.hidden = false;
     showTourStep();
@@ -609,7 +648,22 @@ import { check } from './engine.mjs';
   document.getElementById('tour-start').addEventListener('click', startTour);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !tourDim.hidden) endTour(); });
   tourDim.addEventListener('click', function (e) { if (e.target === tourDim) endTour(); });
-  window.addEventListener('resize', function () { if (!tourDim.hidden) showTourStep(); });
+  window.addEventListener('resize', function () { if (!tourDim.hidden) positionTour(); });
+  window.addEventListener('scroll', function () { if (!tourDim.hidden) requestAnimationFrame(positionTour); }, { passive: true });
+
+  // 12. aria-modal宣言どおりにフォーカスを閉じ込める (ヘルプモーダルとツアー)
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var scope = !tourDim.hidden ? bubble : (!helpEl.hidden ? helpEl.querySelector('.help-modal') : null);
+    if (!scope) return;
+    var f = scope.querySelectorAll('button, a[href], input, select, textarea');
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    else if (!scope.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  });
+
   try { if (!localStorage.getItem('dc-form-help-seen')) startTour(); } catch (e) {}
 })();
 </script>

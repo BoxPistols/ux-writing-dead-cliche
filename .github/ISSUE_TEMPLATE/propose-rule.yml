@@ -28,7 +28,7 @@ body:
         - translationese (翻訳調)
         - closing (締めの型)
         - formatting (書式)
-        - ux-microcopy (UI 文言)
+        - ux-microcopy (UI文言)
         - わからない
     validations:
       required: true
