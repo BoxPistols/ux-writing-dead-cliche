@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dead-cliche AIで書き直す</title>
-<meta name="description" content="検出したクリシェを自分のAPIキーでClaudeに書き直させ、結果を同じ辞書で再検査するページ。">
+<meta name="description" content="検出したクリシェを自分のAPIキーでAIに書き直させ、結果を同じ辞書で再検査するページ。">
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%232A4B7C"/><path d="M8 11h16M8 21h16" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M8 16h11" stroke="%23F6F6F3" stroke-width="2.6"/><path d="M22 13.4l5.2 5.2M27.2 13.4L22 18.6" stroke="%23E07A5F" stroke-width="2.6"/></svg>'>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="./design-tokens.css">
@@ -55,27 +55,26 @@ footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(-
 <header>
   <div class="wrap head-row">
     <h1><a href="./index.html">dead-cliche</a></h1>
-    <span class="sub">検出した表現をClaudeに書き直させ、返ってきた文を同じ辞書で検査し直します</span>
+    <span class="sub">検出した表現をAIに書き直させ、返ってきた文を同じ辞書で検査し直します</span>
     <nav><a href="./index.html">検出だけ使う</a><a href="./rules.html">辞書を引く</a></nav>
   </div>
 </header>
 <main>
   <div class="notice">
-    <p>このページは、あなたが入力した本文とAPIキーをAnthropicのAPIへ送信します。送信しないで使いたい場合は<a href="./index.html">検出だけのページ</a>を使ってください。</p>
-    <p>キーはこのタブのメモリにだけ置きます。保存しないので、再読み込みすると入れ直しになります。料金はあなたのAnthropicアカウントに請求されます。</p>
+    <p>このページは、あなたが入力した本文とAPIキーをGoogleのGemini APIへ送信します。送信しないで使いたい場合は<a href="./index.html">検出だけのページ</a>を使ってください。</p>
+    <p>キーはこのタブのメモリにだけ置きます。保存しないので、再読み込みすると入れ直しになります。料金はキーを発行したGoogleアカウントに請求されます。</p>
+    <p>OpenAIのAPIはブラウザからの生成リクエストをAPI側が拒否するため、このページからは選べません (中継サーバーを置けば使えます)。</p>
   </div>
 
   <div class="setup">
     <div class="field">
-      <label for="key">APIキー</label>
-      <input type="password" id="key" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+      <label for="key">Gemini APIキー</label>
+      <input type="password" id="key" placeholder="AIza..." autocomplete="off" spellcheck="false">
     </div>
     <div class="field">
       <label for="model">モデル</label>
       <select id="model">
-        <option value="claude-opus-5">Claude Opus 5</option>
-        <option value="claude-sonnet-5">Claude Sonnet 5</option>
-        <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
+        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite (最安)</option>
       </select>
     </div>
     <div class="field">
@@ -160,36 +159,37 @@ function setStatus(text, kind) {
   el.className = 'status' + (kind ? ' ' + kind : '');
 }
 
-// Anthropic APIをブラウザから直接呼ぶ。公式SDKを使わないのは、このページが利用者の
-// APIキーを扱うため、CDN経由の外部スクリプトを1本も増やしたくないから (バンドラも無い)。
-// ブラウザから叩くには anthropic-dangerous-direct-browser-access が要る (無いとCORSで落ちる)
+// Gemini APIをブラウザから直接呼ぶ。SDKを使わないのは、利用者のAPIキーを扱うページに
+// CDN経由の外部スクリプトを増やしたくないから (このリポジトリにバンドラも無い)。
+// OpenAIはpreflightを通しても生成リクエストの実POSTがブラウザから拒否されるので選べない
 async function ask(key, model, system, user) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
-      model,
-      max_tokens: 8000,
-      system,
-      messages: [{ role: 'user', content: user }],
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: user }] }],
+      generationConfig: { maxOutputTokens: 8000 },
     }),
   });
+  const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    let detail = '';
-    try { detail = (await res.json())?.error?.message || ''; } catch (e) {}
-    const known = { 401: 'APIキーが受け付けられませんでした', 429: 'レート制限に達しました。少し待って再実行してください', 400: 'リクエストが拒否されました' };
+    const detail = body?.error?.message || '';
+    // Geminiはキー不正も400で返すので、状態番号ではなく本文で分ける
+    if (/API key not valid/i.test(detail)) throw new Error('APIキーが受け付けられませんでした');
+    const known = { 429: 'レート制限に達しました。少し待って再実行してください', 403: 'このキーではAPIを利用できません' };
     throw new Error(`${known[res.status] || `APIがHTTP ${res.status}を返しました`}${detail ? ' (' + detail + ')' : ''}`);
   }
-  const body = await res.json();
-  // 拒否はHTTP 200で返る。content を読む前に stop_reason を見る
-  if (body.stop_reason === 'refusal') throw new Error('モデルがこの内容の生成を断りました');
-  if (body.stop_reason === 'max_tokens') throw new Error('出力が長さの上限に達しました。本文を分けて実行してください');
-  const text = (body.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  // 入力側で止められた場合は候補が返らない
+  if (body.promptFeedback?.blockReason) throw new Error(`入力が安全性の判定で止められました (${body.promptFeedback.blockReason})`);
+  const cand = (body.candidates || [])[0];
+  if (!cand) throw new Error('本文が返りませんでした');
+  if (cand.finishReason === 'MAX_TOKENS') throw new Error('出力が長さの上限に達しました。本文を分けて実行してください');
+  if (cand.finishReason && !['STOP', 'FINISH_REASON_UNSPECIFIED'].includes(cand.finishReason)) {
+    throw new Error(`生成が途中で止まりました (${cand.finishReason})`);
+  }
+  const text = (cand.content?.parts || []).map((p) => p.text || '').join('').trim();
   if (!text) throw new Error('本文が返りませんでした');
   return text;
 }
