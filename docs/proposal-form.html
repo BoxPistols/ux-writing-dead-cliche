@@ -115,6 +115,28 @@ button, .button {
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .actions .disabled { opacity: .45; pointer-events: none; }
 .copied { color: var(--green); font-size: 12.5px; }
+.help-btn {
+  font: inherit; font-size: var(--fs-s); font-weight: 700; cursor: pointer;
+  border: 1px solid var(--indigo); color: var(--indigo); background: transparent;
+  border-radius: var(--radius); padding: 6px 16px; margin-top: 12px;
+}
+.help-overlay {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+}
+.help-overlay[hidden] { display: none; }
+.help-modal {
+  max-width: 560px; max-height: 85vh; overflow-y: auto;
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line); border-radius: 8px; padding: 22px 26px;
+}
+.help-modal h2 { margin: 0 0 10px; font-size: var(--fs-m); }
+.help-modal h3 { margin: 16px 0 6px; font-size: var(--fs-base); color: var(--indigo); }
+.help-modal p, .help-modal li { font-size: var(--fs-s); margin: 4px 0; }
+.help-modal ol { padding-left: 20px; margin: 4px 0; }
+.help-close { margin-top: 14px; }
 .next {
   font-size: 13px; color: var(--ink-soft);
   background: var(--indigo-soft); border-radius: var(--radius);
@@ -134,7 +156,8 @@ footer a { color: var(--indigo); }
 <header>
   <div class="head-inner">
     <h1><span class="brand">dead-cliche</span> 提案フォーム</h1>
-    <p class="lede">禁止したい表現を、YAMLの知識なしで辞書に提案できます。入力から提案用のファイルとGitHubの下書きを生成します。</p>
+    <p class="lede"><a href="./">dead-cliche</a> (AIクリシェ検出ツール) の辞書に、新しい禁止表現を追加するための画面です。YAMLの知識は不要で、入力から提案用のファイルとGitHubの下書きを生成します。</p>
+    <button type="button" class="help-btn" id="help-open">使い方</button>
     <span class="assure">このページは静的ファイルです。入力内容はどこにも自動送信されません</span>
   </div>
 </header>
@@ -204,6 +227,25 @@ footer a { color: var(--indigo); }
     <p class="next" id="next-hint"></p>
   </aside>
 </main>
+<div class="help-overlay" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="help-modal">
+    <h2 id="help-title">この画面でできること</h2>
+    <p>dead-clicheは「AIっぽい日本語表現」を検出して直すツールで、判定の元は約130件の辞書です。この画面は、その辞書にあなたが見つけた表現を追加するためのフォームです。</p>
+    <h3>OSS辞書へ提案 (左のタブ)</h3>
+    <ol>
+      <li>見つけた表現と、なぜ避けるべきか・代わりに何を書くべきかを入力します</li>
+      <li>右側に提案の下書きが自動で組み上がります (これがレビューされる内容です)</li>
+      <li>「GitHubで提案する」を押すと、入力済みのIssueフォームが開きます。送信するかどうかはGitHub上であなたが決めます</li>
+      <li>レビューを通ると辞書に入り、全利用者の検出に反映されます</li>
+    </ol>
+    <h3>自分のプロジェクト用 (右のタブ)</h3>
+    <p>チーム固有の禁止ワード (旧製品名など) を作る場合はこちら。生成されたYAMLをコピーして、自分のリポジトリの .deadcliche/custom-rules.yml に貼れば、そのプロジェクトの検出だけに効きます。どこにも提案されません。</p>
+    <h3>入力の目安</h3>
+    <p>採否の軸は「人間の熟練した書き手も使う表現か」です。使うなら日本語の資産なので提案は通りません。判断に迷ったら、実際に見た文 (悪い例) をそのまま貼るのが早いです。</p>
+    <p><a href="./">検出エディタへ</a> / <a href="./rules.html">いまの辞書を見る</a> / <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/docs/research-notes.md">採否の基準</a></p>
+    <button type="button" class="button primary help-close" id="help-close">閉じる</button>
+  </div>
+</div>
 <footer>
   <a href="./">辞書アプリへ戻る</a>。提案はレビューを経て辞書に入ります。採否の基準は
   <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/docs/research-notes.md">調査ノート</a>、
@@ -307,6 +349,19 @@ footer a { color: var(--indigo); }
   });
 
   render();
+
+  var helpEl = $('help');
+  function openHelp() { helpEl.hidden = false; $('help-close').focus(); }
+  function closeHelp() {
+    helpEl.hidden = true;
+    try { localStorage.setItem('dc-form-help-seen', '1'); } catch (e) {}
+    $('help-open').focus();
+  }
+  $('help-open').addEventListener('click', openHelp);
+  $('help-close').addEventListener('click', closeHelp);
+  helpEl.addEventListener('click', function (e) { if (e.target === helpEl) closeHelp(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !helpEl.hidden) closeHelp(); });
+  try { if (!localStorage.getItem('dc-form-help-seen')) openHelp(); } catch (e) { openHelp(); }
 })();
 </script>
 </body>
