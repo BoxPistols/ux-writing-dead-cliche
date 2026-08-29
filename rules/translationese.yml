@@ -2,6 +2,7 @@
 
 - id: translationese/koto-ga-dekimasu
   severity: warn
+  fix: 'でき$1'
   pattern: 'することができ(ます|る)'
   why: 「できます」で足りる冗長形。
   ask: 「〜できます」に短くする。

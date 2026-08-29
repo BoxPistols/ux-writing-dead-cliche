@@ -67,6 +67,42 @@ export function check(text, rules, { minSeverity = 'info' } = {}) {
   return found.sort((a, b) => a.index - b.index);
 }
 
+// fix フィールドを持つルールの決定論的置換を適用する。
+// maskedText (コード除外済み) で位置を決め、置換は原文に対して行う。
+export function applyFixes(text, rules, { maskedText = text } = {}) {
+  const edits = [];
+  for (const rule of rules) {
+    if (rule.manual || rule.fix === undefined) continue;
+    for (const re of compileRule(rule)) {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(maskedText)) !== null) {
+        if (m[0] === '') {
+          re.lastIndex++;
+          continue;
+        }
+        const original = text.slice(m.index, m.index + m[0].length);
+        const single = rule.pattern
+          ? new RegExp(rule.pattern, (rule.flags ?? 'mu').replace('g', ''))
+          : null;
+        const replacement = single ? original.replace(single, rule.fix) : rule.fix;
+        edits.push({ ruleId: rule.id, index: m.index, length: m[0].length, before: original, after: replacement });
+      }
+    }
+  }
+  edits.sort((a, b) => b.index - a.index);
+  let out = text;
+  const applied = [];
+  let lastStart = Infinity;
+  for (const e of edits) {
+    if (e.index + e.length > lastStart) continue; // 重複範囲は先勝ち
+    out = out.slice(0, e.index) + e.after + out.slice(e.index + e.length);
+    lastStart = e.index;
+    applied.push(e);
+  }
+  return { text: out, applied: applied.reverse() };
+}
+
 export function hasErrors(violations) {
   return violations.some((v) => v.severity === 'error');
 }

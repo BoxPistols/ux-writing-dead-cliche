@@ -5,7 +5,13 @@
   "type": "array",
   "items": {
     "type": "object",
-    "required": ["id", "severity", "why", "ask", "examples"],
+    "required": [
+      "id",
+      "severity",
+      "why",
+      "ask",
+      "examples"
+    ],
     "additionalProperties": false,
     "properties": {
       "id": {
@@ -13,10 +19,19 @@
         "pattern": "^[a-z-]+/[a-z0-9-]+$",
         "description": "カテゴリ名/ルール名。カテゴリ名はファイル名と一致させる。"
       },
-      "severity": { "enum": ["error", "warn", "info"] },
+      "severity": {
+        "enum": [
+          "error",
+          "warn",
+          "info"
+        ]
+      },
       "surface": {
         "type": "array",
-        "items": { "type": "string", "minLength": 1 },
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
         "description": "文字列一致で検出する表層形のリスト。"
       },
       "pattern": {
@@ -31,25 +46,56 @@
         "type": "boolean",
         "description": "true なら機械検出しない。スキルやレビューでの人力判断ルール。"
       },
-      "why": { "type": "string", "minLength": 1, "description": "なぜ避けるか。" },
-      "ask": { "type": "string", "minLength": 1, "description": "代わりに何を書くべきかの問い。" },
+      "why": {
+        "type": "string",
+        "minLength": 1,
+        "description": "なぜ避けるか。"
+      },
+      "ask": {
+        "type": "string",
+        "minLength": 1,
+        "description": "代わりに何を書くべきかの問い。"
+      },
       "examples": {
         "type": "object",
-        "required": ["bad", "good"],
+        "required": [
+          "bad",
+          "good"
+        ],
         "properties": {
-          "bad": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-          "good": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          "bad": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "good": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
         }
       },
       "deny_examples": {
         "type": "array",
-        "items": { "type": "string" },
+        "items": {
+          "type": "string"
+        },
         "description": "検出してはいけない正当な用例。テストで強制される。"
       },
       "refs": {
         "type": "array",
-        "items": { "type": "string" },
+        "items": {
+          "type": "string"
+        },
         "description": "根拠にした公開ガイドの名称。"
+      },
+      "fix": {
+        "type": "string",
+        "description": "決定論的な置換のテンプレート ($1 等の捕捉参照可)。意味を変えない表記修正だけに付ける。"
       }
     }
   }

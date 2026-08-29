@@ -1,0 +1,67 @@
+name: 禁止ワード・クリシェの提案
+description: 辞書に追加したい表現をフォームで提案します。YAML の知識は不要です。
+title: "[rule] "
+labels: ["rule-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提案はレビューを経て辞書に入ります。正規表現ではなく、表現そのもの (リテラル) で書いてください。
+        採否の基準は docs/research-notes.md にあります。軸は「人間の熟練した書き手が使うか」です。
+  - type: input
+    id: expression
+    attributes:
+      label: 検出したい表現
+      description: 例. 世界観を昇華
+      placeholder: 表現そのものを書く (正規表現は不可)
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: カテゴリ
+      options:
+        - metaphor (比喩)
+        - overstatement (誇張・断定)
+        - empty-abstraction (空虚な抽象)
+        - syntax-pattern (構文の型)
+        - translationese (翻訳調)
+        - closing (締めの型)
+        - formatting (書式)
+        - ux-microcopy (UI 文言)
+        - わからない
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: なぜ避けるべきか
+      description: この表現で何の情報が欠けるのかを書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: bad
+    attributes:
+      label: 悪い例 (実際に見た文)
+      description: この表現が使われた文を 1 つ以上。出所が業務文書の場合は内容を差し替えてください。
+    validations:
+      required: true
+  - type: textarea
+    id: good
+    attributes:
+      label: 書き直すとどうなるか
+      description: 同じ内容を平易に書いた文。語尾は敬体 (です・ます)。
+    validations:
+      required: true
+  - type: textarea
+    id: deny
+    attributes:
+      label: 検出してはいけない正当な用法 (任意)
+      description: 同じ語が正当に使われる文があれば書いてください。誤検出防止のテストになります。
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 確認
+      options:
+        - label: 社名・製品名・顧客名・非公開 URL を含んでいません
+          required: true

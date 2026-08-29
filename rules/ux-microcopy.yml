@@ -4,6 +4,7 @@
 
 - id: ux-microcopy/ga-shippai
   severity: error
+  fix: '$1に失敗しました'
   pattern: '(取得|保存|送信|削除|更新|登録|作成|読み込み|読込|接続|認証|通信|アップロード|ダウンロード)が失敗しました'
   why: 完了・失敗の述語は「{対象}の{操作}に失敗しました」。「が失敗」は助詞のゆれ。
   ask: 「〜に失敗しました」に直し、原因か対処を続ける。
@@ -69,6 +70,7 @@
 
 - id: ux-microcopy/kagikakko-kuten
   severity: warn
+  fix: '」'
   pattern: '。」'
   why: かぎかっこ内の文末には句点を付けない (JTF スタイルの原則)。
   ask: 閉じかっこ直前の句点を削る。
@@ -80,6 +82,7 @@
 
 - id: ux-microcopy/shite-kudasai
   severity: error
+  fix: 'してください'
   surface:
     - 'して下さい'
   why: 補助動詞はひらがなで書く (公用文・JTF 共通)。
@@ -92,6 +95,7 @@
 
 - id: ux-microcopy/shite-itadaku
   severity: error
+  fix: 'していただ$1'
   pattern: 'して頂(き|く|け)'
   why: 補助動詞はひらがなで書く。本動詞 (賞状を頂く) は漢字のまま。
   ask: 「していただく」に直す。
@@ -105,6 +109,7 @@
 
 - id: ux-microcopy/dekiru
   severity: error
+  fix: '$1でき$2'
   pattern: '(が|も|は)出来(ます|る|ません|ない)'
   why: 可能の意味の「できる」はひらがなで書く。名詞 (出来事・出来栄え) は漢字のまま。
   ask: 「できます」に直す。
@@ -118,6 +123,7 @@
 
 - id: ux-microcopy/itashimasu
   severity: error
+  fix: '$1いたします'
   pattern: '(願い|お待ち|失礼|連絡|送付)致します'
   why: 補助動詞「いたします」はひらがなで書く。
   ask: 「いたします」に直す。

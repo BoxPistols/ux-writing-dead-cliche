@@ -8,8 +8,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { loadAllRules, loadPreset, rulesForPreset, findRc } from './load-rules.mjs';
-import { check, maskMarkdownCode, hasErrors } from './engine.mjs';
+import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules } from './load-rules.mjs';
+import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
 
 const MD_EXT = new Set(['.md', '.mdx', '.markdown']);
 const TEXT_EXT = new Set([...MD_EXT, '.txt']);
@@ -64,7 +64,7 @@ function cmdCheck(args) {
       if (rc.ignore.some((pat) => rel.startsWith(pat) || rel.includes(`/${pat}`))) return;
     }
     const preset = args.flags.preset ?? rc?.preset ?? 'paper';
-    const rules = getRules({ preset, rulesDir: args.flags['rules-dir'] });
+    const rules = [...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)];
     let violations = checkText(text, filePath, rules);
     const min = args.flags['min-severity'];
     if (min) {
@@ -139,7 +139,7 @@ function cmdClaudeHook() {
       const rel = path.relative(rc._dir, filePath);
       if (rc.ignore.some((pat) => rel.startsWith(pat) || rel.includes(`/${pat}`))) process.exit(0);
     }
-    const rules = getRules({ preset: rc?.preset ?? 'paper' });
+    const rules = [...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })];
     const text = fs.readFileSync(filePath, 'utf8');
     const violations = checkText(text, filePath, rules);
     if (violations.length === 0) process.exit(0);
@@ -156,11 +156,42 @@ function cmdClaudeHook() {
   }
 }
 
+// 決定論的修正。既定は dry-run で、--write を付けたときだけ書き込む。
+function cmdFix(args) {
+  const files = args._;
+  if (files.length === 0) {
+    console.error('使い方: dead-cliche fix <files...> [--preset name] [--write]');
+    process.exit(2);
+  }
+  let totalEdits = 0;
+  for (const f of files) {
+    const rc = findRc(path.dirname(path.resolve(f)));
+    const preset = args.flags.preset ?? rc?.preset ?? 'paper';
+    const rules = [...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)];
+    const text = fs.readFileSync(f, 'utf8');
+    const masked = MD_EXT.has(path.extname(f)) ? maskMarkdownCode(text) : text;
+    const { text: fixed, applied } = applyFixes(text, rules, { maskedText: masked });
+    totalEdits += applied.length;
+    for (const e of applied) {
+      console.log(`${f}: ${e.ruleId} 「${e.before}」→「${e.after}」`);
+    }
+    if (args.flags.write && applied.length > 0) fs.writeFileSync(f, fixed);
+  }
+  if (totalEdits === 0) {
+    console.log('決定論的に修正できる検出はありません (fix を持たないルールは書き直しが必要です)');
+  } else {
+    console.log(`\n${totalEdits} 件${args.flags.write ? 'を書き込みました' : ' (dry-run。書き込むには --write)'}`);
+  }
+}
+
 const args = parseArgs(process.argv.slice(2));
 const cmd = args._.shift();
 switch (cmd) {
   case 'check':
     cmdCheck(args);
+    break;
+  case 'fix':
+    cmdFix(args);
     break;
   case 'list':
     cmdList(args);
@@ -172,8 +203,9 @@ switch (cmd) {
     cmdClaudeHook();
     break;
   default:
-    console.log('使い方: dead-cliche <check|list|explain|claude-hook> [options]');
+    console.log('使い方: dead-cliche <check|fix|list|explain|claude-hook> [options]');
     console.log('  check [files...] [--preset paper|business|chat|ux-microcopy] [--format json] [--min-severity warn]');
+    console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定は dry-run)');
     console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');
     process.exit(cmd ? 2 : 0);

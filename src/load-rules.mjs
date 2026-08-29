@@ -35,6 +35,66 @@ export function rulesForPreset(preset, allRules = loadAllRules()) {
     .map((r) => (overrides[r.id] ? { ...r, severity: overrides[r.id] } : r));
 }
 
+// カスタムパターンの安全性検査。
+// 静的検査で ReDoS を完全には排除できないため、これは最後の砦ではなく入口の門。
+// 信頼境界は「レビューを通ったか」に置く (docs/custom-rules-and-autofix.md)。
+export function validateCustomPattern(pattern) {
+  if (typeof pattern !== 'string' || pattern.length === 0) return { ok: false, reason: 'パターンが空' };
+  if (pattern.length > 200) return { ok: false, reason: '200 文字を超えている' };
+  // (a+)+ / (a*)* / (a+)* 型の量指定子の入れ子を拒否する
+  if (/\([^)]*[+*][^)]*\)\s*[+*]/.test(pattern)) return { ok: false, reason: '量指定子の入れ子 (ReDoS の恐れ)' };
+  try {
+    new RegExp(pattern, 'gmu');
+  } catch (e) {
+    return { ok: false, reason: `正規表現としてコンパイルできない: ${e.message}` };
+  }
+  return { ok: true };
+}
+
+// .deadclicherc.json の customRules からプロジェクト固有辞書を読む。
+// surface (リテラル) は常に許可。pattern は trustCustomPatterns: true のときだけ、
+// 安全性検査を通ったものを許可する。
+export function loadCustomRules(rc, { warn = (msg) => console.error(msg) } = {}) {
+  if (!rc?.customRules?.length) return [];
+  const rules = [];
+  for (const rel of rc.customRules) {
+    const file = path.resolve(rc._dir, rel);
+    if (!fs.existsSync(file)) {
+      warn(`dead-cliche: カスタム辞書が見つかりません: ${rel}`);
+      continue;
+    }
+    const entries = yaml.load(fs.readFileSync(file, 'utf8')) ?? [];
+    for (const entry of entries) {
+      const rule = {
+        category: 'custom',
+        severity: 'error',
+        why: '禁止ワードとして登録された表現。',
+        ask: '登録時の理由に従って置き換える。',
+        ...entry,
+      };
+      if (!rule.id || !rule.id.startsWith('custom/')) {
+        warn(`dead-cliche: カスタムルールの id は custom/ で始めてください: ${rule.id ?? '(id なし)'}`);
+        continue;
+      }
+      if (rule.pattern) {
+        if (!rc.trustCustomPatterns) {
+          warn(`dead-cliche: ${rule.id} の pattern は無視しました (trustCustomPatterns が無効)。surface を使ってください`);
+          delete rule.pattern;
+        } else {
+          const v = validateCustomPattern(rule.pattern);
+          if (!v.ok) {
+            warn(`dead-cliche: ${rule.id} の pattern を拒否しました: ${v.reason}`);
+            delete rule.pattern;
+          }
+        }
+      }
+      if (!rule.pattern && !(rule.surface?.length > 0)) continue;
+      rules.push(rule);
+    }
+  }
+  return rules;
+}
+
 // ファイルの場所から上へ .deadclicherc.json を探す。
 export function findRc(startDir) {
   let dir = path.resolve(startDir);
