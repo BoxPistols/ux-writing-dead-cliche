@@ -35,6 +35,14 @@ cat draft.txt | npx github:BoxPistols/ux-writing-dead-cliche check --preset busi
 ```
 
 リポジトリをcloneして `npm install` すれば `node src/cli.mjs check` でも動きます。
+頻用するなら `npm link` (clone内で1回) すると、どのディレクトリでも `dead-cliche` の
+短いコマンド名で呼べます。
+
+```
+dead-cliche check 文書.md --preset business
+dead-cliche fix 文書.md --write
+dead-cliche version
+```
 
 ### textlintルールとして (既存のtextlint資産と併用)
 

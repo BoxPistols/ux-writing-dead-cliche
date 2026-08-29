@@ -8,6 +8,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import os from 'node:os';
+import crypto from 'node:crypto';
 import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig } from './load-rules.mjs';
 import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
 
@@ -167,6 +169,24 @@ function hookCheckFile(filePath) {
   return checkText(text, filePath, rules).map((v) => ({ ...v, file: path.basename(filePath) }));
 }
 
+// プラグインとグローバル設定の両方にフックがある環境で、同じ検査が二重に返るのを防ぐ。
+// セッション・対象・内容が同じ直近の発火はスキップする。
+function hookDedup(sessionId, files) {
+  try {
+    const sig = files.map((f) => {
+      const st = fs.statSync(f);
+      return `${f}:${st.mtimeMs}:${st.size}`;
+    }).join('|');
+    const key = crypto.createHash('sha1').update(`${sessionId}|${sig}`).digest('hex');
+    const marker = path.join(os.tmpdir(), `dead-cliche-hook-${key}`);
+    if (fs.existsSync(marker) && Date.now() - fs.statSync(marker).mtimeMs < 10_000) return true;
+    fs.writeFileSync(marker, '');
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function cmdClaudeHook() {
   let input;
   try {
@@ -177,6 +197,7 @@ function cmdClaudeHook() {
   try {
     if (input?.tool_name === 'Bash' || (!input?.tool_input?.file_path && input?.tool_input?.command)) {
       const files = extractPathsFromCommand(input?.tool_input?.command ?? '', input?.cwd ?? process.cwd());
+      if (files.length && hookDedup(input?.session_id ?? '', files)) process.exit(0);
       const all = files.flatMap((f) => {
         try { return hookCheckFile(f); } catch { return []; }
       });
@@ -189,6 +210,7 @@ function cmdClaudeHook() {
     }
     const filePath = input?.tool_input?.file_path;
     if (!filePath || !TEXT_EXT.has(path.extname(filePath)) || hookSkipped(path.resolve(filePath))) process.exit(0);
+    if (hookDedup(input?.session_id ?? '', [path.resolve(filePath)])) process.exit(0);
     const rc = findRc(path.dirname(filePath));
     if (rc?.ignore) {
       const rel = path.relative(rc._dir, filePath);
@@ -241,6 +263,11 @@ function cmdFix(args) {
 
 const args = parseArgs(process.argv.slice(2));
 const cmd = args._.shift();
+if (cmd === 'version' || args.flags.version) {
+  const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  console.log(pkg.version);
+  process.exit(0);
+}
 switch (cmd) {
   case 'check':
     cmdCheck(args);

@@ -9,6 +9,16 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/cli.mjs\" claude-hook"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "IN=$(cat); case \"$IN\" in *.md*|*.mdx*|*.markdown*|*.txt*) printf %s \"$IN\" | node \"${CLAUDE_PLUGIN_ROOT}/src/cli.mjs\" claude-hook;; esac",
+            "timeout": 20
+          }
+        ]
       }
     ]
   }

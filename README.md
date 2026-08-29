@@ -53,6 +53,9 @@ npm install textlint github:BoxPistols/ux-writing-dead-cliche
 }
 ```
 
+`npx textlint --fix` にも対応しており、fixを持つルール (表記の置換) は
+textlint経由でも自動修正されます。
+
 ## 環境別の使い方
 
 | 使う場所 | 入れるもの | できること |
