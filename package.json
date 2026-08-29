@@ -43,5 +43,6 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
-  }
+  },
+  "homepage": "https://boxpistols.github.io/ux-writing-dead-cliche/"
 }
