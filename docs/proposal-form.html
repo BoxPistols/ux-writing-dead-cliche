@@ -137,6 +137,26 @@ button, .button {
 .help-modal p, .help-modal li { font-size: var(--fs-s); margin: 4px 0; }
 .help-modal ol { padding-left: 20px; margin: 4px 0; }
 .help-close { margin-top: 14px; }
+.dup-notice {
+  background: var(--indigo-soft); border-radius: var(--radius);
+  padding: 10px 14px; font-size: var(--fs-s);
+}
+.dup-notice b { color: var(--indigo); }
+.dup-notice[hidden] { display: none; }
+.tmpl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tmpl-chips button {
+  font: inherit; font-size: var(--fs-min); cursor: pointer;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--ink-soft); padding: 2px 12px;
+}
+.ai-panel { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 4px 16px 14px; }
+.ai-panel summary { cursor: pointer; font-weight: 700; padding: 10px 0; }
+.ai-panel .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.ai-panel .row input { flex: 1; min-width: 180px; }
+.ai-panel .note { font-size: var(--fs-min); color: var(--ink-soft); margin: 6px 0 10px; }
+.ai-status { font-size: var(--fs-s); margin: 8px 0 0; }
+.ai-status.ok { color: var(--green); }
+.ai-status.err { color: var(--shu); }
 .next {
   font-size: 13px; color: var(--ink-soft);
   background: var(--indigo-soft); border-radius: var(--radius);
@@ -173,6 +193,7 @@ footer a { color: var(--indigo); }
         <span class="hint">正規表現は書けません。文字列そのままで検出されます (安全のための仕様です)</span>
         <input type="text" id="expr" placeholder="例: 世界観を昇華">
       </label>
+      <div class="dup-notice" id="dup" hidden aria-live="polite"></div>
       <label>ルール名 (半角英数とハイフン)<span class="req">必須</span>
         <input type="text" id="slug" placeholder="例: sekaikan-shouka" pattern="[a-z0-9-]+">
       </label>
@@ -194,9 +215,11 @@ footer a { color: var(--indigo); }
       <label>なぜ避けるべきか<span class="req">必須</span>
         <span class="hint">この表現で何の情報が欠けるのかを書きます</span>
         <textarea id="why" placeholder="例: 質の向上を主張するだけで、何をどう変えたのかが書かれない。"></textarea>
+        <span class="tmpl-chips" id="why-tmpl"></span>
       </label>
       <label>代わりに何を書くべきか<span class="req">必須</span>
         <textarea id="ask" placeholder="例: 変換した内容と、反映した先を具体的に書く。"></textarea>
+        <span class="tmpl-chips" id="ask-tmpl"></span>
       </label>
       <label>悪い例 (実際に見た文)<span class="req">必須</span>
         <span class="hint">1行1例。業務文書由来の場合は内容を差し替えてください</span>
@@ -214,6 +237,16 @@ footer a { color: var(--indigo); }
         <span>社名・製品名・顧客名・非公開URLを含んでいません<span class="req">必須</span></span>
       </label>
     </fieldset>
+    <details class="ai-panel" id="ai-panel">
+      <summary>AI補完を使う (任意・BYOK)</summary>
+      <p class="note">あなたのOpenAI APIキーで、入力途中の項目の下書きをAIに作らせます。キーはこのページのメモリ内だけで使い、保存しません。通信はあなたのブラウザからOpenAIへ直接送られ、このサイトのサーバーは存在しません。生成結果は空欄にだけ入り、あなたの入力を上書きしません。</p>
+      <div class="row">
+        <input type="password" id="ai-key" placeholder="sk-..." autocomplete="off" aria-label="OpenAI APIキー">
+        <input type="text" id="ai-model" value="gpt-4o-mini" aria-label="モデル名">
+        <button type="button" class="ghost" id="ai-suggest">空欄の下書きを作らせる</button>
+      </div>
+      <p class="ai-status" id="ai-status" aria-live="polite"></p>
+    </details>
   </form>
   <aside>
     <div class="panel">
@@ -253,7 +286,8 @@ footer a { color: var(--indigo); }
   <a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/docs/custom-rules-and-autofix.md">設計文書</a>
   にあります。
 </footer>
-<script>
+<script type="module">
+import { check } from './engine.mjs';
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var fields = ['expr', 'slug', 'cat', 'why', 'ask', 'bad', 'good', 'deny'];
@@ -335,6 +369,107 @@ footer a { color: var(--indigo); }
       $('next-hint').textContent = 'コピーしたYAMLを自分のリポジトリの .deadcliche/custom-rules.ymlに追記し、.deadclicherc.jsonのcustomRulesから参照して、PRとしてレビューを受けてください。文字列一致 (surface) なのでこのままで安全に動きます。';
     }
   }
+
+  var dict = null;
+  fetch('./app-data.json').then(function (r) { return r.json(); }).then(function (d) {
+    dict = d;
+    renderTemplates();
+    dupCheck();
+  }).catch(function () {});
+
+  function machineRules() {
+    return dict ? dict.rules.filter(function (r) { return !r.manual; }) : [];
+  }
+
+  function dupCheck() {
+    var box = $('dup');
+    var expr = $('expr').value.trim();
+    if (!dict || !expr) { box.hidden = true; return; }
+    var hits = check(expr, machineRules());
+    if (!hits.length) { box.hidden = true; return; }
+    var r = dict.rules.find(function (x) { return x.id === hits[0].ruleId; });
+    box.hidden = false;
+    box.innerHTML = '<b>この表現は既に辞書で検出されます</b>: ' + r.id + ' (' + r.severity + ')。' +
+      esc(r.why) + ' <a href="./rules.html">辞書で確認する</a>。検出範囲を広げる提案なら、悪い例にその文を足して提案してください。';
+  }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  var slugTouched = false;
+  $('slug').addEventListener('input', function () { slugTouched = true; });
+  function autoSlug() {
+    if (slugTouched && $('slug').value) return;
+    var expr = $('expr').value.trim();
+    if (!expr) return;
+    var h = 0;
+    for (var i = 0; i < expr.length; i++) h = (h * 31 + expr.charCodeAt(i)) >>> 0;
+    $('slug').value = $('cat').value.replace('empty-abstraction', 'abst').replace('syntax-pattern', 'syntax') + '-' + h.toString(36).slice(0, 4);
+  }
+
+  function renderTemplates() {
+    if (!dict) return;
+    var cat = $('cat').value;
+    var pool = dict.rules.filter(function (r) { return r.cat === cat; })
+      .sort(function (a, b) { return a.why.length - b.why.length; }).slice(0, 2);
+    [['why-tmpl', 'why'], ['ask-tmpl', 'ask']].forEach(function (pair) {
+      var box = $(pair[0]);
+      box.textContent = '';
+      pool.forEach(function (r) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = '例: ' + r[pair[1]].slice(0, 26) + (r[pair[1]].length > 26 ? '…' : '');
+        b.title = r[pair[1]];
+        b.addEventListener('click', function () {
+          if (!$(pair[1]).value.trim()) { $(pair[1]).value = r[pair[1]]; render(); }
+        });
+        box.appendChild(b);
+      });
+    });
+  }
+  $('cat').addEventListener('change', function () { renderTemplates(); autoSlug(); });
+  $('expr').addEventListener('input', function () { autoSlug(); dupCheck(); });
+
+  $('ai-suggest').addEventListener('click', async function () {
+    var st = $('ai-status');
+    var key = $('ai-key').value.trim();
+    if (!key) { st.className = 'ai-status err'; st.textContent = 'APIキーを入力してください (保存はされません)'; return; }
+    var expr = $('expr').value.trim();
+    if (!expr) { st.className = 'ai-status err'; st.textContent = '先に「表現そのもの」を入力してください'; return; }
+    st.className = 'ai-status'; st.textContent = '生成中…';
+    var prompt = '日本語ライティング検査ツールの辞書エントリの下書きを作ります。対象の表現:「' + expr + '」(カテゴリ: ' + $('cat').value + ')。' +
+      'JSONだけを返してください: {"why": "なぜ避けるべきか(この表現で何の情報が欠けるか、常体で1文)", "ask": "代わりに何を書くべきかの指示(常体で1文)", "bad": "その表現を使った悪い例文1つ", "good": "同じ内容を具体的な事実で書き直した良い例文1つ(語尾は敬体)", "deny": "同じ語が正当に使われる別分野の例文1つ(無ければ空文字)"}。' +
+      '制約: 良い例に誇張・比喩・絵文字を使わない。日本語と英数字の間に半角スペースを入れない。';
+    try {
+      var res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify({
+          model: $('ai-model').value.trim() || 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.4
+        })
+      });
+      if (!res.ok) throw new Error('OpenAI APIが ' + res.status + ' を返しました');
+      var data = await res.json();
+      var out = JSON.parse(data.choices[0].message.content);
+      var filled = [];
+      [['why', 'why'], ['ask', 'ask'], ['bad', 'bad'], ['good', 'good'], ['deny', 'deny']].forEach(function (m) {
+        var el = $(m[0]);
+        if (out[m[1]] && !el.value.trim()) { el.value = out[m[1]]; filled.push(m[0]); }
+      });
+      render();
+      var verdict = '';
+      if (out.good && dict) {
+        var hits = check(out.good, machineRules());
+        verdict = hits.length ? ' 注意: AIの良い例に検出が' + hits.length + '件あります。手直ししてください。' : ' 良い例は辞書検査を通過しています。';
+      }
+      st.className = 'ai-status ok';
+      st.textContent = (filled.length ? '空欄' + filled.length + '項目に下書きを入れました。内容は必ず確認してください。' : '空欄がないため何も変更していません。') + verdict;
+    } catch (e) {
+      st.className = 'ai-status err';
+      st.textContent = '生成に失敗しました: ' + e.message;
+    }
+  });
 
   fields.forEach(function (id) { $(id).addEventListener('input', render); });
   $('consent').addEventListener('change', render);
