@@ -1,6 +1,6 @@
 {
   "name": "textlint-rule-ux-writing-dead-cliche",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "AI が日本語文章に持ち込むクリシェを検出し、平易な文章へ直すための辞書とツール",
   "type": "module",
   "bin": {

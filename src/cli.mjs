@@ -86,8 +86,11 @@ function cmdCheck(args) {
     for (const f of files) run(fs.readFileSync(f, 'utf8'), f, f);
   }
 
+  const counts = { error: 0, warn: 0, info: 0 };
+  for (const r of results) for (const v of r.violations) counts[v.severity]++;
   if ((args.flags.format ?? 'pretty') === 'json') {
-    console.log(JSON.stringify({ results, total, errors }, null, 2));
+    // 出力の形は互換を保つ (判定に使う側は表示文言ではなくこちらを見る)
+    console.log(JSON.stringify({ results, total, errors, counts }, null, 2));
   } else if (total === 0) {
     console.log('既知のパターンは見つかりませんでした (辞書にある表現の有無だけを見ています)');
   } else {
@@ -95,7 +98,8 @@ function cmdCheck(args) {
   }
   // errorとwarnは修正必須 (既定)。--fail-on error で従来挙動、--fail-on info で全件必須にできる
   const order = { info: 0, warn: 1, error: 2 };
-  const failOn = order[args.flags['fail-on']] ?? order.warn;
+  // --strict は info まで含めて落とす (--fail-on info と同じ)
+  const failOn = args.flags.strict ? order.info : (order[args.flags['fail-on']] ?? order.warn);
   const failing = results.reduce((n, r) => n + r.violations.filter((v) => order[v.severity] >= failOn).length, 0);
   process.exit(failing > 0 ? 1 : 0);
 }
@@ -292,6 +296,7 @@ switch (cmd) {
     console.log('使い方: dead-cliche <check|fix|list|explain|claude-hook> [options]');
     console.log('  check [files...] [--preset name] [--format json] [--min-severity warn] [--fail-on info|warn|error]  (既定: warn以上でexit 1)');
     console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
+    console.log('  --strict は info も含めて exit 1 にする (--fail-on info と同義)');
     console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');
     process.exit(cmd ? 2 : 0);

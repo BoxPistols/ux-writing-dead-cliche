@@ -133,3 +133,18 @@ test('fixはコードフェンス内を絶対に書き換えない (全fixable�
   assert.equal(fixed, md);
   for (const line of inside) assert.ok(fixed.includes(line), `フェンス内の行が変化した: ${line}`);
 });
+
+test('--strict は info でも exit 1 にし、JSON は severity の内訳を返す', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dc-strict-'));
+  const f = path.join(dir, 'i.md');
+  fs.writeFileSync(f, 'まさにそのとおりでした。\n'); // info のみ
+  assert.equal(spawnSync('node', ['src/cli.mjs', 'check', f], { encoding: 'utf8' }).status, 0, '既定でinfoは落とさない');
+  assert.equal(spawnSync('node', ['src/cli.mjs', 'check', f, '--strict'], { encoding: 'utf8' }).status, 1, '--strictでinfoが落ちない');
+  const out = spawnSync('node', ['src/cli.mjs', 'check', f, '--format', 'json'], { encoding: 'utf8' }).stdout;
+  const json = JSON.parse(out);
+  assert.deepEqual(Object.keys(json).sort(), ['counts', 'errors', 'results', 'total']);
+  assert.equal(json.counts.info, 1);
+  assert.equal(json.counts.error + json.counts.warn, 0);
+});
