@@ -4,7 +4,7 @@
   "description": "AI特有の日本語クリシェを検出し、平易な文章へ直すための辞書とツール。CLI・textlint・Claude Codeプラグインで同じ辞書が動く",
   "type": "module",
   "bin": {
-    "dead-cliche": "./src/cli.mjs"
+    "dead-cliche": "src/cli.mjs"
   },
   "exports": {
     ".": "./src/index.mjs",
@@ -44,7 +44,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/BoxPistols/ux-writing-dead-cliche.git"
+    "url": "git+https://github.com/BoxPistols/ux-writing-dead-cliche.git"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

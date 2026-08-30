@@ -18,35 +18,46 @@ bumpしたら必ず再生成が要ります。
 
 ## リリース手順
 
+`npm run release` にまとめてあります。手順を手で並べません。
+
 ```
-# 1. バージョンを上げる (2ファイルとも同じ値に)
-#    package.json と .claude-plugin/plugin.json の "version"
-
-# 2. 生成物を作り直す (これを忘れるとCIが赤になる)
-npm run docs:prompts
-npm run docs:webdata
-npm run docs:comparison
-
-# 3. 検証 (すべて通ること)
-npm test                                   # 生成物の同期も含めて検証する
-npx dead-cliche check README.md docs/*.md  # 自分の文書が自分の検査を通ること
-
-# 4. コミットとpush
-git add -A && git commit -m "vX.Y.Z: 変更の要点" && git push
-
-# 5. CIの結果を確認 (successを見てから次へ)
-gh run list --workflow ci.yml --limit 1
-
-# 6. npmに公開 (2要素認証のためブラウザが開きます)
-npm publish --access public
-
-# 7. Releaseとスキルzip
-npm run build:claude-ai-skill
-gh release create vX.Y.Z dist/dead-cliche-review.zip --title "vX.Y.Z" --notes "変更の要点"
-
-# 8. 自分の環境のプラグインを更新
-claude plugin update dead-cliche@ux-writing-dead-cliche
+npm run release patch                       # patch / minor / major / X.Y.Z
+npm run release patch -- --otp=123456       # 認証アプリの6桁コードを渡す
+npm run release patch -- --dry-run          # 検証まで走らせ、公開の手前で止める
+npm run release -- --resume --otp=123456    # 途中で失敗したリリースを続きから流す
 ```
+
+スクリプトが踏む段階は次のとおりです。番号は出力の `[n]` に対応します。
+
+| 段階 | 内容 |
+| --- | --- |
+| 0 | 事前確認 (作業ツリーが綺麗、mainにいる、originに追いついている、ghとnpmにログイン済み、2要素認証を通せる、その版が未公開) |
+| 1 | package.jsonと.claude-plugin/plugin.jsonのversionを更新 |
+| 2 | 生成物の再生成 (prompts / app-data / engine / before-after) |
+| 3 | npm testと自己検査 |
+| 4 | 公開範囲の確認 (機密と業務固有語の走査) |
+| 5 | コミットとpush |
+| 6 | そのコミットのCIがsuccessになるまで待つ |
+| 7 | npm publish |
+| 8 | スキルzipのビルドとGitHub Release |
+| 9 | 手元のプラグイン更新 |
+
+### 2要素認証とTTY
+
+publishは2要素認証を通す必要があり、ブラウザ認証は端末の入力待ちを使います。
+ttyの無い環境から実行すると、npmはURLを表示した直後に`EOTP`で終わります。
+認証アプリの6桁コードを`--otp=`で渡せば、ttyが無くても通ります。この判定は
+段階0で行うので、版を上げる前に止まります。
+
+### 途中で失敗したとき
+
+公開の手前で落ちると、版を上げたコミットだけがmainに残ります。同じコマンドを
+もう一度実行すると版がさらに上がるため、`--resume`を使います。package.jsonの
+現在の版をそのまま対象にして、済んでいる段階を飛ばします。公開済みならpublishを
+飛ばし、Releaseが既にあれば作り直しません。
+
+各段階は外部コマンドの終了コードを見ます。Releaseの作成に失敗した回が過去にあり、
+そのときは最後まで成功したように表示されていました。
 
 ## npmの公開範囲
 
@@ -66,7 +77,7 @@ npmは一度公開すると同じバージョンを差し替えられません (
 - rules/ とpresets/ に社名・製品名・非公開URLが混じっていないこと
   (CONTRIBUTINGの受け入れ拒否条件と同じ基準)
 - `npm whoami` が意図したアカウントであること
-- 2要素認証が有効であること (publish時にブラウザ認証を求められる状態が正常)
+- 2要素認証が有効であること (publish時にブラウザ認証か`--otp`を求められる状態が正常)
 - 依存が最小であること。現在の実行時依存はjs-yamlのみで、追加は慎重に判断する
 
 トークンをCIに置いて自動公開する構成は採っていません。公開の頻度が低く、
