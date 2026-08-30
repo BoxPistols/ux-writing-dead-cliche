@@ -111,3 +111,15 @@ export function applyFixes(text, rules, { maskedText = text } = {}) {
 export function hasErrors(violations) {
   return violations.some((v) => v.severity === 'error');
 }
+
+// 生成物 (docs/app-data.json) からプリセットのルール列を組み立てる。
+// プリセットは severity を上書きすることがあり、その適用をここに閉じ込める。
+// 利用側が ID を引くだけの素朴な実装を書くと、上書きが落ちて paper と business の
+// 判定が同一になる (実際に起きた)。JSONを読む経路は必ずこの関数を通す。
+export function rulesForPresetData(data, presetName, { includeManual = false } = {}) {
+  const ids = new Set(data?.presets?.[presetName] ?? []);
+  const overrides = data?.presetInfo?.[presetName]?.severity ?? {};
+  return (data?.rules ?? [])
+    .filter((r) => ids.has(r.id) && (includeManual || !r.manual))
+    .map((r) => (overrides[r.id] ? { ...r, severity: overrides[r.id] } : r));
+}

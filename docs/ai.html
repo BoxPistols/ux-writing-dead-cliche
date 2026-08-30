@@ -161,7 +161,7 @@ footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(-
   <span id="dict-version"></span>
 </footer>
 <script type="module">
-import { check, maskMarkdownCode } from './engine.mjs';
+import { check, maskMarkdownCode, rulesForPresetData } from './engine.mjs';
 
 const $ = (id) => document.getElementById(id);
 let data = null;
@@ -175,13 +175,9 @@ const PRESET_USE = {
 let before = '';      // 反映前の本文。元に戻すために持つ
 let rewritten = '';
 
+// プリセットの解決 (ID の絞り込みと severity 上書き) は engine 側に閉じ込めてある
 function activeRules() {
-  const ids = new Set(data.presets[preset]);
-  // プリセットは severity を上書きすることがある (paperは修辞疑問と呼びかけをerrorに上げる)
-  const sev = data.presetInfo[preset]?.severity ?? {};
-  return data.rules
-    .filter((r) => ids.has(r.id) && !r.manual)
-    .map((r) => (sev[r.id] ? { ...r, severity: sev[r.id] } : r));
+  return rulesForPresetData(data, preset);
 }
 
 function violationsOf(text) {
