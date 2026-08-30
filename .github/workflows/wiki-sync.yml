@@ -34,6 +34,7 @@ jobs:
             echo ""
             echo "- [[導入マニュアル|adoption-guide]] — 既存プロダクトに入れる手順書"
             echo "- [[導入方法とユースケース|usage]] — 機能別の使い方"
+            echo "- [[スキルとプラグインの基本|claude-plugin-basics]] — Claude Code のスキル / プラグインの仕組みと配布経路"
             echo "- [[類似ツールとの比較|comparison]] — textlint との使い分けと併用構成"
             echo "- [[実施前・実施後の比較|before-after]] — 書き直しコーパスの対訳表"
             echo "- [[設計ドキュメント|design]] — アーキテクチャと未解決課題"

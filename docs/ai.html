@@ -114,6 +114,7 @@ footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(-
 </main>
 <footer>
   判定は<a href="https://github.com/BoxPistols/ux-writing-dead-cliche">CLIと同じエンジン</a>がブラウザ内で実行します。書き直しだけがAPIを使います。
+  <span id="dict-version"></span>
 </footer>
 <script type="module">
 import { check, maskMarkdownCode } from './engine.mjs';
@@ -407,6 +408,8 @@ fetch('./app-data.json').then((r) => r.json()).then((d) => {
     sel.appendChild(o);
   }
   sel.addEventListener('change', () => { preset = sel.value; renderSummary(); });
+  // 古い版がキャッシュされていると、辞書を更新しても検出が増えない。版を出して見分けられるようにする
+  $('dict-version').textContent = ` 辞書 v${d.version}`;
   renderSummary();
 }).catch(() => {
   setStatus('辞書データを読み込めませんでした。再読み込みしてください', 'bad');
