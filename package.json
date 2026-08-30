@@ -1,7 +1,7 @@
 {
   "name": "textlint-rule-ux-writing-dead-cliche",
-  "version": "0.13.2",
-  "description": "AI が日本語文章に持ち込むクリシェを検出し、平易な文章へ直すための辞書とツール",
+  "version": "0.14.0",
+  "description": "AI特有の日本語クリシェを検出し、平易な文章へ直すための辞書とツール。CLI・textlint・Claude Codeプラグインで同じ辞書が動く",
   "type": "module",
   "bin": {
     "dead-cliche": "./src/cli.mjs"
@@ -16,7 +16,9 @@
     "src",
     "rules",
     "presets",
-    "schema"
+    "schema",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "test": "node --test",

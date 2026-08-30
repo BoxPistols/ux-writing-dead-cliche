@@ -137,6 +137,7 @@ button, .button {
 .help-modal p, .help-modal li { font-size: var(--fs-s); margin: 4px 0; }
 .help-modal ol { padding-left: 20px; margin: 4px 0; }
 .help-close { margin-top: 14px; }
+.ai-link { font-size: var(--fs-s); color: var(--ink-soft); margin: 0; }
 .dup-notice {
   background: var(--indigo-soft); border-radius: var(--radius);
   padding: 10px 14px; font-size: var(--fs-s);
@@ -149,14 +150,6 @@ button, .button {
   border: 1px solid var(--line); border-radius: 999px;
   background: var(--card); color: var(--ink-soft); padding: 2px 12px;
 }
-.ai-panel { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 4px 16px 14px; }
-.ai-panel summary { cursor: pointer; font-weight: 700; padding: 10px 0; }
-.ai-panel .row { display: flex; gap: 8px; flex-wrap: wrap; }
-.ai-panel .row input { flex: 1; min-width: 180px; }
-.ai-panel .note { font-size: var(--fs-min); color: var(--ink-soft); margin: 6px 0 10px; }
-.ai-status { font-size: var(--fs-s); margin: 8px 0 0; }
-.ai-status.ok { color: var(--green); }
-.ai-status.err { color: var(--shu); }
 .tour-dim { position: fixed; inset: 0; z-index: 30; background: color-mix(in srgb, var(--paper) 45%, transparent); }
 .tour-dim[hidden] { display: none; }
 .tour-ring {
@@ -257,16 +250,7 @@ footer a { color: var(--indigo); }
         <span>社名・製品名・顧客名・非公開URLを含んでいません<span class="req">必須</span></span>
       </label>
     </fieldset>
-    <details class="ai-panel" id="ai-panel">
-      <summary>AI補完を使う (任意・BYOK)</summary>
-      <p class="note">あなたのOpenAI APIキーで、入力途中の項目の下書きをAIに作らせます。キーはこのページのメモリ内だけで使い、保存しません。通信はあなたのブラウザからOpenAIへ直接送られ、このサイトのサーバーは存在しません。生成結果は空欄にだけ入り、あなたの入力を上書きしません。</p>
-      <div class="row">
-        <input type="password" id="ai-key" placeholder="sk-..." autocomplete="off" aria-label="OpenAI APIキー">
-        <input type="text" id="ai-model" value="gpt-4o-mini" aria-label="モデル名">
-        <button type="button" class="ghost" id="ai-suggest">空欄の下書きを作らせる</button>
-      </div>
-      <p class="ai-status" id="ai-status" aria-live="polite"></p>
-    </details>
+    <p class="ai-link">文章そのものをAIに書き直させたい場合は<a href="./ai.html">AIで書き直すページ</a>を使ってください (このフォームは辞書への提案専用です)。</p>
   </form>
   <aside>
     <div class="panel">
@@ -493,58 +477,6 @@ import { check } from './engine.mjs';
   $('cat').addEventListener('change', function () { renderTemplates(); autoSlug(); });
   $('expr').addEventListener('input', function () { autoSlug(); dupCheck(); });
 
-  $('ai-suggest').addEventListener('click', async function () {
-    var btn = $('ai-suggest');
-    if (btn.disabled) return;
-    var st = $('ai-status');
-    var key = $('ai-key').value.trim();
-    if (!key) { st.className = 'ai-status err'; st.textContent = 'APIキーを入力してください (保存はされません)'; return; }
-    var expr = $('expr').value.trim();
-    if (!expr) { st.className = 'ai-status err'; st.textContent = '先に「表現そのもの」を入力してください'; return; }
-    btn.disabled = true;
-    st.className = 'ai-status'; st.textContent = '生成中…';
-    var prompt = '日本語ライティング検査ツールの辞書エントリの下書きを作ります。対象の表現:「' + expr + '」(カテゴリ: ' + $('cat').value + ')。' +
-      'JSONだけを返してください: {"why": "なぜ避けるべきか(この表現で何の情報が欠けるか、常体で1文)", "ask": "代わりに何を書くべきかの指示(常体で1文)", "bad": "その表現を使った悪い例文1つ", "good": "同じ内容を具体的な事実で書き直した良い例文1つ(語尾は敬体)", "deny": "同じ語が正当に使われる別分野の例文1つ(無ければ空文字)"}。' +
-      '制約: 良い例に誇張・比喩・絵文字を使わない。日本語と英数字の間に半角スペースを入れない。';
-    try {
-      var res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-        signal: AbortSignal.timeout(60000),
-        body: JSON.stringify({
-          model: $('ai-model').value.trim() || 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          response_format: { type: 'json_object' },
-          temperature: 0.4
-        })
-      });
-      if (!res.ok) throw new Error('OpenAI APIが ' + res.status + ' を返しました');
-      var data = await res.json();
-      var out = JSON.parse(data.choices[0].message.content);
-      var filled = [];
-      [['why', 'why'], ['ask', 'ask'], ['bad', 'bad'], ['good', 'good'], ['deny', 'deny']].forEach(function (m) {
-        var el = $(m[0]);
-        if (typeof out[m[1]] === 'string' && out[m[1]] && !el.value.trim()) { el.value = out[m[1]]; filled.push(m[0]); }
-      });
-      render();
-      var verdict = '';
-      var goodNow = $('good').value.trim();
-      if (goodNow && dict) {
-        var hits = check(goodNow, machineRules('business'));
-        verdict = hits.length
-          ? ' 注意: 現在の良い例欄に検出が' + hits.length + '件あります (businessプリセット)。手直ししてください。'
-          : ' 現在の良い例欄はbusinessプリセットの検査を通過しています。';
-      }
-      st.className = 'ai-status ok';
-      st.textContent = (filled.length ? '空欄' + filled.length + '項目に下書きを入れました。内容は必ず確認してください。' : '空欄がないため何も変更していません。') + verdict;
-    } catch (e) {
-      st.className = 'ai-status err';
-      st.textContent = '生成に失敗しました: ' + (e.name === 'TimeoutError' ? '60秒でタイムアウトしました' : e.message);
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
   fields.forEach(function (id) { $(id).addEventListener('input', render); });
   $('consent').addEventListener('change', render);
   document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener('change', render); });
@@ -574,8 +506,7 @@ import { check } from './engine.mjs';
     ['.mode', 'まず目的を選びます。OSSの辞書へ提案するか、自分のプロジェクト専用の禁止ワードを作るか。'],
     ['#expr', '見つけた表現をそのまま入力します。既に辞書にある表現なら、この下に通知が出ます。'],
     ['#yaml', '入力に合わせて、提案の下書きがここに自動で組み上がります。レビューされるのはこの内容です。'],
-    ['#issue', '必須項目がそろうと押せます。入力済みのGitHub Issueが開き、送信するかはGitHub上であなたが決めます。'],
-    ['#ai-panel', '任意: あなたのOpenAI APIキーで、空欄の下書きをAIに作らせることもできます。キーは保存されません。']
+    ['#issue', '必須項目がそろうと押せます。入力済みのGitHub Issueが開き、送信するかはGitHub上であなたが決めます。']
   ];
   var tourDim = document.createElement('div');
   tourDim.className = 'tour-dim';
@@ -598,8 +529,7 @@ import { check } from './engine.mjs';
   function currentTarget() {
     while (tourIdx < TOUR.length) {
       var el = document.querySelector(TOUR[tourIdx][0]);
-      if (TOUR[tourIdx][0] === '#ai-panel' && el) el.open = true;
-      if (stepVisible(el)) return el;
+        if (stepVisible(el)) return el;
       tourIdx++; // 非表示のステップ (自分のプロジェクト用モードの提案ボタン等) はスキップ
     }
     return null;
