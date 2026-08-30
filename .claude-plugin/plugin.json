@@ -1,7 +1,7 @@
 {
   "name": "dead-cliche",
   "description": "AI日本語クリシェの検出と平易な書き直し。UXライティングレビュー、署名なしのPR・コミット文面、Slackレビュー依頼文の生成を含む",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "author": {
     "name": "BoxPistols"
   },
