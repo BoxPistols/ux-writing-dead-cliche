@@ -73,9 +73,9 @@ if (!dryRun && !skipNpm) {
   // 2要素認証はTTYか--otpのどちらかが要る。公開しない回にまで要求しない
   if (willPublish && !otp && !process.stdin.isTTY) {
     fail([
-      'npmの2要素認証を通せません。publishにはTTYか--otpのどちらかが要ります。',
-      `  認証アプリがあるなら: npm run release ${bump || '--'} -- --otp=123456`,
-      '  無いなら、Claude Codeを経由しない端末から実行してください。',
+      'npmの2要素認証を通せません。publishにはttyか--otpのどちらかが要ります。',
+      `  ターミナルから実行してください: npm run release ${bump || '--resume'}`,
+      '  認証アプリ(TOTP)を登録しているアカウントに限り、--otp=123456 を付ければttyなしでも通ります。',
     ].join('\n'));
   }
   console.log(`  npm: ${npmUser} / ${willPublish ? `2要素認証: ${otp ? '--otp' : 'TTYで対話'}` : `${version} は公開済み`}`);
