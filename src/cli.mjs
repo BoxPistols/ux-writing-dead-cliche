@@ -83,7 +83,18 @@ function cmdCheck(args) {
     const text = fs.readFileSync(0, 'utf8');
     run(text, '(stdin)', null);
   } else {
-    for (const f of files) run(fs.readFileSync(f, 'utf8'), f, f);
+    for (const f of files) {
+      // 指定を誤ったときに生のスタックトレースを出さない
+      if (!fs.existsSync(f)) {
+        console.error(`${f} が見つかりません`);
+        process.exit(2);
+      }
+      if (fs.statSync(f).isDirectory()) {
+        console.error(`${f} はディレクトリです。ファイルを指定してください (例: ${f}/*.md)`);
+        process.exit(2);
+      }
+      run(fs.readFileSync(f, 'utf8'), f, f);
+    }
   }
 
   const counts = { error: 0, warn: 0, info: 0 };
@@ -95,6 +106,12 @@ function cmdCheck(args) {
     console.log('既知のパターンは見つかりませんでした (辞書にある表現の有無だけを見ています)');
   } else {
     console.log(`\n${total} 件 (error ${errors} 件)`);
+    // 書式の検出は1件のルールで大量に当たり、文章の指摘を件数で押し流す。
+    // 先に fix を通せば残りが読める量になることを、その場で伝える
+    const fixable = results.reduce((n, r) => n + r.violations.filter((v) => v.fix !== undefined).length, 0);
+    if (fixable > 0 && total - fixable > 0) {
+      console.log(`うち ${fixable} 件は dead-cliche fix --write で自動修正できます。先に実行すると残り ${total - fixable} 件が読みやすくなります`);
+    }
   }
   // errorとwarnは修正必須 (既定)。--fail-on error で従来挙動、--fail-on info で全件必須にできる
   const order = { info: 0, warn: 1, error: 2 };
