@@ -159,8 +159,10 @@ if (!ciOk) fail(`CIが5分以内に完了しませんでした (${headSha.slice(
 console.log(`  CI: success (${headSha.slice(0, 7)})`);
 
 if (!skipNpm) {
-  step(7, `npmに公開する (${otp ? '--otpで認証' : '2要素認証のためブラウザが開きます'})`);
-  if (isPublished(version)) {
+  // 飛ばす回に認証の案内を出さない
+  const upAlready = isPublished(version);
+  step(7, `npmに公開する${upAlready ? '' : ` (${otp ? '--otpで認証' : '2要素認証のためブラウザが開きます'})`}`);
+  if (upAlready) {
     console.log(`  ${version} は公開済みです。飛ばします`);
   } else {
     const publishArgs = ['publish', '--access', 'public'];
