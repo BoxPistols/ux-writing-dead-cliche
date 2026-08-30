@@ -133,7 +133,11 @@ try { const p = localStorage.getItem('dc-preset'); if (p) preset = p; } catch (e
 
 function activeRules(name = preset) {
   const ids = new Set(data.presets[name]);
-  return data.rules.filter((r) => ids.has(r.id) && !r.manual);
+  // プリセットは severity を上書きすることがある (paperは修辞疑問と呼びかけをerrorに上げる)
+  const sev = data.presetInfo[name]?.severity ?? {};
+  return data.rules
+    .filter((r) => ids.has(r.id) && !r.manual)
+    .map((r) => (sev[r.id] ? { ...r, severity: sev[r.id] } : r));
 }
 
 // 検出0件のとき、他のプリセットなら当たるかを調べる。プリセットで検出範囲が変わることを
@@ -149,7 +153,8 @@ function wider(text) {
 
 function setPresetNote() {
   const info = data.presetInfo[preset];
-  $('preset-note').textContent = `${info.description} このプリセットは${info.activeCount}規則で検査します。`;
+  // 件数は自動判定できる規則の数。人力判断のルールは辞書にあるがブラウザでは実行しない
+  $('preset-note').textContent = `${info.description} このプリセットが自動判定する規則は${info.activeCount}件です。`;
 }
 
 function loadSample() {
@@ -238,7 +243,7 @@ function render() {
     const info = data.presetInfo[preset];
     const ok = document.createElement('div');
     ok.className = 'allclear';
-    ok.textContent = `${preset}の${info.activeCount}規則には一致しませんでした`;
+    ok.textContent = `${preset}が自動判定する${info.activeCount}規則には一致しませんでした`;
     const note = document.createElement('p');
     note.className = 'why';
     note.textContent = 'この検査は辞書にある表現の有無だけを見ます。文章が読みやすいか、内容が正しいかは判定していません。';

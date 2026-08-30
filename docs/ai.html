@@ -177,7 +177,11 @@ let rewritten = '';
 
 function activeRules() {
   const ids = new Set(data.presets[preset]);
-  return data.rules.filter((r) => ids.has(r.id) && !r.manual);
+  // プリセットは severity を上書きすることがある (paperは修辞疑問と呼びかけをerrorに上げる)
+  const sev = data.presetInfo[preset]?.severity ?? {};
+  return data.rules
+    .filter((r) => ids.has(r.id) && !r.manual)
+    .map((r) => (sev[r.id] ? { ...r, severity: sev[r.id] } : r));
 }
 
 function violationsOf(text) {
@@ -547,7 +551,7 @@ fetch('./app-data.json').then((r) => r.json()).then((d) => {
   }
   const renderPresetDesc = () => {
     const info = d.presetInfo[preset];
-    $('preset-desc').textContent = info ? `${info.description} (有効 ${info.activeCount} 規則)` : '';
+    $('preset-desc').textContent = info ? `${info.description} (自動判定する規則 ${info.activeCount} 件)` : '';
   };
   sel.addEventListener('change', () => { preset = sel.value; renderPresetDesc(); renderSummary(); });
   renderPresetDesc();

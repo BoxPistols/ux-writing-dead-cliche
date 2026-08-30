@@ -37,6 +37,9 @@ const guards = [
 const rules = all.map((r) => ({
   id: r.id,
   cat: r.category,
+  // engine.mjs は violation.category に rule.category を入れる。cat だけだと
+  // ブラウザ経路の検出結果で category が undefined になる
+  category: r.category,
   catLabel: CATEGORY_LABEL[r.category],
   reprs: repr(r),
   severity: r.severity,
@@ -72,11 +75,20 @@ for (const name of ['paper', 'business', 'chat', 'ux-microcopy']) {
   if (!hits.length) {
     throw new Error(`presets: ${name} の例文が検出0件です。辞書の変更に合わせて例文を直してください`);
   }
+  // プリセットの overrides で変わった severity を持ち出す。
+  // ルール本体は1つの severity しか持たないので、ここを落とすとブラウザ経路だけ
+  // paper と business の判定が同一になる (YAML経路との食い違い)
+  const severity = {};
+  for (const r of active) {
+    const base = all.find((a) => a.id === r.id)?.severity;
+    if (r.severity !== base) severity[r.id] = r.severity;
+  }
   presetInfo[name] = {
     description: preset.description,
     // 手動確認の規則はWebアプリでは実行しないので、画面に出す件数からも除く
     activeCount: active.filter((r) => !r.manual).length,
     sample,
+    severity,
   };
 }
 
