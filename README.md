@@ -114,6 +114,9 @@ PR本文自体の検査です。
 | コマンド | /dead-cliche:review-request | Slack用レビュー依頼文の生成 (プレーンテキスト) |
 | コマンド | /dead-cliche:pr-review | PRのレビュー (散文とUI文言の検査、署名なしのコメント文面) |
 | コマンド | /dead-cliche:compose | 導入・説明・結論の3段落での文章生成 (チェッカー通過を保証) |
+| コマンド | /dead-cliche:sync | 辞書を変更したあとの生成物の再生成、テスト、自己検査 |
+| コマンド | /dead-cliche:gaps | 辞書の取りこぼしを数え、広げる候補を出す |
+| コマンド | /dead-cliche:release | バージョン更新から公開までの実行と検証 |
 | エージェント | dead-cliche-editor | 長文原稿の隔離推敲 |
 | フック | PostToolUse | Markdownを書いた直後に自動チェックし、検出時は書き直しを要求 |
 
