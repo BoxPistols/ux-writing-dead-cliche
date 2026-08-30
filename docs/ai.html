@@ -58,6 +58,26 @@ button:disabled { opacity: .45; cursor: default; }
 .left b { color: var(--ink-soft); font-weight: 500; font-size: var(--fs-min); letter-spacing: .04em; display: block; margin-bottom: 4px; }
 .left p { margin: 3px 0 0; }
 .expr { font-family: var(--font-mono); font-weight: 700; background: var(--mono-bg); border-radius: 3px; padding: 1px 8px; }
+.settings-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.settings-bar .state { font-size: var(--fs-s); color: var(--ink-soft); }
+.settings-bar .state b { font-weight: 500; color: var(--ink); font-family: var(--font-mono); }
+.settings-bar .state .unset { color: var(--shu); font-weight: 700; }
+.overlay { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 20px; background: color-mix(in srgb, var(--paper) 55%, transparent); }
+.overlay[hidden] { display: none; }
+.modal { width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; background: color-mix(in srgb, var(--card) 85%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 8px; padding: 22px 26px; }
+.modal h2 { margin: 0 0 4px; font-size: var(--fs-m); }
+.modal .lead { margin: 0 0 18px; font-size: var(--fs-s); color: var(--ink-soft); }
+.modal .field { display: block; margin-bottom: 16px; }
+.modal .field > label { display: block; font-size: var(--fs-min); color: var(--ink-soft); letter-spacing: .04em; margin-bottom: 4px; }
+.modal input[type="password"], .modal select { width: 100%; }
+.hint { font-size: var(--fs-s); color: var(--ink-soft); margin: 5px 0 0; }
+.modal details { margin-top: 8px; }
+.modal summary { font-size: var(--fs-s); color: var(--indigo); cursor: pointer; }
+.modal pre { margin: 6px 0 0; padding: 10px 12px; background: var(--mono-bg); border-radius: var(--radius); font-family: var(--font-mono); font-size: var(--fs-min); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.modal-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.test-status { font-size: var(--fs-s); margin: 8px 0 0; color: var(--ink-soft); }
+.test-status.ok { color: var(--green); font-weight: 700; }
+.test-status.bad { color: var(--shu); font-weight: 700; }
 footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(--ink-soft); font-size: var(--fs-min); }
 </style>
 </head>
@@ -72,25 +92,11 @@ footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(-
 <main>
   <div class="notice">
     <p>このページは、あなたが入力した本文とAPIキーを選んだ提供元 (<span id="vendor">OpenAI</span>) のAPIへ直接送信します。送信しないで使いたい場合は<a href="./index.html">検出だけのページ</a>を使ってください。</p>
-    <p>キーはこのタブのメモリにだけ置きます。保存しないので、再読み込みすると入れ直しになります。料金はキーを発行したアカウントに請求されます。</p>
   </div>
 
-  <div class="setup">
-    <div class="field">
-      <label for="key" id="key-label">OpenAI APIキー</label>
-      <input type="password" id="key" placeholder="sk-..." autocomplete="off" spellcheck="false">
-    </div>
-    <div class="field">
-      <label for="model">モデル</label>
-      <select id="model">
-        <option value="openai">OpenAI gpt-5.6-luna</option>
-        <option value="gemini">Gemini 2.5 Flash-Lite (最安)</option>
-      </select>
-    </div>
-    <div class="field">
-      <label for="preset">プリセット</label>
-      <select id="preset"></select>
-    </div>
+  <div class="settings-bar">
+    <button type="button" class="ghost" id="settings-open">API設定</button>
+    <span class="state" id="settings-state" aria-live="polite"></span>
   </div>
 
   <div class="cols">
@@ -112,6 +118,44 @@ footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(-
     </section>
   </div>
 </main>
+<div class="overlay" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div class="modal">
+    <h2 id="settings-title">API設定</h2>
+    <p class="lead">キーはこのタブのメモリにだけ置きます。保存しないので、再読み込みすると入れ直しになります。料金はキーを発行したアカウントに請求されます。</p>
+
+    <div class="field">
+      <label for="model">モデル</label>
+      <select id="model">
+        <option value="openai">OpenAI gpt-5.6-luna</option>
+        <option value="gemini">Gemini 2.5 Flash-Lite (最安)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="key" id="key-label">OpenAI APIキー</label>
+      <input type="password" id="key" placeholder="sk-..." autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="field">
+      <label for="preset">プリセット</label>
+      <select id="preset"></select>
+      <p class="hint" id="preset-desc"></p>
+    </div>
+
+    <div class="field">
+      <button type="button" class="ghost" id="test">接続を確認</button>
+      <p class="test-status" id="test-status">短い文を1往復させて、キーが使えるかどうかを確かめます。本文は送りません。</p>
+      <details>
+        <summary>確認のときに送る内容を見る</summary>
+        <pre id="test-payload"></pre>
+      </details>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="primary" id="settings-close">閉じる</button>
+    </div>
+  </div>
+</div>
 <footer>
   判定は<a href="https://github.com/BoxPistols/ux-writing-dead-cliche">CLIと同じエンジン</a>がブラウザ内で実行します。書き直しだけがAPIを使います。
   <span id="dict-version"></span>
@@ -122,6 +166,12 @@ import { check, maskMarkdownCode } from './engine.mjs';
 const $ = (id) => document.getElementById(id);
 let data = null;
 let preset = 'business';
+const PRESET_USE = {
+  paper: '設計書・論文・提案書',
+  business: 'PR・issue・社内文書',
+  chat: 'チャット・カジュアルな文章',
+  'ux-microcopy': '画面の文言',
+};
 let before = '';      // 反映前の本文。元に戻すために持つ
 let rewritten = '';
 
@@ -143,6 +193,44 @@ function renderSummary() {
   const n = text.trim() ? violationsOf(text).length : 0;
   $('summary').textContent = text.trim() ? (n ? `${n}件` : '検出なし') : '';
   $('run').disabled = !(text.trim() && n > 0 && $('key').value.trim());
+  renderSettingsState();
+}
+
+// 接続確認で送る内容。この2つの定数が、モーダルの表示にもリクエストにも同じまま渡る。
+// 片方だけを書き換えると、見せている内容と送る内容がずれる
+const TEST_SYSTEM = '接続確認です。返答は ok の1語だけにしてください。';
+const TEST_USER = 'ok';
+
+function renderSettingsState() {
+  const el = $('settings-state');
+  if (!el) return;
+  el.textContent = '';
+  if (!$('key').value.trim()) {
+    const s = document.createElement('span');
+    s.className = 'unset';
+    s.textContent = 'キーが未設定です';
+    el.appendChild(s);
+    return;
+  }
+  const info = PROVIDERS[$('model').value];
+  const b = document.createElement('b');
+  b.textContent = `${info.vendor} ${info.model}`;
+  el.appendChild(b);
+  el.appendChild(document.createTextNode(` ・ ${preset}`));
+}
+
+function renderTestPayload() {
+  const provider = $('model').value;
+  const info = PROVIDERS[provider];
+  $('test-payload').textContent = [
+    `送信先: ${endpointOf(provider)}`,
+    `モデル: ${info.model}`,
+    '',
+    `system: ${TEST_SYSTEM}`,
+    `user: ${TEST_USER}`,
+    '',
+    `これに加えて、${info.keyLabel}が認証ヘッダで送られます。`,
+  ].join('\n');
 }
 
 function showLeft(list) {
@@ -246,10 +334,16 @@ const PROVIDERS = {
   gemini: { keyLabel: 'Gemini APIキー', keyHint: 'AIza...', model: 'gemini-2.5-flash-lite', vendor: 'Google' },
 };
 
+function endpointOf(provider) {
+  return provider === 'gemini'
+    ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(PROVIDERS.gemini.model)}:generateContent`
+    : 'https://api.openai.com/v1/chat/completions';
+}
+
 async function askOpenAI(key, system, user) {
   let res;
   try {
-    res = await fetch('https://api.openai.com/v1/chat/completions', {
+    res = await fetch(endpointOf('openai'), {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
       body: JSON.stringify({
@@ -278,7 +372,7 @@ async function askOpenAI(key, system, user) {
 }
 
 async function askGemini(key, system, user) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(PROVIDERS.gemini.model)}:generateContent`;
+  const url = endpointOf('gemini');
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
@@ -321,12 +415,21 @@ $('run').addEventListener('click', async () => {
   // 制約を規律より先に置く。規律側の「要点を1文で再掲する」のような ask は、
   // 元の文に中身が無いとき捏造の指示として働くため、上書きする形で書く
   const system = [
-    'あなたは日本語の編集者です。渡された本文から、指摘された表現を取り除きます。',
+    'あなたは日本語の編集者です。指摘された表現を使わずに、同じ意味が伝わる文に書き直します。',
     '',
-    '次を必ず守ってください。',
-    '- 本文に書かれていない情報を足さない。言い換えの材料が本文に無いときは、指摘された語を外すだけの最小限の書き換えにとどめる。推測で内容を補わない',
-    '- 行の並びを保つ。ある行の内容を別の行へ移さない。行を減らすことはあってよいが、新しい行を作らない',
-    '- 固有名詞・数値・否定を変えない',
+    '書き直しは次の順に試してください。',
+    '1. 指摘された語を、同じ意味の平易な語に置き換える。それで文が成り立つならこれが最善です (例: 「ここが核心です」→「ここが本題です」)',
+    '2. 置き換えでは収まらないときは、文の組み立てごと変える。語順・述語・助詞を入れ替えて、指摘された語がなくても通る文にする (例: 「問題の穴があっても緑です」→「問題があっても成功してしまいます」)',
+    '3. 本文の文脈からは意味を決められないときは、その文を変えずにそのまま残す。推測で書き換えない',
+    '',
+    '語を消すだけで済ませないでください。指摘された語を抜いた結果、意味の通らない文や、主語・目的語・述語を欠いた文にしてはいけません。',
+    '比喩で書かれている箇所は、その比喩が本文の中で指している事柄に置き換えます。指している事柄が本文から読み取れない場合は3に従います。',
+    '',
+    '守る制約:',
+    '- 本文に書かれていない情報を足さない。事実・数値・固有名詞・否定を変えない',
+    '- 行の並びを保つ。ある行の内容を別の行へ移さない。新しい行を作らない',
+    '- マークダウン記法はそのまま残す。見出しの #、箇条書きの - や数字、表の |、リンクの []()、強調の記号、コードブロックの ``` を書き換えない',
+    '- コードブロックとインラインコードの中身は書き直さない',
     '- 語尾は敬体にする',
     '- 書き直した本文だけを出力する。前置き・説明・コードフェンスを付けない',
     '',
@@ -395,6 +498,40 @@ $('model').addEventListener('change', () => {
   $('key-label').textContent = info.keyLabel;
   $('key').placeholder = info.keyHint;
   $('vendor').textContent = info.vendor;
+  renderTestPayload();
+  renderSettingsState();
+});
+
+const settingsEl = $('settings');
+function openSettings() { settingsEl.hidden = false; $('key').focus(); }
+function closeSettings() { settingsEl.hidden = true; $('settings-open').focus(); }
+$('settings-open').addEventListener('click', openSettings);
+$('settings-close').addEventListener('click', closeSettings);
+settingsEl.addEventListener('click', (e) => { if (e.target === settingsEl) closeSettings(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !settingsEl.hidden) closeSettings(); });
+
+$('test').addEventListener('click', async () => {
+  const key = $('key').value.trim();
+  const el = $('test-status');
+  if (!key) {
+    el.textContent = 'キーを入力してから確認してください。';
+    el.className = 'test-status bad';
+    $('key').focus();
+    return;
+  }
+  $('test').disabled = true;
+  el.textContent = '確認しています…';
+  el.className = 'test-status';
+  try {
+    await ask($('model').value, key, TEST_SYSTEM, TEST_USER);
+    el.textContent = 'このキーで応答が返りました。書き直しを実行できます。';
+    el.className = 'test-status ok';
+  } catch (e) {
+    el.textContent = String(e.message || e);
+    el.className = 'test-status bad';
+  } finally {
+    $('test').disabled = false;
+  }
 });
 
 fetch('./app-data.json').then((r) => r.json()).then((d) => {
@@ -403,14 +540,23 @@ fetch('./app-data.json').then((r) => r.json()).then((d) => {
   for (const name of Object.keys(d.presets)) {
     const o = document.createElement('option');
     o.value = name;
-    o.textContent = `${name} (${d.presetInfo[name].activeCount}規則)`;
+    // 規則数だけでは paper と business が同数で見分けられないため、用途を出す
+    o.textContent = PRESET_USE[name] ? `${name} — ${PRESET_USE[name]}` : name;
     o.selected = name === preset;
     sel.appendChild(o);
   }
-  sel.addEventListener('change', () => { preset = sel.value; renderSummary(); });
+  const renderPresetDesc = () => {
+    const info = d.presetInfo[preset];
+    $('preset-desc').textContent = info ? `${info.description} (有効 ${info.activeCount} 規則)` : '';
+  };
+  sel.addEventListener('change', () => { preset = sel.value; renderPresetDesc(); renderSummary(); });
+  renderPresetDesc();
+  renderTestPayload();
   // 古い版がキャッシュされていると、辞書を更新しても検出が増えない。版を出して見分けられるようにする
   $('dict-version').textContent = ` 辞書 v${d.version}`;
   renderSummary();
+  // キーは保存されないため、読み込み直後は必ず未設定になる。最初の操作が設定なので開いて始める
+  if (!$('key').value.trim()) openSettings();
 }).catch(() => {
   setStatus('辞書データを読み込めませんでした。再読み込みしてください', 'bad');
 });
