@@ -189,7 +189,9 @@ if (exists.status === 0) {
   console.log(`  v${version} のReleaseは作成済みです。飛ばします`);
 } else {
   const notes = process.env.RELEASE_NOTES || `v${version} の変更点は git log を参照してください。`;
-  const rel = runInherit('gh', ['release', 'create', `v${version}`, 'dist/dead-cliche-review.zip', '--title', `v${version}`, '--notes', notes]);
+  // タグはリモートの先端ではなく、テストして公開したコミットに作る。
+  // 実行中に別の場所からpushが入ると、--targetが無い場合は別のコミットにタグが付く。
+  const rel = runInherit('gh', ['release', 'create', `v${version}`, 'dist/dead-cliche-review.zip', '--title', `v${version}`, '--notes', notes, '--target', headSha]);
   if (rel.status !== 0) fail(`gh release createが失敗しました (終了コード ${rel.status})。npmには公開済みなので、続きは --resume で流せます`);
   console.log(`  Release v${version} を作成しました`);
 }
