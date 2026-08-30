@@ -152,6 +152,10 @@ const violations = check(maskMarkdownCode(text), rulesForPresetData(data, 'busin
 
 `applyFixes()` の戻り値は文字列ではなく `{ text, applied }` です。`applied` は `{ before, after }` の配列で、置換した内容を利用者に見せるために使えます。
 
+`reprs` を画面の見出しに使わないでください。悪い例から実際に一致した文字列を取っているため、書式のルールでは意味を持ちません (`formatting/jp-en-space` では `e ` が返ります)。見出しには `catLabel` と、検出ごとの `matched` を使ってください。
+
+書式のルールは1件で大量に当たります。実測では、AIが書いた設計文書33本の検出6003件のうち5752件 (96%) が `formatting/jp-en-space` でした。件数の多い順に並べると、比喩や誇張の指摘が画面から押し出されます。ルール単位に畳むか、書式と文章を分けて表示してください。
+
 ## プリセットを選ばせるなら説明を出す
 
 `paper` と `business` はルール集合が同一で、差は重大度だけです。規則数を出すと両方とも同じ数になり、見分けがつきません。用途で見せます。
