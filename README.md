@@ -243,7 +243,7 @@ YAMLを編集しない人向けに、[提案フォーム](https://boxpistols.git
 ## リリース運用
 
 配布物 (npm・プラグイン・Releases・Pages) の出し方と、公開前のセキュリティ確認は
-docs/release-guide.md にまとめています。バージョンをbumpしたら生成物の再生成が必要です
+docs/release-guide.mdにまとめています。バージョンをbumpしたら生成物の再生成が必要です
 (忘れるとCIが落ちます。npm testでも検出されます)。
 
 ## 貢献
