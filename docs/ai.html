@@ -45,6 +45,16 @@ button:disabled { opacity: .45; cursor: default; }
 .status.bad { color: var(--shu); }
 .status.ok { color: var(--green); }
 .left { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 10px 14px; font-size: var(--fs-s); }
+#compare { display: flex; flex-direction: column; gap: 8px; }
+#compare .warn { margin: 0; font-size: var(--fs-s); color: var(--shu); font-weight: 700; }
+#compare .rows { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 10px 14px; font-size: var(--fs-s); }
+#compare .row { padding: 6px 0; border-top: 1px solid var(--line); }
+#compare .row:first-child { border-top: 0; }
+#compare .row p { margin: 0; line-height: 1.7; }
+#compare .row .b { color: var(--ink-soft); }
+#compare .row .b::before { content: "元 "; font-family: var(--font-mono); }
+#compare .row .a::before { content: "後 "; font-family: var(--font-mono); color: var(--ink-soft); }
+#compare .row.drastic .a { color: var(--shu); }
 .left b { color: var(--ink-soft); font-weight: 500; font-size: var(--fs-min); letter-spacing: .04em; display: block; margin-bottom: 4px; }
 .left p { margin: 3px 0 0; }
 .expr { font-family: var(--font-mono); font-weight: 700; background: var(--mono-bg); border-radius: 3px; padding: 1px 8px; }
@@ -98,6 +108,7 @@ footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(-
       <div class="pane-head"><strong>書き直し</strong><span class="summary" id="after-summary"></span></div>
       <div class="result" id="result"></div>
       <div id="left"></div>
+      <div id="compare"></div>
     </section>
   </div>
 </main>
@@ -151,6 +162,74 @@ function showLeft(list) {
     el.appendChild(p);
   }
   box.appendChild(el);
+}
+
+// 辞書は意味を見ないので、書き換えの前後を機械的に照合する。
+// 目的は良し悪しの判定ではなく、人が見るべき箇所を指すこと
+function bigrams(s) {
+  const t = s.replace(/\s+/g, '');
+  const out = new Set();
+  for (let i = 0; i < t.length - 1; i++) out.add(t.slice(i, i + 2));
+  return out;
+}
+function overlap(a, b) {
+  const x = bigrams(a);
+  const y = bigrams(b);
+  if (!x.size || !y.size) return a === b ? 1 : 0;
+  let hit = 0;
+  for (const g of x) if (y.has(g)) hit++;
+  return (2 * hit) / (x.size + y.size);
+}
+function compare(before, after) {
+  const bl = before.split('\n').filter((l) => l.trim());
+  const al = after.split('\n').filter((l) => l.trim());
+  const warnings = [];
+  if (bl.length !== al.length) {
+    warnings.push(`行数が ${bl.length} 行から ${al.length} 行に変わりました。行の対応を確かめてください。`);
+  }
+  const num = (s) => (s.match(/\d+(?:[.,]\d+)*/g) || []).join(',');
+  if (num(before) !== num(after)) {
+    warnings.push(`数値が変わりました (${num(before) || 'なし'} → ${num(after) || 'なし'})。`);
+  }
+  const rows = [];
+  for (let i = 0; i < Math.max(bl.length, al.length); i++) {
+    const b = bl[i] ?? '';
+    const a = al[i] ?? '';
+    const sim = b && a ? overlap(b, a) : 0;
+    rows.push({ b, a, drastic: !!b && !!a && sim < 0.34 });
+  }
+  const drastic = rows.filter((r) => r.drastic).length;
+  if (drastic) {
+    warnings.push(`${drastic}行が元の文とほとんど重なっていません。書き足されていないか確かめてください。`);
+  }
+  return { rows, warnings };
+}
+
+function showCompare(before, after) {
+  const box = $('compare');
+  box.textContent = '';
+  const { rows, warnings } = compare(before, after);
+  for (const w of warnings) {
+    const p = document.createElement('p');
+    p.className = 'warn';
+    p.textContent = w;
+    box.appendChild(p);
+  }
+  const list = document.createElement('div');
+  list.className = 'rows';
+  for (const r of rows) {
+    const row = document.createElement('div');
+    row.className = 'row' + (r.drastic ? ' drastic' : '');
+    const b = document.createElement('p');
+    b.className = 'b';
+    b.textContent = r.b || '(元は無し)';
+    const a = document.createElement('p');
+    a.className = 'a';
+    a.textContent = r.a || '(削られました)';
+    row.append(b, a);
+    list.appendChild(row);
+  }
+  box.appendChild(list);
 }
 
 function setStatus(text, kind) {
@@ -238,7 +317,21 @@ $('run').addEventListener('click', async () => {
   const provider = $('model').value;
   const original = $('src').value;
   const guard = data.guards.find((g) => g.id === 'writing-guard-compact');
-  const system = `${guard.body}\n\n書き直した本文だけを出力してください。前置き・説明・コードフェンスを付けないでください。固有名詞・数値・否定は元の文と一致させ、事実を足したり削ったりしないでください。`;
+  // 制約を規律より先に置く。規律側の「要点を1文で再掲する」のような ask は、
+  // 元の文に中身が無いとき捏造の指示として働くため、上書きする形で書く
+  const system = [
+    'あなたは日本語の編集者です。渡された本文から、指摘された表現を取り除きます。',
+    '',
+    '次を必ず守ってください。',
+    '- 本文に書かれていない情報を足さない。言い換えの材料が本文に無いときは、指摘された語を外すだけの最小限の書き換えにとどめる。推測で内容を補わない',
+    '- 行の並びを保つ。ある行の内容を別の行へ移さない。行を減らすことはあってよいが、新しい行を作らない',
+    '- 固有名詞・数値・否定を変えない',
+    '- 語尾は敬体にする',
+    '- 書き直した本文だけを出力する。前置き・説明・コードフェンスを付けない',
+    '',
+    '書き方の規律 (上の制約と矛盾する場合は上の制約を優先する):',
+    guard.body,
+  ].join('\n');
 
   $('run').disabled = true;
   $('apply').disabled = $('undo').disabled = true;
@@ -260,13 +353,14 @@ $('run').addEventListener('click', async () => {
     }
     rewritten = text;
     $('result').textContent = text;
-    $('after-summary').textContent = list.length ? `${list.length}件` : '検出なし';
+    $('after-summary').textContent = list.length ? `辞書では${list.length}件` : '辞書では0件';
     showLeft(list);
+    showCompare(original, text);
+    // 0件は「辞書にある表現が無い」だけで、文意が保たれた証明ではない。
+    // 成功として書くと、意味が壊れた出力をそのまま反映させてしまう
     setStatus(
-      list.length
-        ? `検出は${firstCount}件から${list.length}件になりました。残りは辞書では直しきれていません。内容を確かめてから反映してください。`
-        : `検出は${firstCount}件から0件になりました。事実と数値が変わっていないか確かめてから反映してください。`,
-      list.length ? '' : 'ok',
+      `辞書の検出は${firstCount}件から${list.length}件になりました。辞書は書かれている表現しか見ないので、`
+      + `文意が保たれているか、元に無い内容が足されていないかは、下の照合を読んで判断してください。`,
     );
     $('apply').disabled = false;
   } catch (e) {
