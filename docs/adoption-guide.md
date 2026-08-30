@@ -82,7 +82,7 @@ https://boxpistols.github.io/ux-writing-dead-cliche/ を案内してください
 - uses: actions/setup-node@v4
   with:
     node-version: 22
-- run: npx github:BoxPistols/ux-writing-dead-cliche check README.md docs/*.md
+- run: npx textlint-rule-ux-writing-dead-cliche check README.md docs/*.md
 ```
 
 error級の検出でexit 1になります。CLIはグロブを展開しないため、
@@ -99,8 +99,8 @@ error級の検出でexit 1になります。CLIはグロブを展開しないた
 ### 既存のPR・issue本文を改善する
 
 ```
-gh pr view 123 --json body -q .body | npx github:BoxPistols/ux-writing-dead-cliche check --preset business
-gh issue view 45 --json body -q .body | npx github:BoxPistols/ux-writing-dead-cliche check --preset business
+gh pr view 123 --json body -q .body | npx textlint-rule-ux-writing-dead-cliche check --preset business
+gh issue view 45 --json body -q .body | npx textlint-rule-ux-writing-dead-cliche check --preset business
 ```
 
 書き直しまで任せる場合は、セッションで対象を指定してください
@@ -114,8 +114,8 @@ cloneできない点に注意してください。
 ```
 git clone git@github.com:OWNER/REPO.wiki.git
 cd REPO.wiki
-npx github:BoxPistols/ux-writing-dead-cliche check *.md --preset business
-npx github:BoxPistols/ux-writing-dead-cliche fix *.md --write
+npx textlint-rule-ux-writing-dead-cliche check *.md --preset business
+npx textlint-rule-ux-writing-dead-cliche fix *.md --write
 ```
 
 `fix` は表記系 (補助動詞の漢字・助詞のゆれ・冗長形など) だけを機械修正します。
@@ -133,7 +133,7 @@ Claudeセッションでの書き直しか、長文ならdead-cliche-editorエ�
 ### UI文言 (アプリの画面テキスト)
 
 ```
-npx github:BoxPistols/ux-writing-dead-cliche check src/components/*.tsx --preset ux-microcopy
+npx textlint-rule-ux-writing-dead-cliche check src/components/*.tsx --preset ux-microcopy
 ```
 
 助詞のゆれ (`が失敗しました`)、責める表現 (`不正な値`)、補助動詞の漢字などが
@@ -152,7 +152,7 @@ npx github:BoxPistols/ux-writing-dead-cliche check src/components/*.tsx --preset
 ## つまずきやすい点
 
 - npxの `github:` 指定は毎回取得が走るため遅めです。頻用するリポジトリでは
-  `npm i -D github:BoxPistols/ux-writing-dead-cliche` で固定してください
+  `npm i -D textlint-rule-ux-writing-dead-cliche` で固定してください
 - 標準入力経由ではコードフェンスのマスクと `.deadclicherc.json` が効きません。
   ファイルがあるならパスで渡してください
 - フックの検査は差分ではなくファイル全体に対して走ります。過去の文書を1行だけ

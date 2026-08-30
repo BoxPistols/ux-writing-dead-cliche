@@ -16,9 +16,9 @@ AIが日本語文章に持ち込むクリシェを検出し、平易な文章へ
 文章を検査する:
 
 ```
-npx github:BoxPistols/ux-writing-dead-cliche check 文書.md --preset business
-npx github:BoxPistols/ux-writing-dead-cliche fix 文書.md --write   # 表記系を自動修正 (既定はdry-run)
-echo "確認したい文章" | npx github:BoxPistols/ux-writing-dead-cliche check
+npx textlint-rule-ux-writing-dead-cliche check 文書.md --preset business
+npx textlint-rule-ux-writing-dead-cliche fix 文書.md --write   # 表記系を自動修正 (既定はdry-run)
+echo "確認したい文章" | npx textlint-rule-ux-writing-dead-cliche check
 ```
 
 プリセットは記事・設計書がpaper、issue・PR・Wikiがbusiness、画面文言がux-microcopyです。
@@ -67,10 +67,10 @@ Claude Codeプラグインとして使う場合:
 /plugin install dead-cliche
 ```
 
-textlintと併用する場合 (パッケージ名はtextlintの慣例に従いtextlint-rule- 接頭辞):
+textlintと併用する場合:
 
 ```
-npm install textlint github:BoxPistols/ux-writing-dead-cliche
+npm i -D textlint textlint-rule-ux-writing-dead-cliche
 ```
 
 .textlintrc.json:
@@ -239,6 +239,12 @@ YAMLを編集しない人向けに、[提案フォーム](https://boxpistols.git
 書き込みます。textlint経由でも `npx textlint --fix` で同じ置換が効きます。
 機械置換できないクリシェは書き直しが必要なため、Claudeのフックと
 `/dead-cliche:check --fix` が担当します。
+
+## リリース運用
+
+配布物 (npm・プラグイン・Releases・Pages) の出し方と、公開前のセキュリティ確認は
+docs/release-guide.md にまとめています。バージョンをbumpしたら生成物の再生成が必要です
+(忘れるとCIが落ちます。npm testでも検出されます)。
 
 ## 貢献
 

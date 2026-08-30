@@ -30,8 +30,8 @@ https://boxpistols.github.io/ux-writing-dead-cliche/ (辞書の検索と、AIチ
 ### CLIとして (エディタ・AIツールを問わない)
 
 ```
-npx github:BoxPistols/ux-writing-dead-cliche check draft.md
-cat draft.txt | npx github:BoxPistols/ux-writing-dead-cliche check --preset business
+npx textlint-rule-ux-writing-dead-cliche check draft.md
+cat draft.txt | npx textlint-rule-ux-writing-dead-cliche check --preset business
 ```
 
 リポジトリをcloneして `npm install` すれば `node src/cli.mjs check` でも動きます。
@@ -47,7 +47,7 @@ dead-cliche version
 ### textlintルールとして (既存のtextlint資産と併用)
 
 ```
-npm install github:BoxPistols/ux-writing-dead-cliche textlint
+npm i -D textlint-rule-ux-writing-dead-cliche textlint
 ```
 
 `.textlintrc.json`:
@@ -69,7 +69,7 @@ prhやpreset-ja-technical-writingと同じ設定ファイルに並べて書け�
 - uses: actions/setup-node@v4
   with:
     node-version: 22
-- run: npx github:BoxPistols/ux-writing-dead-cliche check docs/*.md README.md
+- run: npx textlint-rule-ux-writing-dead-cliche check docs/*.md README.md
 ```
 
 error級の検出があるとexit 1になり、ジョブが落ちます。

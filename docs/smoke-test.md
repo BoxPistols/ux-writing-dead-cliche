@@ -32,7 +32,7 @@ claude plugin update dead-cliche@ux-writing-dead-cliche
 ```
 
 ```
-npx github:BoxPistols/ux-writing-dead-cliche check test-dc.md --preset business
+npx textlint-rule-ux-writing-dead-cliche check test-dc.md --preset business
 ```
 
 期待値: 7件 (error 3件) でexit 1。`ゲームチェンジャー` `我々のDNA` `圧倒的`
@@ -43,7 +43,7 @@ npx github:BoxPistols/ux-writing-dead-cliche check test-dc.md --preset business
 ## テスト2: 決定論的な自動修正
 
 ```
-npx github:BoxPistols/ux-writing-dead-cliche fix test-dc.md
+npx textlint-rule-ux-writing-dead-cliche fix test-dc.md
 ```
 
 期待値: dry-runで2件が提示されます (`することができます`→`できます`、`！！`→`！`)。
@@ -64,7 +64,7 @@ cat > .deadcliche/custom-rules.yml <<'YML'
   ask: 正式名称に置き換える。
 YML
 printf '旧プロダクトXの設定画面を開きます。\n' > test-custom.md
-npx github:BoxPistols/ux-writing-dead-cliche check test-custom.md
+npx textlint-rule-ux-writing-dead-cliche check test-custom.md
 ```
 
 期待値: `custom/old-product-name 「旧プロダクトX」` がerrorで1件。
@@ -105,6 +105,6 @@ rm -f test-dc.md test-custom.md memo.md
 | --- | --- |
 | コマンドが出ない | プラグイン導入前のセッション。新しいセッションを開く |
 | 検出が古い (最近の語が出ない) | `claude plugin update dead-cliche@ux-writing-dead-cliche` |
-| npxが遅い | 毎回GitHubから取得するため。頻用なら `npm i -D github:BoxPistols/ux-writing-dead-cliche` |
+| npxが遅い | 毎回レジストリから取得するため。頻用なら `npm i -D textlint-rule-ux-writing-dead-cliche` で固定する |
 | 0件になる | `.deadclicherc.json` のignore、またはコードフェンス内に書いている |
 | フックが過去の文書で止まる | 検査はファイル全体に走る。先に一括改善するかignoreに入れる |
