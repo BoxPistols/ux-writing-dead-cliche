@@ -59,6 +59,12 @@ ttyの無い環境から実行すると、npmはURLを表示した直後に`EOTP
 各段階は外部コマンドの終了コードを見ます。Releaseの作成に失敗した回が過去にあり、
 そのときは最後まで成功したように表示されていました。
 
+### 過去の版のReleaseを後から作るとき
+
+`gh release create`は既定でそのReleaseをLatestにします。古い版のReleaseを遡って
+作ると、最新版からLatestの表示を奪います。`--latest=false`を付けるか、作ったあとに
+`gh release edit vX.Y.Z --latest`で最新版に戻してください。
+
 ## npmの公開範囲
 
 `package.json` の `files` に列挙したものだけが公開されます (src / rules / presets /
