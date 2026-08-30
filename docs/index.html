@@ -121,7 +121,7 @@ footer a { color: var(--indigo); }
   厳密な運用(フック・CI・PRレビュー)はClaude Codeプラグインが担います。デザイン規範は<a href="https://github.com/BoxPistols/ux-writing-dead-cliche/blob/main/DESIGN.md">DESIGN.md</a>。
 </footer>
 <script type="module">
-import { check, applyFixes, maskMarkdownCode } from './engine.mjs';
+import { check, applyFixes, maskMarkdownCode, rulesForPresetData } from './engine.mjs';
 
 const $ = (id) => document.getElementById(id);
 let data = null;
@@ -131,13 +131,9 @@ let lastApplied = [];
 try { const d = localStorage.getItem('dc-draft'); if (d) $('src').value = d; } catch (e) {}
 try { const p = localStorage.getItem('dc-preset'); if (p) preset = p; } catch (e) {}
 
+// プリセットの解決 (ID の絞り込みと severity 上書き) は engine 側に閉じ込めてある
 function activeRules(name = preset) {
-  const ids = new Set(data.presets[name]);
-  // プリセットは severity を上書きすることがある (paperは修辞疑問と呼びかけをerrorに上げる)
-  const sev = data.presetInfo[name]?.severity ?? {};
-  return data.rules
-    .filter((r) => ids.has(r.id) && !r.manual)
-    .map((r) => (sev[r.id] ? { ...r, severity: sev[r.id] } : r));
+  return rulesForPresetData(data, name);
 }
 
 // 検出0件のとき、他のプリセットなら当たるかを調べる。プリセットで検出範囲が変わることを
