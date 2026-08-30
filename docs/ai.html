@@ -61,20 +61,20 @@ footer { max-width: 1160px; margin: 0 auto; padding: 8px 20px 40px; color: var(-
 </header>
 <main>
   <div class="notice">
-    <p>このページは、あなたが入力した本文とAPIキーをGoogleのGemini APIへ送信します。送信しないで使いたい場合は<a href="./index.html">検出だけのページ</a>を使ってください。</p>
-    <p>キーはこのタブのメモリにだけ置きます。保存しないので、再読み込みすると入れ直しになります。料金はキーを発行したGoogleアカウントに請求されます。</p>
-    <p>OpenAIのAPIはブラウザからの生成リクエストをAPI側が拒否するため、このページからは選べません (中継サーバーを置けば使えます)。</p>
+    <p>このページは、あなたが入力した本文とAPIキーを選んだ提供元 (<span id="vendor">OpenAI</span>) のAPIへ直接送信します。送信しないで使いたい場合は<a href="./index.html">検出だけのページ</a>を使ってください。</p>
+    <p>キーはこのタブのメモリにだけ置きます。保存しないので、再読み込みすると入れ直しになります。料金はキーを発行したアカウントに請求されます。</p>
   </div>
 
   <div class="setup">
     <div class="field">
-      <label for="key">Gemini APIキー</label>
-      <input type="password" id="key" placeholder="AIza..." autocomplete="off" spellcheck="false">
+      <label for="key" id="key-label">OpenAI APIキー</label>
+      <input type="password" id="key" placeholder="sk-..." autocomplete="off" spellcheck="false">
     </div>
     <div class="field">
       <label for="model">モデル</label>
       <select id="model">
-        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite (最安)</option>
+        <option value="openai">OpenAI gpt-5.6-luna</option>
+        <option value="gemini">Gemini 2.5 Flash-Lite (最安)</option>
       </select>
     </div>
     <div class="field">
@@ -159,11 +159,46 @@ function setStatus(text, kind) {
   el.className = 'status' + (kind ? ' ' + kind : '');
 }
 
-// Gemini APIをブラウザから直接呼ぶ。SDKを使わないのは、利用者のAPIキーを扱うページに
-// CDN経由の外部スクリプトを増やしたくないから (このリポジトリにバンドラも無い)。
-// OpenAIはpreflightを通しても生成リクエストの実POSTがブラウザから拒否されるので選べない
-async function ask(key, model, system, user) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+// 各社のAPIをブラウザから直接呼ぶ。SDKを使わないのは、利用者のAPIキーを扱うページに
+// CDN経由の外部スクリプトを増やしたくないから (このリポジトリにバンドラも無い)
+const PROVIDERS = {
+  openai: { keyLabel: 'OpenAI APIキー', keyHint: 'sk-...', model: 'gpt-5.6-luna', vendor: 'OpenAI' },
+  gemini: { keyLabel: 'Gemini APIキー', keyHint: 'AIza...', model: 'gemini-2.5-flash-lite', vendor: 'Google' },
+};
+
+async function askOpenAI(key, system, user) {
+  let res;
+  try {
+    res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: PROVIDERS.openai.model,
+        // 新しめのモデルは max_tokens を拒否するので max_completion_tokens を使う
+        max_completion_tokens: 8000,
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      }),
+    });
+  } catch (e) {
+    // キーが不正なときの401はCORSヘッダを伴わずに返るため、ブラウザからは中身を読めず
+    // 通信エラーとして落ちる。状態番号で判別できないので、ここで両方の可能性を出す
+    throw new Error('応答を読めませんでした。APIキーが正しいか、通信が届いているかを確認してください');
+  }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = body?.error?.message || '';
+    const known = { 401: 'APIキーが受け付けられませんでした', 429: 'レート制限に達しました。少し待って再実行してください' };
+    throw new Error(`${known[res.status] || `APIがHTTP ${res.status}を返しました`}${detail ? ' (' + detail + ')' : ''}`);
+  }
+  const choice = (body.choices || [])[0];
+  if (choice?.finish_reason === 'length') throw new Error('出力が長さの上限に達しました。本文を分けて実行してください');
+  const text = (choice?.message?.content || '').trim();
+  if (!text) throw new Error('本文が返りませんでした');
+  return text;
+}
+
+async function askGemini(key, system, user) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(PROVIDERS.gemini.model)}:generateContent`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
@@ -194,9 +229,13 @@ async function ask(key, model, system, user) {
   return text;
 }
 
+function ask(provider, key, system, user) {
+  return provider === 'gemini' ? askGemini(key, system, user) : askOpenAI(key, system, user);
+}
+
 $('run').addEventListener('click', async () => {
   const key = $('key').value.trim();
-  const model = $('model').value;
+  const provider = $('model').value;
   const original = $('src').value;
   const guard = data.guards.find((g) => g.id === 'writing-guard-compact');
   const system = `${guard.body}\n\n書き直した本文だけを出力してください。前置き・説明・コードフェンスを付けないでください。固有名詞・数値・否定は元の文と一致させ、事実を足したり削ったりしないでください。`;
@@ -216,7 +255,7 @@ $('run').addEventListener('click', async () => {
     for (let attempt = 1; attempt <= 2 && list.length; attempt++) {
       setStatus(attempt === 1 ? '書き直しています…' : `${list.length}件が残ったので、もう一度書き直しています…`);
       const user = `次の日本語テキストを、指摘された表現を使わない形に書き直してください。\n\n指摘:\n${describe(list)}\n\n--- テキスト ---\n${text}`;
-      text = await ask(key, model, system, user);
+      text = await ask(provider, key, system, user);
       list = violationsOf(text);
     }
     rewritten = text;
@@ -256,6 +295,12 @@ $('undo').addEventListener('click', () => {
 
 $('src').addEventListener('input', renderSummary);
 $('key').addEventListener('input', renderSummary);
+$('model').addEventListener('change', () => {
+  const info = PROVIDERS[$('model').value];
+  $('key-label').textContent = info.keyLabel;
+  $('key').placeholder = info.keyHint;
+  $('vendor').textContent = info.vendor;
+});
 
 fetch('./app-data.json').then((r) => r.json()).then((d) => {
   data = d;
