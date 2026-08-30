@@ -26,7 +26,8 @@
     "docs:comparison": "node tools/render-comparison.mjs > docs/before-after.md",
     "build:claude-ai-skill": "node tools/build-claude-ai-skill.mjs",
     "docs:prompts": "node tools/render-prompts.mjs",
-    "docs:webdata": "node tools/render-webdata.mjs"
+    "docs:webdata": "node tools/render-webdata.mjs",
+    "release": "node tools/release.mjs"
   },
   "keywords": [
     "japanese",
