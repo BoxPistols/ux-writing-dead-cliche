@@ -1,6 +1,6 @@
 # リリース運用マニュアル
 
-このリポジトリの配布物と、その出し方をまとめます。手順を間違えるとCIが赤のまま
+このリポジトリの配布物と、その出し方をまとめます。手順を間違えるとCIが失敗したまま
 リリースが出るため、順序に意味があります。
 
 ## 実行する場所
@@ -31,6 +31,11 @@ npm run release patch
 | Claude Codeプラグイン | このリポジトリ (marketplace経由) | .claude-plugin/plugin.json |
 | GitHub Releases | dead-cliche-review.zip (claude.aiスキル) | タグ名 |
 | GitHub Pages | docs/配下 | 生成物に埋め込まれるpackage.jsonの値 |
+| Claude公式ディレクトリ (claude-community) | このリポジトリ (申請前。#14) | .claude-plugin/plugin.json |
+
+審査パイプラインは`claude plugin validate . --strict`を走らせます。同じ判定を
+`npm run check:plugin`で手元とCIから通せます。claude CLIがある環境では本物の
+validateも実行し、無い環境 (CIランナー) では同じ基準の自前検証だけを当てます。
 
 package.jsonと.claude-plugin/plugin.jsonのversionは必ず同じ値にします。
 生成物 (docs/prompts/*.md、docs/app-data.json) にもこの値が埋め込まれるため、
@@ -101,7 +106,7 @@ npm run release patch -- --otp=123456       # 認証アプリを登録してい�
 | 段階0で2要素認証の警告が出る | 同上。版を上げる前に止めている | ターミナルから実行し直す |
 | 未コミットの変更があると言われる | 作業ツリーが汚れている | コミットするか元に戻す |
 | originに追いついていないと言われる | リモートに先の変更がある | `git pull`してから再実行 |
-| CIが赤で止まる | テストか生成物の同期が壊れている | 直してから再実行。版は上がっていない |
+| CIが失敗して止まる | テストか生成物の同期が壊れている | 直してから再実行。版は上がっていない |
 | 版を上げたコミットだけが残った | 段階7以降で落ちた | `npm run release -- --resume` |
 | 同じ版がすでに公開されていると言われる | 公開まで済んでいる回を再実行した | `--resume`を付けて続きから流す |
 | 公開したのにタグとReleaseが無い | 段階8が黙って失敗していた (修正済み) | `--resume`で作り直す |

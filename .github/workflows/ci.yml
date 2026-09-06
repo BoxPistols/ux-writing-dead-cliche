@@ -15,6 +15,8 @@ jobs:
       - run: npm test
       - name: self check (README と CONTRIBUTING が自らの検査を通ること)
         run: node src/cli.mjs check README.md CONTRIBUTING.md
+      - name: プラグイン manifest の検証 (claude CLI があれば validate --strict も通す)
+        run: node tools/validate-plugin.mjs
       - name: 比較表がコーパスと同期していること
         run: node tools/render-comparison.mjs > /tmp/before-after.md && diff /tmp/before-after.md docs/before-after.md
       - name: プロンプト配布物が辞書と同期していること

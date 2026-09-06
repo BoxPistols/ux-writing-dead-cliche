@@ -25,6 +25,7 @@
     "sync": "npm run docs:prompts && npm run docs:webdata && npm run docs:comparison && npm test && npm run check:self",
     "gaps": "node tools/gap-report.mjs",
     "check:self": "node src/cli.mjs check README.md CONTRIBUTING.md",
+    "check:plugin": "node tools/validate-plugin.mjs",
     "docs:comparison": "node tools/render-comparison.mjs > docs/before-after.md",
     "build:claude-ai-skill": "node tools/build-claude-ai-skill.mjs",
     "docs:prompts": "node tools/render-prompts.mjs",
