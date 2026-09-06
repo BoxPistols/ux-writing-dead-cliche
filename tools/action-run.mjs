@@ -162,7 +162,12 @@ function run() {
   const report = JSON.parse(res.stdout);
 
   const failOn = input('DC_FAIL_ON', 'warn');
-  const threshold = SEVERITY_ORDER[failOn]; // none / 未知の値は undefined → 落とさない
+  // 綴りを誤った値 (warning など) を「落とさない」と解釈すると、検出があっても緑になる
+  if (failOn !== 'none' && !Object.hasOwn(SEVERITY_ORDER, failOn)) {
+    console.error(`dead-cliche: fail-on の値が不正です: ${failOn} (error | warn | info | none)`);
+    return 2;
+  }
+  const threshold = failOn === 'none' ? undefined : SEVERITY_ORDER[failOn];
   let failing = 0;
   const rows = [];
   for (const { file, violations } of report.results) {

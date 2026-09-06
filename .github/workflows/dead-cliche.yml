@@ -2,13 +2,19 @@
 # CIの自己検査はリポジトリ全体を見る。こちらは差分だけを見て、annotationの出方を確かめる。
 name: dead-cliche
 on: pull_request
+permissions:
+  contents: read # PRの内容を実行するジョブなので、既定に頼らず読み取りだけに固定する
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # 差分の基準コミットを手元に置く
+          persist-credentials: false # トークンをローカルのgit設定に残さない
       - uses: ./
         with:
           fail-on: warn

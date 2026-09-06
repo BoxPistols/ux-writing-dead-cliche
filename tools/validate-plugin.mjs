@@ -64,7 +64,9 @@ if (plugin) {
   requireString(plugin, 'name', where);
   requireString(plugin, 'description', where);
   requireString(plugin, 'version', where);
-  if (plugin.version && !/^\d+\.\d+\.\d+/.test(plugin.version)) {
+  // 末尾まで見る。1.2.3junk や 1.2.3.4 を通すと、claude CLI の無い環境で素通りする
+  const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+  if (plugin.version && !SEMVER.test(plugin.version)) {
     errors.push(`${where}: version がsemverではありません: ${plugin.version}`);
   }
 }

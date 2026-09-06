@@ -36,6 +36,14 @@ test('窓をずらしただけの重なりは1件にまとまる', () => {
   assert.equal(fragments.length, 0, `断片が残っている: ${fragments.map((r) => r.gram).join(' / ')}`);
 });
 
+test('別々の箇所にある候補をつないで、実在しない候補を作らない', () => {
+  const ai = [...Array(5)].flatMap(() => ['あいうえ。', 'いうえお。']).join('\n');
+  const rows = mine(ai, '進捗は表に記録します。', { minCount: 4, minRatio: 2 });
+  const grams = rows.map((r) => r.gram);
+  assert.ok(!grams.includes('あいうえお'), `コーパスに無い候補が出た: ${grams.join(' / ')}`);
+  assert.ok(grams.includes('あいうえ') && grams.includes('いうえお'), grams.join(' / '));
+});
+
 test('句読点をまたぐ n-gram は数えない', () => {
   const { counts } = countNgrams('あいうえ。かきくけ', { min: 3, max: 8 });
   assert.ok(!([...counts.keys()].some((g) => g.includes('。'))), '区切りを含む候補がある');
