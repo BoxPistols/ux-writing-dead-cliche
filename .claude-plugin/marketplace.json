@@ -1,5 +1,6 @@
 {
   "name": "ux-writing-dead-cliche",
+  "description": "日本語のAIクリシェ辞書 dead-cliche の配布元。辞書 (rules/*.yml) を単一の情報源として、CLI・textlint・Claude Codeプラグインが同じ判定で動く",
   "owner": {
     "name": "BoxPistols",
     "url": "https://github.com/BoxPistols"

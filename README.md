@@ -120,6 +120,22 @@ PR本文自体の検査です。
 | エージェント | dead-cliche-editor | 長文原稿の隔離推敲 |
 | フック | PostToolUse | Markdownを書いた直後に自動チェックし、検出時は書き直しを要求 |
 
+## GitHub Actionsで使う
+
+PRの差分に含まれる文書だけを検査し、該当行にannotationを出します。
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+- uses: BoxPistols/ux-writing-dead-cliche@main
+  with:
+    fail-on: warn # error | warn | info | none
+```
+
+入力の一覧は`docs/usage.md`にあります。Actionは次のリリースからタグでも指定できます
+(v0.14.3以前のタグには`action.yml`が入っていません)。
+
 ## プリセット
 
 | プリセット | 想定する文書 | 特徴 |
@@ -137,6 +153,18 @@ PR本文自体の検査です。
   "ignore": ["docs/archive/"]
 }
 ```
+
+引用のように書き換えられない箇所は、コメント指示で範囲を外せます。書式はtextlintに
+寄せてあります。ルールIDを書けばそのルールだけ、書かなければ範囲内のすべてを止めます。
+
+```markdown
+<!-- dead-cliche-disable metaphor/otoshiana -->
+> 除外する語は落とし穴です。
+<!-- dead-cliche-enable -->
+```
+
+1行だけなら `<!-- dead-cliche-disable-next-line -->` を直前の行に置きます。
+`dead-cliche-enable` を書かない `dead-cliche-disable` は、ファイルの末尾まで効きます。
 
 ## ルールの書式
 
