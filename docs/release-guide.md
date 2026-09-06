@@ -31,6 +31,7 @@ npm run release patch
 | Claude Codeプラグイン | このリポジトリ (marketplace経由) | .claude-plugin/plugin.json |
 | GitHub Releases | dead-cliche-review.zip (claude.aiスキル) | タグ名 |
 | GitHub Pages | docs/配下 | 生成物に埋め込まれるpackage.jsonの値 |
+| GitHub Actions | action.yml (このリポジトリを`uses:`で参照) | タグ名 |
 | Claude公式ディレクトリ (claude-community) | このリポジトリ (申請前。#14) | .claude-plugin/plugin.json |
 
 審査パイプラインは`claude plugin validate . --strict`を走らせます。同じ判定を
