@@ -7,7 +7,7 @@ import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
 import yaml from 'js-yaml';
-import { createUiServer, ruleFromForm, readCustomRules } from '../src/ui.mjs';
+import { createUiServer, ruleFromForm, readCustomRules, writeCustomRules } from '../src/ui.mjs';
 import { loadCustomRules } from '../src/load-rules.mjs';
 import { check } from '../src/engine.mjs';
 
@@ -149,6 +149,37 @@ test('壊れた辞書ファイルでサーバーを落とさない', async () =>
     // 落ちていないこと (次の要求が届く)
     assert.equal(await rawGet(port, '/?token=wrong', { host: `127.0.0.1:${port}` }), 403);
   });
+});
+
+test('壊れた要素は、どのエントリかまで言って止める', () => {
+  const file = tempFile();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, '- id: custom/rule-1\n  surface: [あ]\n- null\n');
+  assert.throws(() => readCustomRules(file), /2 件目/);
+  fs.writeFileSync(file, '- surface: [あ]\n');
+  assert.throws(() => readCustomRules(file), /id がありません/);
+});
+
+test('保存は原子的に置き換える (途中の状態を残さない)', async () => {
+  const file = tempFile();
+  await withServer(file, async ({ origin, token }) => {
+    await post(origin, '/add', { ...validForm(), token });
+  });
+  const rules = readCustomRules(file);
+  assert.equal(rules.length, 1);
+  // 一時ファイルを残さない
+  const leftovers = fs.readdirSync(path.dirname(file)).filter((f) => f.includes('.tmp'));
+  assert.deepEqual(leftovers, []);
+});
+
+test('シンボリックリンクの保存先には書かない', () => {
+  const file = tempFile();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const real = path.join(path.dirname(file), 'real.yml');
+  fs.writeFileSync(real, '[]\n');
+  fs.symlinkSync(real, file);
+  assert.throws(() => writeCustomRules(file, [{ id: 'custom/rule-1' }]), /シンボリックリンク/);
+  assert.equal(fs.readFileSync(real, 'utf8'), '[]\n', '指し先が書き換えられている');
 });
 
 test('多バイト文字の合言葉でも落ちない', async () => {

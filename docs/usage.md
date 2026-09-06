@@ -151,8 +151,9 @@ npx textlint-rule-ux-writing-dead-cliche ui
 
 - 127.0.0.1にだけ束ね、起動時に表示されたURL (合言葉つき) でだけ開けます
 - 受け取るのは表現そのもの (リテラル) だけです。正規表現は入れられません
-- 書き込むのは`.deadclicherc.json`の`customRules`が指すファイルだけで、
-  共有辞書 (`rules/`) には書きません
+- 保存先は`--file`、指定が無ければ`.deadclicherc.json`の`customRules`の1つ目、
+  それも無ければ`.deadcliche/custom-rules.yml`です (この場合は`customRules`への
+  追記を起動時に案内します)。共有辞書 (`rules/`) を指すと起動時に止まります
 - 追加した表現がその場の例をどう判定するかを見て、噛み合わないときは警告を出します
 - 保存先はリポジトリにコミットされるため、変更はPRレビューを通ります
 
