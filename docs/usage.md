@@ -64,6 +64,41 @@ prhやpreset-ja-technical-writingと同じ設定ファイルに並べて書け�
 
 ### CIとして (GitHub Actions)
 
+PRの差分だけを検査するActionがあります。導入は1ステップです。
+
+```yaml
+name: dead-cliche
+on: pull_request
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 差分の基準コミットを取るために要る
+      - uses: BoxPistols/ux-writing-dead-cliche@main
+        with:
+          fail-on: warn # error | warn | info | none
+```
+
+`action.yml`が入るのは次のリリースからです。それ以降は`@v0.15.0`のように公開済みの
+タグで固定できます (`v1`系の移動タグは1.0以降に用意します)。
+検出はファイルの該当行にannotationとして出て、ジョブサマリに一覧表が残ります。
+
+| 入力 | 既定 | 意味 |
+| --- | --- | --- |
+| `preset` | (空) | プリセット名。空なら対象リポジトリの`.deadclicherc.json`、無ければpaper |
+| `fail-on` | `warn` | ジョブを落とす下限。`none`にすると報告だけ |
+| `paths` | (空) | 対象を絞るグロブ (カンマ区切り。例: `docs/**/*.md,README.md`) |
+| `extensions` | `.md,.mdx,.markdown,.txt` | グロブを書かないときの対象拡張子 |
+| `changed-only` | `true` | `false`で差分ではなくリポジトリ全体を検査する |
+| `base-sha` | (空) | 差分の基準コミット。空ならイベントペイロードから取る |
+
+`.deadclicherc.json`の`ignore`と、本文中のコメント指示 (`<!-- dead-cliche-disable -->`)
+はActionでもそのまま効きます。
+
+Actionを使わずCLIで回すこともできます。
+
 ```yaml
 - uses: actions/checkout@v4
 - uses: actions/setup-node@v4
@@ -72,7 +107,7 @@ prhやpreset-ja-technical-writingと同じ設定ファイルに並べて書け�
 - run: npx textlint-rule-ux-writing-dead-cliche check docs/*.md README.md
 ```
 
-error級の検出があるとexit 1になり、ジョブが落ちます。
+warn級以上の検出があるとexit 1になり、ジョブが落ちます (`--fail-on error`で従来の挙動)。
 
 ### プロジェクトごとの設定
 
@@ -84,6 +119,26 @@ error級の検出があるとexit 1になり、ジョブが落ちます。
   "ignore": ["docs/archive/", "CHANGELOG.md"]
 }
 ```
+
+### 書き換えられない箇所を外す
+
+引用・他人の文章・辞書の除外仕様の説明のように、検出が出ても直せない箇所があります。
+`ignore` (ファイル単位) と `disable` (ルール単位) では粒度が粗いので、コメント指示で
+範囲を指定します。書式はtextlintに寄せてあります。
+
+```markdown
+<!-- dead-cliche-disable metaphor/otoshiana -->
+> 除外する語は落とし穴です。
+<!-- dead-cliche-enable -->
+```
+
+- ルールIDを空にすると、範囲内のすべてのルールを止めます。IDは空白かカンマで複数書けます。
+- `<!-- dead-cliche-disable-next-line metaphor/otoshiana -->` は次の1行だけ止めます。
+- `dead-cliche-enable` を書かなければ、そのファイルの末尾まで効きます。
+- IDを書かずに止めた範囲は、ID付きの`dead-cliche-enable`では開きません。守った範囲が
+  別のルールの再開で丸ごと外れないようにするためです。IDなしの`enable`で開きます。
+- 指示は `check` と `fix` の両方に効きます。止めた範囲は自動修正の対象からも外れます。
+- 引用を一律に対象外にはしていません。自分の下書きを引用で置く使い方があるためです。
 
 ## ユースケース別の使い方
 

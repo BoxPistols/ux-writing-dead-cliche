@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { check, maskMarkdownCode } from '../src/engine.mjs';
+import { check, maskMarkdownCode, applyFixes } from '../src/engine.mjs';
 import { loadAllRules, loadPreset, rulesForPreset } from '../src/load-rules.mjs';
 import textlintRule from '../src/textlint-rule.mjs';
 
@@ -30,6 +30,69 @@ test('コードフェンスとインラインコードは検査対象から外�
   const masked = maskMarkdownCode(md);
   assert.equal(check(masked, all).length, 0);
   assert.equal(masked.length, md.length, 'オフセットが保存されていない');
+});
+
+test('コメント指示: 指定ルールを範囲で止める', () => {
+  const md = [
+    '<!-- dead-cliche-disable metaphor/otoshiana -->',
+    '> 除外する語は落とし穴です。',
+    '<!-- dead-cliche-enable -->',
+    'ここにも落とし穴があります。',
+  ].join('\n');
+  const hits = check(md, all);
+  assert.equal(hits.length, 1, `止めた範囲が検出された: ${hits.map((v) => `${v.line}:${v.ruleId}`)}`);
+  assert.equal(hits[0].line, 4);
+});
+
+test('コメント指示: ID を書かなければ範囲内のすべてを止める', () => {
+  const md = '<!-- dead-cliche-disable -->\nこの文書はチームの羅針盤です。\n落とし穴です。';
+  assert.equal(check(md, all).length, 0);
+});
+
+test('コメント指示: disable-next-line は次の1行だけ止める', () => {
+  const md = '<!-- dead-cliche-disable-next-line -->\n落とし穴です。\n落とし穴です。';
+  const hits = check(md, all);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].line, 3);
+});
+
+test('コメント指示: ID なしで止めた範囲は、ID 付き enable では開かない', () => {
+  const md = [
+    '<!-- dead-cliche-disable -->',
+    '<!-- dead-cliche-enable metaphor/compass -->',
+    '落とし穴です。',
+    'この文書はチームの羅針盤です。',
+  ].join('\n');
+  assert.equal(check(md, all).length, 0);
+});
+
+test('コメント指示: 複数 ID のうち enable した ID だけが再開する', () => {
+  const md = [
+    '<!-- dead-cliche-disable metaphor/otoshiana metaphor/compass -->',
+    '<!-- dead-cliche-enable metaphor/compass -->',
+    '落とし穴です。',
+    'この文書はチームの羅針盤です。',
+  ].join('\n');
+  const hits = check(md, all);
+  assert.deepEqual(hits.map((v) => v.ruleId), ['metaphor/compass']);
+});
+
+test('コメント指示: 別ルールの enable では閉じない', () => {
+  const md = [
+    '<!-- dead-cliche-disable metaphor/otoshiana -->',
+    '<!-- dead-cliche-enable metaphor/compass -->',
+    '落とし穴です。',
+  ].join('\n');
+  assert.equal(check(md, all).length, 0);
+});
+
+test('コメント指示: 止めた範囲は fix の対象からも外れる', () => {
+  const rules = all.filter((r) => r.fix !== undefined);
+  const target = rules.find((r) => r.examples.bad.some((b) => applyFixes(b, [r]).applied.length > 0));
+  assert.ok(target, 'fix を持つルールが辞書にない');
+  const bad = target.examples.bad.find((b) => applyFixes(b, [target]).applied.length > 0);
+  const md = `<!-- dead-cliche-disable ${target.id} -->\n${bad}`;
+  assert.equal(applyFixes(md, [target]).applied.length, 0);
 });
 
 test('textlint ラッパーが違反を報告する', () => {
