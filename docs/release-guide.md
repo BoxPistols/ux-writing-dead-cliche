@@ -32,10 +32,12 @@ npm run release patch
 | GitHub Releases | dead-cliche-review.zip (claude.aiスキル) | タグ名 |
 | GitHub Pages | docs/配下 | 生成物に埋め込まれるpackage.jsonの値 |
 | GitHub Actions | action.yml (このリポジトリを`uses:`で参照) | タグ名 (v0.14.3以前のタグには入っていません) |
-| Claude公式ディレクトリ (claude-community) | このリポジトリ (申請前。#14) | .claude-plugin/plugin.json |
+| Claude公式ディレクトリ (claude-community) | 未申請。公開するかは今後検討 (#14) | .claude-plugin/plugin.json |
 
-審査パイプラインは`claude plugin validate . --strict`を走らせます。同じ判定を
-`npm run check:plugin`で手元とCIから通せます。claude CLIがある環境では本物の
+`npm run check:plugin`でmanifestの検証を手元とCIから通せます。versionの不一致や
+必須項目の欠落をmainに入れないための検査で、公式ディレクトリへ出すかどうかとは
+独立に要ります。公式ディレクトリの審査は同じ`claude plugin validate . --strict`を
+走らせるため、出す判断をした時点で追加の作業は要りません。claude CLIがある環境では本物の
 validateも実行し、無い環境 (CIランナー) では同じ基準の自前検証だけを当てます。
 
 package.jsonと.claude-plugin/plugin.jsonのversionは必ず同じ値にします。
