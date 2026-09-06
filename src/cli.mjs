@@ -4,13 +4,14 @@
 //   dead-cliche list [--preset name] [--manual]
 //   dead-cliche explain <rule-id>
 //   dead-cliche claude-hook   (Claude CodeのPostToolUseフックからstdin JSONで呼ばれる)
+//   dead-cliche ui [--port 7777] [--file .deadcliche/custom-rules.yml]
 
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig } from './load-rules.mjs';
+import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig, PACKAGE_ROOT } from './load-rules.mjs';
 import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
 
 const MD_EXT = new Set(['.md', '.mdx', '.markdown']);
@@ -22,7 +23,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith('--')) {
       const key = a.slice(2);
-      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on'].includes(key)) {
+      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on', 'port', 'file'].includes(key)) {
         args.flags[key] = argv[++i];
       } else {
         args.flags[key] = true;
@@ -286,6 +287,31 @@ function cmdFix(args) {
   }
 }
 
+// ローカル編集フォーム。カスタム辞書 (プロジェクト辞書) だけを書き換える。
+// 保存先は --file、無ければ .deadclicherc.json の customRules の1つ目、
+// それも無ければ .deadcliche/custom-rules.yml (rcに追記する案内を出す)。
+async function cmdUi(args) {
+  const { createUiServer } = await import('./ui.mjs');
+  const rc = findRc(process.cwd());
+  const base = rc?._dir ?? process.cwd();
+  const fromRc = rc?.customRules?.[0];
+  const file = path.resolve(base, args.flags.file ?? fromRc ?? '.deadcliche/custom-rules.yml');
+  if (file.startsWith(path.join(PACKAGE_ROOT, 'rules') + path.sep)) {
+    console.error('共有辞書 (rules/) はこのフォームからは編集できません。PRで変更してください');
+    process.exit(2);
+  }
+  const port = Number(args.flags.port ?? 7777);
+  const { token, listen } = createUiServer({ file, port });
+  await listen(port);
+  console.log(`dead-cliche ui: http://127.0.0.1:${port}/?token=${token}`);
+  console.log(`保存先: ${path.relative(process.cwd(), file) || file}`);
+  if (!fromRc && !args.flags.file) {
+    console.log('この辞書を検査に効かせるには、.deadclicherc.json に次を足してください:');
+    console.log(`  "customRules": ["${path.relative(base, file)}"]`);
+  }
+  console.log('終了するには Ctrl+C');
+}
+
 const args = parseArgs(process.argv.slice(2));
 const cmd = args._.shift();
 if (cmd === 'version' || args.flags.version) {
@@ -309,12 +335,16 @@ switch (cmd) {
   case 'claude-hook':
     cmdClaudeHook();
     break;
+  case 'ui':
+    await cmdUi(args);
+    break;
   default:
-    console.log('使い方: dead-cliche <check|fix|list|explain|claude-hook> [options]');
+    console.log('使い方: dead-cliche <check|fix|ui|list|explain|claude-hook> [options]');
     console.log('  check [files...] [--preset name] [--format json] [--min-severity warn] [--fail-on info|warn|error]  (既定: warn以上でexit 1)');
     console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
     console.log('  --strict は info も含めて exit 1 にする (--fail-on info と同義)');
-    console.log('  list [--preset name] [--manual]');
+    console.log('  ui [--port 7777] [--file path]   プロジェクト辞書のローカル編集フォーム (127.0.0.1のみ)');
+  console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');
     process.exit(cmd ? 2 : 0);
 }
