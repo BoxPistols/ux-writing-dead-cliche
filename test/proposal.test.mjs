@@ -71,6 +71,13 @@ test("引用符を含む表現でもYAMLが壊れない", () => {
   assert.deepEqual(parsed[0].surface, ["it's a trap"]);
 });
 
+test('コロンや記号を含む自由記述でもYAMLとして読める', () => {
+  const { rule } = proposalToRule(body({ why: '例: 「#1 の指摘」のように書かれると何が起きるか分からない' }), 42);
+  const parsed = yaml.load(renderRuleYaml(rule));
+  assert.match(parsed[0].why, /^例: /);
+  assert.equal(typeof parsed[0].ask, 'string');
+});
+
 test('カテゴリを特定できない提案は問題として報告される', () => {
   const { problems } = proposalToRule(body({ category: 'わからない' }), 42);
   assert.ok(problems.some((p) => p.includes('カテゴリ')), problems.join(' / '));

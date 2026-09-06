@@ -73,12 +73,24 @@ export function disabledRanges(text) {
       open.push({ ruleIds, start: m.index });
       continue;
     }
-    // enable: id 指定があればその範囲だけ閉じる。指定が無ければ開いているものをすべて閉じる
+    // enable: 指定が無ければ開いているものをすべて閉じる。
+    // id 指定は、その id で止めた範囲だけを閉じる。id を書かずに止めた範囲 (すべての
+    // ルールが対象) は、id 付きの enable では閉じない。書き手が守った範囲を、
+    // 別のルールを再開しただけで丸ごと外さないため。
+    const end = m.index + full.length;
     for (let i = open.length - 1; i >= 0; i--) {
       const o = open[i];
-      if (ruleIds && !(o.ruleIds === null || [...o.ruleIds].some((id) => ruleIds.has(id)))) continue;
-      ranges.push({ start: o.start, end: m.index + full.length, ruleIds: o.ruleIds });
-      open.splice(i, 1);
+      if (!ruleIds) {
+        ranges.push({ start: o.start, end, ruleIds: o.ruleIds });
+        open.splice(i, 1);
+        continue;
+      }
+      if (o.ruleIds === null) continue;
+      const closing = [...o.ruleIds].filter((id) => ruleIds.has(id));
+      if (closing.length === 0) continue;
+      ranges.push({ start: o.start, end, ruleIds: new Set(closing) });
+      for (const id of closing) o.ruleIds.delete(id);
+      if (o.ruleIds.size === 0) open.splice(i, 1);
     }
   }
   for (const o of open) ranges.push({ start: o.start, end: text.length, ruleIds: o.ruleIds });

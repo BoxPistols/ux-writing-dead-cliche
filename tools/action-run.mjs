@@ -28,7 +28,13 @@ const extensions = input('DC_EXTENSIONS', '.md,.mdx,.markdown,.txt')
   .filter(Boolean);
 
 function git(args) {
-  return execFileSync('git', args, { cwd: WORKSPACE, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  // core.quotePath が既定のままだと、日本語のファイル名が \346\227\245 の形で返り、
+  // そのまま存在しないパスとして落ちる (検査対象から黙って消える)
+  return execFileSync('git', ['-c', 'core.quotePath=false', ...args], {
+    cwd: WORKSPACE,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 }
 
 // 差分の基準コミット。pull_request では base.sha、push では before を使う。
@@ -107,12 +113,20 @@ function targetFiles() {
   const changedOnly = input('DC_CHANGED_ONLY', 'true') !== 'false';
   const byExtension = (f) => extensions.includes(path.extname(f));
 
-  let files;
+  let files = null;
   if (changedOnly) {
     const base = baseSha();
     if (base && ensureSha(base)) {
-      files = git(['diff', '--name-only', '--diff-filter=ACMR', `${base}...HEAD`]).split('\n');
-    } else {
+      try {
+        // 浅いクローンでは共通の祖先が無く 3点比較が落ちる。2点比較まで下げる
+        files = git(['diff', '--name-only', '--diff-filter=ACMR', `${base}...HEAD`]).split('\n');
+      } catch {
+        try {
+          files = git(['diff', '--name-only', '--diff-filter=ACMR', base, 'HEAD']).split('\n');
+        } catch {}
+      }
+    }
+    if (files === null) {
       console.log('dead-cliche: 差分の基準コミットが取れないため、対象パス全体を検査します (checkout の fetch-depth: 0 で差分に絞れます)');
       files = walk(WORKSPACE);
     }

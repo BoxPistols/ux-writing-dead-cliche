@@ -126,8 +126,9 @@ export function renderRuleYaml(rule) {
   out.push('  # surfaceをpatternに置き換えて正当な用法を除外してください');
   out.push('  surface:');
   for (const s of rule.surface) out.push(`    - ${quote(s)}`);
-  out.push(`  why: ${rule.why}`);
-  out.push(`  ask: ${rule.ask}`);
+  // Issueの自由記述には : や # が入る。素で書くとYAMLとして読めなくなるため必ず引用する
+  out.push(`  why: ${quote(rule.why)}`);
+  out.push(`  ask: ${quote(rule.ask)}`);
   out.push('  examples:');
   out.push('    bad:');
   for (const b of rule.examples.bad) out.push(`      - ${quote(b)}`);

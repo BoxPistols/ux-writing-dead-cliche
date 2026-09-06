@@ -70,6 +70,9 @@ jobs:
           git checkout -b "$BRANCH"
           git add rules docs
           git commit -m "提案Issue #$NUMBER の表現を辞書の下書きとして足す"
+          # 同じIssueで作り直す回のために、先にリモート側を取る。
+          # 追跡refが無いまま --force-with-lease を投げると stale info で弾かれる
+          git fetch --no-tags origin "$BRANCH" || true
           git push -u origin "$BRANCH" --force-with-lease
           {
             echo "提案Issue #$NUMBER をフォームの回答どおりに辞書エントリへ移した下書きです。"
