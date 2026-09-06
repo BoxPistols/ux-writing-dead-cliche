@@ -138,6 +138,18 @@ PR本文自体の検査です。
 }
 ```
 
+引用のように書き換えられない箇所は、コメント指示で範囲を外せます。書式はtextlintに
+寄せてあります。ルールIDを書けばそのルールだけ、書かなければ範囲内のすべてを止めます。
+
+```markdown
+<!-- dead-cliche-disable metaphor/otoshiana -->
+> 除外する語は落とし穴です。
+<!-- dead-cliche-enable -->
+```
+
+1行だけなら `<!-- dead-cliche-disable-next-line -->` を直前の行に置きます。
+`dead-cliche-enable` を書かない `dead-cliche-disable` は、ファイルの末尾まで効きます。
+
 ## ルールの書式
 
 1ルール1エントリです。whyとaskを必須にしているのは、置換候補だけの辞書では
