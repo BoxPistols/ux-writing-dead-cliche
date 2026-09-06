@@ -1,0 +1,14 @@
+# 自分のActionを自分のPRで動かす (dogfooding)。
+# CIの自己検査はリポジトリ全体を見る。こちらは差分だけを見て、annotationの出方を確かめる。
+name: dead-cliche
+on: pull_request
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 差分の基準コミットを手元に置く
+      - uses: ./
+        with:
+          fail-on: warn

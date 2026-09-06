@@ -120,6 +120,21 @@ PR本文自体の検査です。
 | エージェント | dead-cliche-editor | 長文原稿の隔離推敲 |
 | フック | PostToolUse | Markdownを書いた直後に自動チェックし、検出時は書き直しを要求 |
 
+## GitHub Actionsで使う
+
+PRの差分に含まれる文書だけを検査し、該当行にannotationを出します。
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+- uses: BoxPistols/ux-writing-dead-cliche@v0.14.3 # 公開済みのタグを指定します
+  with:
+    fail-on: warn # error | warn | info | none
+```
+
+入力の一覧は`docs/usage.md`にあります。
+
 ## プリセット
 
 | プリセット | 想定する文書 | 特徴 |

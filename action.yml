@@ -1,0 +1,50 @@
+name: dead-cliche
+description: PRの差分に含まれる日本語の文書からAI特有のクリシェを検出し、annotationで返す
+author: BoxPistols
+branding:
+  icon: edit-3
+  color: purple
+
+inputs:
+  preset:
+    description: 'プリセット名 (paper | business | chat | ux-microcopy)。空なら対象リポジトリの .deadclicherc.json、無ければ paper'
+    required: false
+    default: ''
+  fail-on:
+    description: 'ジョブを失敗させる下限 (error | warn | info | none)'
+    required: false
+    default: 'warn'
+  paths:
+    description: '検査対象を絞るグロブ (カンマ区切り。例: docs/**/*.md,README.md)。空なら extensions で判定する'
+    required: false
+    default: ''
+  extensions:
+    description: '対象拡張子 (カンマ区切り)'
+    required: false
+    default: '.md,.mdx,.markdown,.txt'
+  changed-only:
+    description: "'false' にすると差分ではなくリポジトリ全体を検査する"
+    required: false
+    default: 'true'
+  base-sha:
+    description: '差分の基準コミット。空ならイベントペイロード (pull_request.base.sha) から取る'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    # 辞書の読み込みに js-yaml だけを使う。action の取得先に入れる (対象リポジトリを汚さない)
+    - name: dead-cliche の依存をインストールする
+      shell: bash
+      run: npm ci --omit=dev --ignore-scripts --prefix "$GITHUB_ACTION_PATH"
+    - name: 差分の文書を検査する
+      shell: bash
+      env:
+        DC_PRESET: ${{ inputs.preset }}
+        DC_FAIL_ON: ${{ inputs.fail-on }}
+        DC_PATHS: ${{ inputs.paths }}
+        DC_EXTENSIONS: ${{ inputs.extensions }}
+        DC_CHANGED_ONLY: ${{ inputs.changed-only }}
+        DC_BASE_SHA: ${{ inputs.base-sha }}
+      run: node "$GITHUB_ACTION_PATH/tools/action-run.mjs"
