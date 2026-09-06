@@ -13,6 +13,21 @@
 5. 機械判定できないルールは `manual: true` で登録します。patternとsurfaceは書きません。
 6. `examples.good` の語尾は敬体 (です・ます) で書きます。良い例は書き直しの手本を兼ねるためです。
 
+## 提案フォームから来たものを取り込む
+
+Issueテンプレート「禁止ワード・クリシェの提案」で来た提案は、フォームの回答を
+そのまま辞書エントリの形に移せます。
+
+```
+node tools/proposal-to-rule.mjs --number 17 --body-file 本文.md          # 生成物を見る
+node tools/proposal-to-rule.mjs --number 17 --body-file 本文.md --write  # rules/ に追記する
+```
+
+維持者が提案Issueに`rule-proposal`ラベルを付け直すか、Actions画面から
+「提案Issueから下書きPRを作る」を流すと、同じ変換を行った下書きPRができます。
+下書きはそのまま入れません。idを内容の分かる名前に変え、正当な用法を
+`deny_examples`に足し、必要なら`surface`を`pattern`に置き換えて絞ります。
+
 ## severityの基準
 
 - error: その表現がほぼ常に不適切なもの (文脈で正当化される余地が小さい)
