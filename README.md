@@ -120,6 +120,16 @@ PR本文自体の検査です。
 | エージェント | dead-cliche-editor | 長文原稿の隔離推敲 |
 | フック | PostToolUse | Markdownを書いた直後に自動チェックし、検出時は書き直しを要求 |
 
+## チームの禁止ワードをフォームで足す
+
+```bash
+dead-cliche ui   # http://127.0.0.1:7777/?token=... が開く
+```
+
+プロジェクト辞書 (`.deadcliche/custom-rules.yml`) をYAMLなしで編集できます。127.0.0.1に
+だけ束ね、合言葉を要求し、受け取るのは表現そのもの (リテラル) だけです。共有辞書
+(`rules/`) には書き込みません。設計と脅威モデルは`docs/custom-rules-and-autofix.md`にあります。
+
 ## GitHub Actionsで使う
 
 PRの差分に含まれる文書だけを検査し、該当行にannotationを出します。
