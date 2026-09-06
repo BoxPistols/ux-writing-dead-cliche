@@ -30,6 +30,16 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       NUMBER: ${{ github.event.issue.number || inputs.issue }}
     steps:
+      # 発火条件はIssue作成者しか見ない。ラベルを付けた人にも書き込み権限を要求する
+      - name: 発火させた人の権限を確認する
+        env:
+          ACTOR: ${{ github.actor }}
+        run: |
+          PERMISSION=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$ACTOR/permission" -q .permission)
+          case "$PERMISSION" in
+            admin|maintain|write) echo "$ACTOR: $PERMISSION" ;;
+            *) echo "$ACTOR には書き込み権限がありません ($PERMISSION)"; exit 1 ;;
+          esac
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -62,6 +72,10 @@ jobs:
         run: npm test
 
       - name: 下書きPRを作る
+        env:
+          RULE_ID: ${{ steps.gen.outputs.rule_id }}
+          CATEGORY: ${{ steps.gen.outputs.category }}
+          TEST_OUTCOME: ${{ steps.test.outcome }}
         run: |
           set -e
           BRANCH="rule-proposal/$NUMBER"
@@ -78,8 +92,8 @@ jobs:
             echo "提案Issue #$NUMBER をフォームの回答どおりに辞書エントリへ移した下書きです。"
             echo "自動生成なので、このままでは辞書に入れません。"
             echo
-            echo "- 生成したルール: \`${{ steps.gen.outputs.rule_id }}\` (rules/${{ steps.gen.outputs.category }}.yml)"
-            echo "- npm test: ${{ steps.test.outcome }}"
+            echo "- 生成したルール: \`$RULE_ID\` (rules/$CATEGORY.yml)"
+            echo "- npm test: $TEST_OUTCOME"
             echo
             cat "$RUNNER_TEMP/notes.md"
             echo

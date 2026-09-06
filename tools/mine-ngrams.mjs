@@ -101,7 +101,10 @@ export function countNgrams(text, { min = 3, max = 8 } = {}) {
 // 同じ言い回しを窓をずらして数えただけなので、元の長さまで戻して1件にする。
 // つなぐのは、続きの候補が1つしかなく、その候補の手前も1つしかないときだけ。
 // 分岐がある箇所でつなぐと、コーパスに無い文字列を作ってしまう。
-function mergeOverlaps(rows) {
+// つないだ結果は、コーパスに同じ回数だけ実在するときだけ採る。回数と文字の重なりは
+// 隣接の証明にならない (別々の段落にある「あいうえ」と「いうえお」から、どこにも
+// 無い「あいうえお」を作ってしまう)
+function mergeOverlaps(rows, occurrences = () => null) {
   let current = rows;
   for (let pass = 0; pass < 64; pass++) {
     const byHead = new Map(); // 先頭 n-1 文字が一致する候補 (= 続きになりうる)
@@ -122,9 +125,12 @@ function mergeOverlaps(rows) {
       if (next.length !== 1 || next[0] === r || used.has(next[0])) continue;
       const prev = byTail.get(`${r.aiCount}|${next[0].gram.slice(0, -1)}`) ?? [];
       if (prev.length !== 1 || prev[0] !== r) continue;
+      const gram = r.gram + next[0].gram.slice(-1);
+      const actual = occurrences(gram);
+      if (actual !== null && actual !== r.aiCount) continue; // 実在しないつなぎ方
       used.add(r);
       used.add(next[0]);
-      merged.push({ ...r, gram: r.gram + next[0].gram.slice(-1) });
+      merged.push({ ...r, gram });
     }
     if (merged.length === 0) break;
     current = [...current.filter((r) => !used.has(r)), ...merged];
@@ -165,7 +171,18 @@ export function mine(aiText, humanText, options = {}) {
     rows.push({ gram, aiCount, humanCount, aiRate, humanRate, ratio, known });
   }
   const maxLength = options.maxLength ?? 20;
-  return collapseSubstrings(mergeOverlaps(rows))
+  const segments = aiText.split(SEGMENT_SPLIT).filter((seg) => seg.length > 0);
+  const seen = new Map();
+  const occurrences = (gram) => {
+    if (seen.has(gram)) return seen.get(gram);
+    let n = 0;
+    for (const seg of segments) {
+      for (let i = seg.indexOf(gram); i !== -1; i = seg.indexOf(gram, i + 1)) n++;
+    }
+    seen.set(gram, n);
+    return n;
+  };
+  return collapseSubstrings(mergeOverlaps(rows, occurrences))
     // 長すぎる一致はコーパス内の重複文であって言い回しではない
     .filter((r) => r.gram.length <= maxLength)
     .sort((a, b) => b.ratio - a.ratio || b.aiCount - a.aiCount);
