@@ -104,6 +104,12 @@ try {
 } catch (e) {
   fail(`テストが失敗しました:\n${(e.stdout || '') + (e.stderr || '')}`);
 }
+try {
+  run('node tools/validate-plugin.mjs');
+  console.log('  プラグインmanifest: 通過');
+} catch (e) {
+  fail(`プラグインmanifestの検証に落ちました:\n${(e.stdout || '') + (e.stderr || '')}`);
+}
 const docs = fs.readdirSync(path.join(PACKAGE_ROOT, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`);
 const check = spawnSync('node', ['src/cli.mjs', 'check', 'README.md', 'CONTRIBUTING.md', 'DESIGN.md', ...docs], { cwd: PACKAGE_ROOT, encoding: 'utf8' });
 if (check.status !== 0) fail(`自分の文書が自分の検査に落ちました:\n${check.stdout}`);
