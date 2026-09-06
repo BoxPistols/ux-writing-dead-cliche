@@ -128,12 +128,13 @@ PRの差分に含まれる文書だけを検査し、該当行にannotationを�
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: BoxPistols/ux-writing-dead-cliche@v0.14.3 # 公開済みのタグを指定します
+- uses: BoxPistols/ux-writing-dead-cliche@main
   with:
     fail-on: warn # error | warn | info | none
 ```
 
-入力の一覧は`docs/usage.md`にあります。
+入力の一覧は`docs/usage.md`にあります。Actionは次のリリースからタグでも指定できます
+(v0.14.3以前のタグには`action.yml`が入っていません)。
 
 ## プリセット
 

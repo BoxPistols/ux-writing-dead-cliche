@@ -56,6 +56,27 @@ test('コメント指示: disable-next-line は次の1行だけ止める', () =>
   assert.equal(hits[0].line, 3);
 });
 
+test('コメント指示: ID なしで止めた範囲は、ID 付き enable では開かない', () => {
+  const md = [
+    '<!-- dead-cliche-disable -->',
+    '<!-- dead-cliche-enable metaphor/compass -->',
+    '落とし穴です。',
+    'この文書はチームの羅針盤です。',
+  ].join('\n');
+  assert.equal(check(md, all).length, 0);
+});
+
+test('コメント指示: 複数 ID のうち enable した ID だけが再開する', () => {
+  const md = [
+    '<!-- dead-cliche-disable metaphor/otoshiana metaphor/compass -->',
+    '<!-- dead-cliche-enable metaphor/compass -->',
+    '落とし穴です。',
+    'この文書はチームの羅針盤です。',
+  ].join('\n');
+  const hits = check(md, all);
+  assert.deepEqual(hits.map((v) => v.ruleId), ['metaphor/compass']);
+});
+
 test('コメント指示: 別ルールの enable では閉じない', () => {
   const md = [
     '<!-- dead-cliche-disable metaphor/otoshiana -->',

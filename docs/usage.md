@@ -76,12 +76,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # 差分の基準コミットを取るために要る
-      - uses: BoxPistols/ux-writing-dead-cliche@v0.14.3
+      - uses: BoxPistols/ux-writing-dead-cliche@main
         with:
           fail-on: warn # error | warn | info | none
 ```
 
-タグは公開済みのバージョンを指定します (`v1`系の移動タグは1.0以降に用意します)。
+`action.yml`が入るのは次のリリースからです。それ以降は`@v0.15.0`のように公開済みの
+タグで固定できます (`v1`系の移動タグは1.0以降に用意します)。
 検出はファイルの該当行にannotationとして出て、ジョブサマリに一覧表が残ります。
 
 | 入力 | 既定 | 意味 |
@@ -134,6 +135,8 @@ warn級以上の検出があるとexit 1になり、ジョブが落ちます (`-
 - ルールIDを空にすると、範囲内のすべてのルールを止めます。IDは空白かカンマで複数書けます。
 - `<!-- dead-cliche-disable-next-line metaphor/otoshiana -->` は次の1行だけ止めます。
 - `dead-cliche-enable` を書かなければ、そのファイルの末尾まで効きます。
+- IDを書かずに止めた範囲は、ID付きの`dead-cliche-enable`では開きません。守った範囲が
+  別のルールの再開で丸ごと外れないようにするためです。IDなしの`enable`で開きます。
 - 指示は `check` と `fix` の両方に効きます。止めた範囲は自動修正の対象からも外れます。
 - 引用を一律に対象外にはしていません。自分の下書きを引用で置く使い方があるためです。
 
