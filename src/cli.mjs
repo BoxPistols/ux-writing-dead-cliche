@@ -301,7 +301,17 @@ async function cmdUi(args) {
     process.exit(2);
   }
   const port = Number(args.flags.port ?? 7777);
-  const { token, listen } = createUiServer({ file, port });
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    console.error(`--port には1〜65535の整数を指定してください: ${args.flags.port}`);
+    process.exit(2);
+  }
+  const { server, token, listen } = createUiServer({ file, port });
+  // 使用中のポートで生のスタックトレースを出さない
+  server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') console.error(`ポート ${port} は使用中です。--port で別の番号を指定してください`);
+    else console.error(`起動できませんでした: ${e.message}`);
+    process.exit(2);
+  });
   await listen(port);
   console.log(`dead-cliche ui: http://127.0.0.1:${port}/?token=${token}`);
   console.log(`保存先: ${path.relative(process.cwd(), file) || file}`);
@@ -343,7 +353,7 @@ switch (cmd) {
     console.log('  check [files...] [--preset name] [--format json] [--min-severity warn] [--fail-on info|warn|error]  (既定: warn以上でexit 1)');
     console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
     console.log('  --strict は info も含めて exit 1 にする (--fail-on info と同義)');
-    console.log('  ui [--port 7777] [--file path]   プロジェクト辞書のローカル編集フォーム (127.0.0.1のみ)');
+    console.log('  ui [--port 7777] [--file path]            プロジェクト辞書のローカル編集フォーム (127.0.0.1のみ)');
   console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');
     process.exit(cmd ? 2 : 0);

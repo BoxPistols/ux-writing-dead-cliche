@@ -23,17 +23,38 @@ import { check } from './engine.mjs';
 const MAX_FIELD = 400; // 1項目の上限。辞書に長文を入れさせない
 const SEVERITIES = new Set(['error', 'warn', 'info']);
 
+const DEFAULT_HEADER =
+  '# dead-cliche のプロジェクト辞書。dead-cliche ui とエディタのどちらからでも編集できます。\n' +
+  '# ui から足せるのは surface (リテラル) だけです。正規表現はPRのレビューを通して足してください。\n';
+
 export function readCustomRules(file) {
   if (!fs.existsSync(file)) return [];
-  const entries = yaml.load(fs.readFileSync(file, 'utf8')) ?? [];
-  return Array.isArray(entries) ? entries : [];
+  const text = fs.readFileSync(file, 'utf8');
+  let entries;
+  try {
+    entries = yaml.load(text) ?? [];
+  } catch (e) {
+    throw new Error(`${file} をYAMLとして読めません: ${e.message}`);
+  }
+  // 配列でないものを空として扱うと、次の保存で既存の中身を消してしまう
+  if (!Array.isArray(entries)) throw new Error(`${file} の中身がルールの配列ではありません`);
+  return entries;
+}
+
+// 既存ファイルの先頭コメントは書き手のものなので残す
+function leadingComment(file) {
+  if (!fs.existsSync(file)) return DEFAULT_HEADER;
+  const kept = [];
+  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+    if (!line.startsWith('#')) break;
+    kept.push(line);
+  }
+  return kept.length > 0 ? `${kept.join('\n')}\n` : DEFAULT_HEADER;
 }
 
 export function writeCustomRules(file, rules) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const header = '# dead-cliche のプロジェクト辞書。dead-cliche ui で編集できます。\n' +
-    '# surface (リテラル) だけを持ちます。正規表現はレビューを通る経路 (PR) で足してください。\n';
-  fs.writeFileSync(file, header + yaml.dump(rules, { lineWidth: 100, noRefs: true }));
+  fs.writeFileSync(file, leadingComment(file) + yaml.dump(rules, { lineWidth: 100, noRefs: true }));
 }
 
 const trimmed = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -109,7 +130,7 @@ function page({ file, token, rules, message, error, warnings = [], form = {} }) 
       <td>${(r.surface ?? []).map((s) => `<b>${escapeHtml(s)}</b>`).join('、')}</td>
       <td>${escapeHtml(r.severity ?? 'error')}</td>
       <td>${escapeHtml(r.why ?? '')}<br><span class="soft">→ ${escapeHtml(r.ask ?? '')}</span></td>
-      <td><form method="post" action="/delete" onsubmit="return confirm('${escapeHtml(r.id)} を削除します。よろしいですか')">
+      <td><form method="post" action="/delete">
         <input type="hidden" name="token" value="${escapeHtml(token)}">
         <input type="hidden" name="id" value="${escapeHtml(r.id)}">
         <button class="ghost">削除</button>
@@ -236,9 +257,13 @@ th { font-size: 12.5px; color: var(--ink-soft); }
         <div class="field">
           <label for="severity">重大度</label>
           <select id="severity" name="severity">
-            <option value="error">error (修正必須)</option>
-            <option value="warn">warn (修正必須。CI・フックが止める)</option>
-            <option value="info">info (表示のみ)</option>
+            ${['error', 'warn', 'info']
+              .map((s) => {
+                const label = { error: 'error (修正必須)', warn: 'warn (修正必須。CI・フックが止める)', info: 'info (表示のみ)' }[s];
+                const selected = (form.severity ?? 'error') === s ? ' selected' : '';
+                return `<option value="${s}"${selected}>${label}</option>`;
+              })
+              .join('')}
           </select>
         </div>
       </div>
@@ -259,6 +284,34 @@ th { font-size: 12.5px; color: var(--ink-soft); }
 </html>`;
 }
 
+function confirmDeletePage({ token, rule }) {
+  return `<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>削除の確認 — dead-cliche ui</title>
+<style>
+body { margin: 0; padding: 40px 24px; background: #F6F6F3; color: #22262A; line-height: 1.75;
+  font-family: "IBM Plex Sans JP", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; font-size: 14.5px; }
+@media (prefers-color-scheme: dark) { body { background: #15181B; color: #E7E6E1; } }
+main { max-width: 640px; margin: 0 auto; }
+code { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+button { font: inherit; font-size: 14px; cursor: pointer; border-radius: 4px; padding: 7px 18px;
+  border: 1px solid #B8432C; background: #B8432C; color: #fff; }
+a { color: #2A4B7C; margin-left: 16px; }
+:focus-visible { outline: 2px solid #2A4B7C; outline-offset: 1px; }
+</style></head>
+<body><main>
+<h1>削除の確認</h1>
+<p><code>${escapeHtml(rule.id)}</code> (${(rule.surface ?? []).map((x) => escapeHtml(x)).join('、')}) を辞書から削除します。</p>
+<form method="post" action="/delete">
+  <input type="hidden" name="token" value="${escapeHtml(token)}">
+  <input type="hidden" name="id" value="${escapeHtml(rule.id)}">
+  <input type="hidden" name="confirm" value="yes">
+  <button type="submit">削除する</button>
+  <a href="/?token=${escapeHtml(token)}">やめる</a>
+</form>
+</main></body></html>`;
+}
+
 function parseForm(body) {
   const params = new URLSearchParams(body);
   return Object.fromEntries(params.entries());
@@ -266,8 +319,12 @@ function parseForm(body) {
 
 // 合言葉の比較は長さを揃えてから定数時間で行う
 function tokenMatches(expected, given) {
-  if (typeof given !== 'string' || given.length !== expected.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(given));
+  if (typeof given !== 'string') return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(given);
+  // timingSafeEqual は長さが違うと例外を投げる。多バイト文字で落とされないよう先に見る
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
 }
 
 export function createUiServer({ file, token = crypto.randomBytes(24).toString('hex'), port = 7777 } = {}) {
@@ -277,76 +334,102 @@ export function createUiServer({ file, token = crypto.randomBytes(24).toString('
     return new Set([`127.0.0.1:${bound}`, `localhost:${bound}`, `[::1]:${bound}`]).has(host);
   };
 
+  // 想定外の失敗でサーバーごと落とさない。辞書ファイルが壊れているときも画面で伝える
   const server = http.createServer((req, res) => {
-    const send = (status, html) => {
-      res.writeHead(status, {
-        'content-type': 'text/html; charset=utf-8',
-        // このページは何も外部に出さない。埋め込みも読み込みも禁じる
-        'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'",
-        'referrer-policy': 'no-referrer',
-        'x-content-type-options': 'nosniff',
-      });
-      res.end(html);
+    const fail = (e) => {
+      try {
+        res.writeHead(500, { 'content-type': 'text/html; charset=utf-8' });
+        res.end(`<!doctype html><meta charset="utf-8"><p>${escapeHtml(e?.message ?? String(e))}</p>`);
+      } catch {}
     };
-    const deny = (status, text) => send(status, `<!doctype html><meta charset="utf-8"><p>${escapeHtml(text)}</p>`);
+    try {
+      const send = (status, html) => {
+        res.writeHead(status, {
+          'content-type': 'text/html; charset=utf-8',
+          // このページは何も外部に出さない。埋め込みも読み込みも禁じる
+          'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'",
+          'referrer-policy': 'no-referrer',
+          'x-content-type-options': 'nosniff',
+        });
+        res.end(html);
+      };
+      const deny = (status, text) => send(status, `<!doctype html><meta charset="utf-8"><p>${escapeHtml(text)}</p>`);
 
-    // 別名で到達した要求は受けない (DNSリバインディング対策)
-    if (!allowedHost(req.headers.host ?? '')) return deny(403, 'このアドレスからは操作できません');
-    const origin = req.headers.origin;
-    if (origin && !allowedHost(new URL(origin).host)) return deny(403, '別のサイトからの操作は受け付けません');
-
-    const url = new URL(req.url, `http://${req.headers.host}`);
-
-    if (req.method === 'GET') {
-      if (!tokenMatches(token, url.searchParams.get('token') ?? '')) {
-        return deny(403, '合言葉が違います。起動時に表示されたURLを開いてください');
+      // 別名で到達した要求は受けない (DNSリバインディング対策)
+      if (!allowedHost(req.headers.host ?? '')) return deny(403, 'このアドレスからは操作できません');
+      const origin = req.headers.origin;
+      if (origin) {
+        // Origin: null (サンドボックス化されたiframe等) や壊れた値でも落ちない
+        let originHost = null;
+        try {
+          originHost = new URL(origin).host;
+        } catch {}
+        if (!originHost || !allowedHost(originHost)) return deny(403, '別のサイトからの操作は受け付けません');
       }
-      const rules = readCustomRules(file);
-      const state = { file, token, rules };
-      const kind = url.searchParams.get('done');
-      if (kind === 'added') state.message = '辞書に追加しました。';
-      if (kind === 'deleted') state.message = '辞書から削除しました。';
-      const warn = url.searchParams.getAll('warn');
-      if (warn.length) state.warnings = warn;
-      return send(200, page(state));
+
+      const url = new URL(req.url, `http://${req.headers.host}`);
+
+      if (req.method === 'GET') {
+        if (!tokenMatches(token, url.searchParams.get('token') ?? '')) {
+          return deny(403, '合言葉が違います。起動時に表示されたURLを開いてください');
+        }
+        const rules = readCustomRules(file);
+        const state = { file, token, rules };
+        const kind = url.searchParams.get('done');
+        if (kind === 'added') state.message = '辞書に追加しました。';
+        if (kind === 'deleted') state.message = '辞書から削除しました。';
+        const warn = url.searchParams.getAll('warn');
+        if (warn.length) state.warnings = warn;
+        return send(200, page(state));
+      }
+
+      if (req.method !== 'POST') return deny(405, '対応していない操作です');
+
+      let body = '';
+      let done = false;
+      req.setEncoding('utf8'); // 多バイト文字がチャンク境界で割れても壊れないようにする
+      req.on('data', (chunk) => {
+        if (done) return;
+        body += chunk;
+        if (body.length > 64 * 1024) {
+          done = true;
+          deny(413, '入力が大きすぎます'); // 返してから切る (切ってからでは 'end' が来ない)
+          req.destroy();
+        }
+      });
+      req.on('end', () => {
+      try {
+        if (done) return;
+        const form = parseForm(body);
+        if (!tokenMatches(token, form.token ?? '')) return deny(403, '合言葉が違います');
+
+        const rules = readCustomRules(file);
+        if (url.pathname === '/delete') {
+          const target = rules.find((r) => r.id === form.id);
+          if (!target) return deny(404, '指定されたidがありません');
+          // 押し間違いで消えないよう、確認を挟む (CSPでJSを動かさないため画面で確かめる)
+          if (form.confirm !== 'yes') return send(200, confirmDeletePage({ token, rule: target }));
+          writeCustomRules(file, rules.filter((r) => r.id !== form.id));
+          res.writeHead(303, { location: `/?token=${token}&done=deleted` });
+          return res.end();
+        }
+        if (url.pathname !== '/add') return deny(404, 'そのページはありません');
+
+        const { rule, problems, warnings } = ruleFromForm(form, rules);
+        if (problems.length > 0) {
+          return send(400, page({ file, token, rules, error: problems.join(' / '), form }));
+        }
+        writeCustomRules(file, [...rules, rule]);
+        const query = warnings.map((w) => `&warn=${encodeURIComponent(w)}`).join('');
+        res.writeHead(303, { location: `/?token=${token}&done=added${query}` });
+        res.end();
+      } catch (e) {
+        fail(e);
+      }
+    });
+    } catch (e) {
+      fail(e);
     }
-
-    if (req.method !== 'POST') return deny(405, '対応していない操作です');
-
-    let body = '';
-    let tooLarge = false;
-    req.on('data', (chunk) => {
-      body += chunk;
-      if (body.length > 64 * 1024) {
-        tooLarge = true;
-        req.destroy();
-      }
-    });
-    req.on('end', () => {
-      if (tooLarge) return deny(413, '入力が大きすぎます');
-      const form = parseForm(body);
-      if (!tokenMatches(token, form.token ?? '')) return deny(403, '合言葉が違います');
-
-      const rules = readCustomRules(file);
-      if (url.pathname === '/delete') {
-        const next = rules.filter((r) => r.id !== form.id);
-        if (next.length === rules.length) return deny(404, '指定されたidがありません');
-        writeCustomRules(file, next);
-        res.writeHead(303, { location: `/?token=${token}&done=deleted` });
-        return res.end();
-      }
-      if (url.pathname !== '/add') return deny(404, 'そのページはありません');
-
-      const { rule, problems, warnings } = ruleFromForm(form, rules);
-      if (problems.length > 0) {
-        return send(400, page({ file, token, rules, error: problems.join(' / '), form }));
-      }
-      writeCustomRules(file, [...rules, rule]);
-      const query = warnings.map((w) => `&warn=${encodeURIComponent(w)}`).join('');
-      res.writeHead(303, { location: `/?token=${token}&done=added${query}` });
-      res.end();
-    });
   });
-
   return { server, token, listen: (p = port) => new Promise((resolve) => server.listen(p, '127.0.0.1', resolve)) };
 }

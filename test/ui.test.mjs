@@ -125,14 +125,46 @@ test('patternは受け取らない (リテラルだけを辞書に入れる)', a
   assert.equal(written[0].id, 'custom/rule-1', 'idを入力から取っている');
 });
 
-test('削除できる。存在しないidは404', async () => {
+test('削除は確認を挟む。存在しないidは404', async () => {
   const file = tempFile();
   await withServer(file, async ({ origin, token }) => {
     await post(origin, '/add', { ...validForm(), token });
     assert.equal((await post(origin, '/delete', { token, id: 'custom/nope' })).status, 404);
-    assert.equal((await post(origin, '/delete', { token, id: 'custom/rule-1' })).status, 303);
+    // 確認なしの削除は消さず、確認画面を返す
+    const confirm = await post(origin, '/delete', { token, id: 'custom/rule-1' });
+    assert.equal(confirm.status, 200);
+    assert.match(await confirm.text(), /削除の確認/);
+    assert.equal(readCustomRules(file).length, 1, '確認前に消えている');
+    assert.equal((await post(origin, '/delete', { token, id: 'custom/rule-1', confirm: 'yes' })).status, 303);
   });
   assert.deepEqual(readCustomRules(file), []);
+});
+
+test('壊れた辞書ファイルでサーバーを落とさない', async () => {
+  const file = tempFile();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, '- id: [壊れた\n  surface\n');
+  await withServer(file, async ({ origin, token, port }) => {
+    assert.equal((await fetch(`${origin}/?token=${token}`)).status, 500);
+    // 落ちていないこと (次の要求が届く)
+    assert.equal(await rawGet(port, '/?token=wrong', { host: `127.0.0.1:${port}` }), 403);
+  });
+});
+
+test('多バイト文字の合言葉でも落ちない', async () => {
+  const file = tempFile();
+  await withServer(file, async ({ origin, port }) => {
+    assert.equal((await fetch(`${origin}/?token=${encodeURIComponent('あ'.repeat(48))}`)).status, 403);
+    assert.equal(await rawGet(port, '/?token=x', { host: `127.0.0.1:${port}` }), 403);
+  });
+});
+
+test('壊れたOriginでも落ちない', async () => {
+  const file = tempFile();
+  await withServer(file, async ({ origin, token }) => {
+    const res = await post(origin, '/add', { ...validForm(), token }, { origin: 'null' });
+    assert.equal(res.status, 403);
+  });
 });
 
 test('知らない経路と操作は受け付けない', async () => {
