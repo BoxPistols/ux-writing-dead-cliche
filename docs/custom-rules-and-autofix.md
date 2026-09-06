@@ -67,8 +67,17 @@
   読み込み、さらに長さ上限とコンパイル検査、量指定子の入れ子の拒否を通す
 - カスタム辞書はリポジトリにコミットされるため、変更は必ずPRレビューを通る
 
-ローカルUI (`dead-cliche ui` で127.0.0.1に立つ編集フォーム) はロードマップです。
-実装する場合はloopbackバインド・CSRFトークン・surface限定を必須にします。
+ローカルUI (`dead-cliche ui`) は実装済みです。127.0.0.1にだけ束ね、起動時に作る
+合言葉をページの取得と保存の両方で要求し、受け取るのはsurface (リテラル) だけです。
+Hostヘッダを検査して別名からの到達 (DNSリバインディング) を拒み、Originヘッダが
+別サイトのときも拒みます。書き込むのはカスタム辞書ファイルだけで、`rules/` には
+書きません。保存はjs-yamlのdumpを通し、フォーム入力を文字列連結でYAML化しません。
+
+```
+dead-cliche ui [--port 7777] [--file .deadcliche/custom-rules.yml]
+```
+
+起動すると合言葉付きのURLが表示されます。そのURLでだけ開けます。
 
 ## 検証層
 
@@ -108,6 +117,6 @@ fixを持たないルールはask (何を書くべきかの問い) に答える�
 | フェーズ | 内容 | 状態 |
 | --- | --- | --- |
 | 1 | custom-rules機構、fixフィールド、Issue Form、提案ページ | 実装済み (v0.7.0) |
-| 2 | 提案Issueから下書きPRを生成するAction | [#4](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/4) |
-| 3 | `dead-cliche ui` (ローカル編集フォーム) | [#5](https://github.com/BoxPistols/ux-writing-dead-cliche/issues/5) |
+| 2 | 提案Issueから下書きPRを生成するAction | 実装済み |
+| 3 | `dead-cliche ui` (ローカル編集フォーム) | 実装済み |
 | 4 | 組織ダッシュボード (検出統計・辞書の採用状況) | 構想のみ |
