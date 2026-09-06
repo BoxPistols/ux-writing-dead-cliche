@@ -1,0 +1,88 @@
+# 提案Issue (ISSUE_TEMPLATE/propose-rule.yml) から辞書エントリの下書きPRを作る。
+# 出来上がるのはdraftで、そのまま入る想定ではない。idの命名・パターンの絞り込み・
+# 負例の追加は人が行う。この自動化の役目は、フォームの回答をYAMLの形に移すところまで。
+name: 提案Issueから下書きPRを作る
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: '対象のIssue番号'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  draft:
+    # 見知らぬ利用者の本文でブランチを作らない。フォームの提案は維持者がラベルを
+    # 付け直すか、workflow_dispatchで明示的に流す
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.label.name == 'rule-proposal' &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NUMBER: ${{ github.event.issue.number || inputs.issue }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+
+      # 本文はシェルに展開せずファイルで受け取る (Issueの文面をコマンドに混ぜない)
+      - name: Issue本文を取得する
+        run: gh issue view "$NUMBER" --repo "$GITHUB_REPOSITORY" --json body -q .body > "$RUNNER_TEMP/proposal.md"
+
+      - name: 辞書エントリを生成して追記する
+        id: gen
+        run: |
+          node tools/proposal-to-rule.mjs \
+            --number "$NUMBER" \
+            --body-file "$RUNNER_TEMP/proposal.md" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --write
+
+      - name: 生成物を作り直す
+        run: |
+          node tools/render-prompts.mjs
+          node tools/render-webdata.mjs
+          node tools/render-comparison.mjs > docs/before-after.md
+
+      # 落ちてもPRは作る。何が通っていないかを本文に書いてレビューに渡す
+      - name: テスト
+        id: test
+        continue-on-error: true
+        run: npm test
+
+      - name: 下書きPRを作る
+        run: |
+          set -e
+          BRANCH="rule-proposal/$NUMBER"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git add rules docs
+          git commit -m "提案Issue #$NUMBER の表現を辞書の下書きとして足す"
+          git push -u origin "$BRANCH" --force-with-lease
+          {
+            echo "提案Issue #$NUMBER をフォームの回答どおりに辞書エントリへ移した下書きです。"
+            echo "自動生成なので、このままでは辞書に入れません。"
+            echo
+            echo "- 生成したルール: \`${{ steps.gen.outputs.rule_id }}\` (rules/${{ steps.gen.outputs.category }}.yml)"
+            echo "- npm test: ${{ steps.test.outcome }}"
+            echo
+            cat "$RUNNER_TEMP/notes.md"
+            echo
+            echo "Closes #$NUMBER"
+          } > "$RUNNER_TEMP/pr-body.md"
+          gh pr create --draft --base main --head "$BRANCH" \
+            --title "[rule] 提案 #$NUMBER の下書き" \
+            --body-file "$RUNNER_TEMP/pr-body.md" \
+            || gh pr edit "$BRANCH" --body-file "$RUNNER_TEMP/pr-body.md"
