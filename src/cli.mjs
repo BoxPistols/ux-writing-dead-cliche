@@ -4,13 +4,14 @@
 //   dead-cliche list [--preset name] [--manual]
 //   dead-cliche explain <rule-id>
 //   dead-cliche claude-hook   (Claude CodeのPostToolUseフックからstdin JSONで呼ばれる)
+//   dead-cliche ui [--port 7777] [--file .deadcliche/custom-rules.yml]
 
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig } from './load-rules.mjs';
+import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig, PACKAGE_ROOT } from './load-rules.mjs';
 import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
 
 const MD_EXT = new Set(['.md', '.mdx', '.markdown']);
@@ -22,8 +23,15 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith('--')) {
       const key = a.slice(2);
-      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on'].includes(key)) {
-        args.flags[key] = argv[++i];
+      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on', 'port', 'file'].includes(key)) {
+        const value = argv[i + 1];
+        // 値を落とすと既定値で走ってしまう (--port だけ書いて7777で立つ等)。指定漏れは止める
+        if (value === undefined || value.startsWith('--')) {
+          console.error(`--${key} には値が要ります`);
+          process.exit(2);
+        }
+        args.flags[key] = value;
+        i++;
       } else {
         args.flags[key] = true;
       }
@@ -286,6 +294,53 @@ function cmdFix(args) {
   }
 }
 
+// ローカル編集フォーム。カスタム辞書 (プロジェクト辞書) だけを書き換える。
+// 保存先は --file、無ければ .deadclicherc.json の customRules の1つ目、
+// それも無ければ .deadcliche/custom-rules.yml (rcに追記する案内を出す)。
+async function cmdUi(args) {
+  const { createUiServer } = await import('./ui.mjs');
+  const rc = findRc(process.cwd());
+  const base = rc?._dir ?? process.cwd();
+  const fromRc = rc?.customRules?.[0];
+  const file = path.resolve(base, args.flags.file ?? fromRc ?? '.deadcliche/custom-rules.yml');
+  // 字句のパスだけ見ると、rules/ の中を指すシンボリックリンク経由で共有辞書を書き換えられる。
+  // 実体 (既存ファイルと親ディレクトリ) を解決してから判定する
+  const sharedRules = fs.realpathSync.native(path.join(PACKAGE_ROOT, 'rules'));
+  const resolved = [];
+  try {
+    resolved.push(fs.realpathSync.native(file));
+  } catch {
+    // まだ無いファイルは親ディレクトリで見る
+  }
+  try {
+    resolved.push(fs.realpathSync.native(path.dirname(file)));
+  } catch {}
+  if (resolved.some((p) => p === sharedRules || p.startsWith(sharedRules + path.sep))) {
+    console.error('共有辞書 (rules/) はこのフォームからは編集できません。PRで変更してください');
+    process.exit(2);
+  }
+  const port = Number(args.flags.port ?? 7777);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    console.error(`--port には1〜65535の整数を指定してください: ${args.flags.port}`);
+    process.exit(2);
+  }
+  const { server, token, listen } = createUiServer({ file, port });
+  // 使用中のポートで生のスタックトレースを出さない
+  server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') console.error(`ポート ${port} は使用中です。--port で別の番号を指定してください`);
+    else console.error(`起動できませんでした: ${e.message}`);
+    process.exit(2);
+  });
+  await listen(port);
+  console.log(`dead-cliche ui: http://127.0.0.1:${port}/?token=${token}`);
+  console.log(`保存先: ${path.relative(process.cwd(), file) || file}`);
+  if (!fromRc && !args.flags.file) {
+    console.log('この辞書を検査に効かせるには、.deadclicherc.json に次を足してください:');
+    console.log(`  "customRules": ["${path.relative(base, file)}"]`);
+  }
+  console.log('終了するには Ctrl+C');
+}
+
 const args = parseArgs(process.argv.slice(2));
 const cmd = args._.shift();
 if (cmd === 'version' || args.flags.version) {
@@ -309,12 +364,16 @@ switch (cmd) {
   case 'claude-hook':
     cmdClaudeHook();
     break;
+  case 'ui':
+    await cmdUi(args);
+    break;
   default:
-    console.log('使い方: dead-cliche <check|fix|list|explain|claude-hook> [options]');
+    console.log('使い方: dead-cliche <check|fix|ui|list|explain|claude-hook> [options]');
     console.log('  check [files...] [--preset name] [--format json] [--min-severity warn] [--fail-on info|warn|error]  (既定: warn以上でexit 1)');
     console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
     console.log('  --strict は info も含めて exit 1 にする (--fail-on info と同義)');
-    console.log('  list [--preset name] [--manual]');
+    console.log('  ui [--port 7777] [--file path]            プロジェクト辞書のローカル編集フォーム (127.0.0.1のみ)');
+  console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');
     process.exit(cmd ? 2 : 0);
 }
