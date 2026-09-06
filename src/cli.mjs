@@ -24,7 +24,14 @@ function parseArgs(argv) {
     if (a.startsWith('--')) {
       const key = a.slice(2);
       if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on', 'port', 'file'].includes(key)) {
-        args.flags[key] = argv[++i];
+        const value = argv[i + 1];
+        // 値を落とすと既定値で走ってしまう (--port だけ書いて7777で立つ等)。指定漏れは止める
+        if (value === undefined || value.startsWith('--')) {
+          console.error(`--${key} には値が要ります`);
+          process.exit(2);
+        }
+        args.flags[key] = value;
+        i++;
       } else {
         args.flags[key] = true;
       }
@@ -296,7 +303,19 @@ async function cmdUi(args) {
   const base = rc?._dir ?? process.cwd();
   const fromRc = rc?.customRules?.[0];
   const file = path.resolve(base, args.flags.file ?? fromRc ?? '.deadcliche/custom-rules.yml');
-  if (file.startsWith(path.join(PACKAGE_ROOT, 'rules') + path.sep)) {
+  // 字句のパスだけ見ると、rules/ の中を指すシンボリックリンク経由で共有辞書を書き換えられる。
+  // 実体 (既存ファイルと親ディレクトリ) を解決してから判定する
+  const sharedRules = fs.realpathSync.native(path.join(PACKAGE_ROOT, 'rules'));
+  const resolved = [];
+  try {
+    resolved.push(fs.realpathSync.native(file));
+  } catch {
+    // まだ無いファイルは親ディレクトリで見る
+  }
+  try {
+    resolved.push(fs.realpathSync.native(path.dirname(file)));
+  } catch {}
+  if (resolved.some((p) => p === sharedRules || p.startsWith(sharedRules + path.sep))) {
     console.error('共有辞書 (rules/) はこのフォームからは編集できません。PRで変更してください');
     process.exit(2);
   }

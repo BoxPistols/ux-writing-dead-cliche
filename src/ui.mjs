@@ -38,6 +38,22 @@ export function readCustomRules(file) {
   }
   // 配列でないものを空として扱うと、次の保存で既存の中身を消してしまう
   if (!Array.isArray(entries)) throw new Error(`${file} の中身がルールの配列ではありません`);
+  // 壊れた要素をそのまま持ち回ると、一覧の描画で落ちる。どのエントリが悪いかまで言う
+  entries.forEach((entry, i) => {
+    const where = `${file} の ${i + 1} 件目`;
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error(`${where} がルールの形をしていません`);
+    }
+    if (typeof entry.id !== 'string' || !entry.id) throw new Error(`${where} に id がありません`);
+    if (entry.surface !== undefined && !Array.isArray(entry.surface)) {
+      throw new Error(`${where} の surface が配列ではありません`);
+    }
+    for (const key of ['why', 'ask']) {
+      if (entry[key] !== undefined && typeof entry[key] !== 'string') {
+        throw new Error(`${where} の ${key} が文字列ではありません`);
+      }
+    }
+  });
   return entries;
 }
 
@@ -53,8 +69,33 @@ function leadingComment(file) {
 }
 
 export function writeCustomRules(file, rules) {
+  // シンボリックリンクをたどると、指し先 (共有辞書など) を書き換えてしまう
+  if (fs.existsSync(file) && fs.lstatSync(file).isSymbolicLink()) {
+    throw new Error(`${file} はシンボリックリンクです。実体のパスを --file で指定してください`);
+  }
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, leadingComment(file) + yaml.dump(rules, { lineWidth: 100, noRefs: true }));
+  const body = leadingComment(file) + yaml.dump(rules, { lineWidth: 100, noRefs: true });
+  // 書き込みの途中で落ちると辞書が壊れる。同じディレクトリに書いてから置き換える
+  const tmp = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.tmp`);
+  let fd;
+  try {
+    fd = fs.openSync(tmp, 'wx');
+    fs.writeFileSync(fd, body);
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fd = undefined;
+    fs.renameSync(tmp, file);
+  } catch (e) {
+    if (fd !== undefined) {
+      try {
+        fs.closeSync(fd);
+      } catch {}
+    }
+    try {
+      fs.rmSync(tmp, { force: true });
+    } catch {}
+    throw e;
+  }
 }
 
 const trimmed = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -104,7 +145,7 @@ export function ruleFromForm(form, existing = []) {
     for (const g of good) if (check(g, [rule]).length > 0) warnings.push(`良い例を誤検出します: ${g}`);
     for (const d of deny) if (check(d, [rule]).length > 0) warnings.push(`検出しない例を誤検出します: ${d}`);
   }
-  if (existing.some((r) => (r.surface ?? []).includes(surface))) {
+  if (existing.some((r) => (Array.isArray(r?.surface) ? r.surface : []).includes(surface))) {
     problems.push(`同じ表現がすでに登録されています: ${surface}`);
   }
   return { rule, problems, warnings };
@@ -112,7 +153,7 @@ export function ruleFromForm(form, existing = []) {
 
 // idは機械が振る。custom/ で始まらないエントリはエンジンが読まないため
 function nextId(existing) {
-  const used = new Set(existing.map((r) => r.id));
+  const used = new Set(existing.map((r) => r?.id));
   for (let n = 1; ; n++) {
     const id = `custom/rule-${n}`;
     if (!used.has(id)) return id;
@@ -126,13 +167,13 @@ function page({ file, token, rules, message, error, warnings = [], form = {} }) 
   const rows = rules
     .map(
       (r) => `<tr>
-      <td><code>${escapeHtml(r.id)}</code></td>
-      <td>${(r.surface ?? []).map((s) => `<b>${escapeHtml(s)}</b>`).join('、')}</td>
-      <td>${escapeHtml(r.severity ?? 'error')}</td>
-      <td>${escapeHtml(r.why ?? '')}<br><span class="soft">→ ${escapeHtml(r.ask ?? '')}</span></td>
+      <td><code>${escapeHtml(r?.id ?? '(idなし)')}</code></td>
+      <td>${(Array.isArray(r?.surface) ? r.surface : []).map((s) => `<b>${escapeHtml(s)}</b>`).join('、')}</td>
+      <td>${escapeHtml(r?.severity ?? 'error')}</td>
+      <td>${escapeHtml(r?.why ?? '')}<br><span class="soft">→ ${escapeHtml(r?.ask ?? '')}</span></td>
       <td><form method="post" action="/delete">
         <input type="hidden" name="token" value="${escapeHtml(token)}">
-        <input type="hidden" name="id" value="${escapeHtml(r.id)}">
+        <input type="hidden" name="id" value="${escapeHtml(r?.id ?? '')}">
         <button class="ghost">削除</button>
       </form></td>
     </tr>`
