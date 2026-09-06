@@ -24,6 +24,7 @@
     "test": "node --test",
     "sync": "npm run docs:prompts && npm run docs:webdata && npm run docs:comparison && npm test && npm run check:self",
     "gaps": "node tools/gap-report.mjs",
+    "mine": "node tools/mine-ngrams.mjs",
     "check:self": "node src/cli.mjs check README.md CONTRIBUTING.md",
     "check:plugin": "node tools/validate-plugin.mjs",
     "docs:comparison": "node tools/render-comparison.mjs > docs/before-after.md",
