@@ -29,8 +29,17 @@ const warn = (msg) => console.warn(`  注意: ${msg}`);
 const runInherit = (cmd, cmdArgs) => spawnSync(cmd, cmdArgs, { cwd: PACKAGE_ROOT, stdio: 'inherit' });
 
 const PKG = 'textlint-rule-ux-writing-dead-cliche';
+// npm view はローカルキャッシュを返すため、publish直後は古い値が返る。--prefer-online で取りに行く
 const isPublished = (v) => {
-  try { return run(`npm view ${PKG}@${v} version`).trim() === v; } catch { return false; }
+  try { return run(`npm view ${PKG}@${v} version --prefer-online`).trim() === v; } catch { return false; }
+};
+// レジストリへの反映には間がある。publish直後の確認はこちらを使う
+const waitPublished = (v) => {
+  for (let i = 0; i < 5; i += 1) {
+    if (isPublished(v)) return true;
+    if (i < 4) execSync('sleep 3');
+  }
+  return false;
 };
 
 const pkgPath = path.join(PACKAGE_ROOT, 'package.json');
@@ -181,7 +190,7 @@ if (!skipNpm) {
         `  版はコミット済みなので、続きは: npm run release -- --resume --otp=123456`,
       ].join('\n'));
     }
-    if (!isPublished(version)) fail(`npmの公開が確認できません (レジストリ上は ${run(`npm view ${PKG} version`).trim()})`);
+    if (!waitPublished(version)) fail(`npmの公開が確認できません (レジストリ上は ${run(`npm view ${PKG} version --prefer-online`).trim()})`);
     console.log(`  npm: ${version} を公開しました`);
   }
 }
