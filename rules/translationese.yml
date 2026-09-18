@@ -16,12 +16,13 @@
 
 - id: translationese/kanou-desu
   severity: warn
-  pattern: 'することが可能(です|になります)'
+  pattern: 'することが可能(です|である|だ|になります|になる)'
   why: 「できます」で足りる冗長形。
   ask: 「〜できます」に短くする。
   examples:
     bad:
       - 'CSV形式で出力することが可能です。'
+      - 'CSV形式で出力することが可能である。'
     good:
       - 'CSV形式で出力できます。'
 
@@ -51,12 +52,13 @@
 
 - id: translationese/mono-to-narimasu
   severity: warn
-  pattern: 'もの(と|に)なります'
+  pattern: 'もの(と|に)な(ります|る)'
   why: 「なります」で足りる冗長形。主体が消える。
   ask: 「〜になります」か、動作主のある文にする。
   examples:
     bad:
       - '本機能は今後の開発の土台となるものとなります。'
+      - '本機能は今後の開発の土台となるものとなる。'
     good:
       - '今後の機能は本機能のAPIを使って実装します。'
 
@@ -108,11 +110,12 @@
 
 - id: translationese/iu-made-mo-naku
   severity: info
-  pattern: '言うまでもなく|言うまでもありませんが'
+  pattern: '言うまでも(なく|ない|ありませんが|ありません)'
   why: needless to sayの直訳。言うまでもないなら書かなくてよい。
   ask: 削るか、根拠として必要なら普通の文で書く。
   examples:
     bad:
       - '言うまでもなく、テストは重要です。'
+      - '言うまでもないが、テストは重要だ。'
     good:
       - 'テストがないと、退行をリリース後まで検出できません。'
