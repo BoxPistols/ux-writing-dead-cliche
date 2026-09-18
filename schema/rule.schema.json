@@ -46,6 +46,10 @@
         "type": "boolean",
         "description": "true なら機械検出しない。スキルやレビューでの人力判断ルール。"
       },
+      "quotable": {
+        "type": "boolean",
+        "description": "false なら代表表記が固定表現ではない (主題が任意の語であるなど)。短縮プロンプトの禁止表現一覧から外し、全文プロンプトでは ask つきで示す。既定は true。"
+      },
       "why": {
         "type": "string",
         "minLength": 1,

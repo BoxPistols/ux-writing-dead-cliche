@@ -51,17 +51,22 @@ textlint上で両方を有効にする構成が成立します。
 
 ## textlint-rule-preset-ai-words-jaとの違い (調査日: 2026-09-16)
 
-p1ass/textlint-rule-preset-ai-words-jaは、AIが書いた日本語に増えた単語そのものを検出する
-textlintプリセットです (`no-ai-words`と`no-short-topic-comma`の2ルール)。辞書は49語で、
-「Qiitaの7万記事を生成AIの前後で比べ、出現率が上がった語」を根拠にしています。kuromojiの
-形態素解析を使うため、基本形で登録した語は活用形もまとめて検出します。
+比較したのはp1ass/textlint-rule-preset-ai-words-jaのv1.2.0 (commit 4de09b3) です。以下の
+件数はこの版で測っています。ルールは2つあり、性質が違います。
 
-検出の単位が違います。向こうは語 (`効く` `経路` `穴` `土台` `核心` `線引き` `定石`)、本ツールは
-型と文脈 (共起条件つきの比喩・誇張・翻訳調・締めの型) です。相互にかけた結果もほぼ排他でした。
+- `no-ai-words`: AIが書いた日本語に増えた単語そのものを検出します。辞書は49語で、
+  「Qiitaの7万記事を生成AIの前後で比べ、出現率が上がった語」を根拠にしています。kuromojiの
+  形態素解析を使うため、基本形で登録した語は活用形もまとめて検出します
+- `no-short-topic-comma`: 短い主題のあとの読点を検出する構文のルールです。語彙は見ません。
+  指摘が多くなりやすいため、既定では無効です
+
+主軸の`no-ai-words`と本ツールでは、検出の単位が違います。向こうは語 (`効く` `経路` `穴` `土台`
+`核心` `線引き` `定石`)、本ツールは型と文脈 (共起条件つきの比喩・誇張・翻訳調・締めの型) です。
+相互にかけた結果もほぼ排他でした。
 
 | かけた文章 | preset-ai-words-ja | 本ツール (paper) |
 | --- | --- | --- |
-| 先方のAI生成サンプル (179行) | 30件 | 2件 |
+| 先方のAI生成サンプル (`example/ai-generated-text.md`, 179行) | 30件 | 2件 |
 | 本ツールのREADME + DESIGN.md | 20件 | 0件 |
 
 本ツールのREADMEで出た20件は、大半が`検査` (8件) と`効く` (4件) です。どちらも本ツールの
@@ -79,8 +84,9 @@ textlintプリセットです (`no-ai-words`と`no-short-topic-comma`の2ルー�
 <!-- dead-cliche-disable syntax-pattern/short-topic-comma -->
 
 「結論は、まだ出ていません。」のように、主題を数文字示しただけで読点を打つ型です。先方は主題の
-長さだけを見て、指摘が多くなるためデフォルト無効にしています。本ツールの辞書はCIとフックを
-止めるため、述部も短いこと (12文字以内) を共起条件に足して絞り、severityはinfoにしました。
+長さだけを見ています。この辞書はerrorとwarnがCIとフックを止めるので、それでは広すぎます。
+述部も短いこと (12文字以内) を共起条件に足して絞ったうえで、severityはCIとフックを失敗させない
+infoにしました。
 「本機能は、検索結果を閲覧履歴で並べ替えます。」のような長い述部の読点は検出しません。
 
 <!-- dead-cliche-enable syntax-pattern/short-topic-comma -->
@@ -102,7 +108,7 @@ preset-ai-words-jaが優位なものは次のとおりです。
   "rules": {
     "preset-ja-technical-writing": true,
     "preset-ai-writing": true,
-    "preset-ai-words-ja": { "no-ai-words": { "allows": ["検査", "経路"] } },
+    "preset-ai-words-ja": { "no-ai-words": { "allows": ["検査", "効く", "経路"] } },
     "ux-writing-dead-cliche": { "preset": "paper" },
     "prh": { "rulePaths": ["prh.yml"] }
   }

@@ -97,13 +97,14 @@ for (const p of [pkgPath, pluginPath]) {
   d.version = version;
   writeJson(p, d);
 }
+const pluginVersion = readJson(pluginPath).version;
+if (pluginVersion !== version) fail(`plugin.jsonの版が一致しません (${pluginVersion})`);
 // lockfileの版も上げる。npm i を誰かが実行するまで差分として残り続けるため。
+// 検証のあとに書く。落ちたときに書き換えるファイルを増やさないため。
 const lock = readJson(lockPath);
 lock.version = version;
 if (lock.packages?.['']) lock.packages[''].version = version;
 writeJson(lockPath, lock);
-const pluginVersion = readJson(pluginPath).version;
-if (pluginVersion !== version) fail(`plugin.jsonの版が一致しません (${pluginVersion})`);
 console.log(`  package.json と package-lock.json と plugin.json を ${version} にしました`);
 
 step(2, '生成物を作り直す');
