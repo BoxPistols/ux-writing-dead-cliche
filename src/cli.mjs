@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // dead-cliche CLI。
 //   dead-cliche check [files...] [--preset name] [--format pretty|json] [--min-severity warn]
+//   dead-cliche check [files...] --ai            manualルールも判定する (TYPESAFE_API_KEYが要る。既定はオフ)
 //   dead-cliche list [--preset name] [--manual]
 //   dead-cliche explain <rule-id>
 //   dead-cliche claude-hook   (Claude CodeのPostToolUseフックからstdin JSONで呼ばれる)
@@ -23,7 +24,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith('--')) {
       const key = a.slice(2);
-      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on', 'port', 'file'].includes(key)) {
+      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on', 'port', 'file', 'ai-threshold'].includes(key)) {
         const value = argv[i + 1];
         // 値を落とすと既定値で走ってしまう (--port だけ書いて7777で立つ等)。指定漏れは止める
         if (value === undefined || value.startsWith('--')) {
@@ -61,13 +62,13 @@ function printPretty(file, violations) {
   }
 }
 
-function cmdCheck(args) {
+async function cmdCheck(args) {
   const files = args._;
   const results = [];
   let total = 0;
   let errors = 0;
 
-  const run = (text, displayName, filePath) => {
+  const run = async (text, displayName, filePath) => {
     const rc = filePath ? findRc(path.dirname(path.resolve(filePath))) : findRc(process.cwd());
     if (rc?.ignore && filePath) {
       const rel = path.relative(rc._dir, path.resolve(filePath));
@@ -76,6 +77,17 @@ function cmdCheck(args) {
     const preset = args.flags.preset ?? rc?.preset ?? 'paper';
     const rules = applyRcRuleConfig([...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)], rc);
     let violations = checkText(text, filePath, rules);
+    // --ai を付けたときだけ、機械検出していないmanualルールを型付き判定のAPIで見る。
+    // 失敗しても既存の検出結果は捨てない
+    if (args.flags.ai) {
+      try {
+        const { judgeManualRules } = await import('./manual-judge.mjs');
+        const threshold = args.flags['ai-threshold'] ? Number(args.flags['ai-threshold']) : undefined;
+        violations = [...violations, ...(await judgeManualRules(text, rules, { threshold }))];
+      } catch (e) {
+        console.error(`--ai の判定を飛ばしました: ${e.message}`);
+      }
+    }
     const min = args.flags['min-severity'];
     if (min) {
       const order = { info: 0, warn: 1, error: 2 };
@@ -89,7 +101,7 @@ function cmdCheck(args) {
 
   if (files.length === 0 || (files.length === 1 && files[0] === '-')) {
     const text = fs.readFileSync(0, 'utf8');
-    run(text, '(stdin)', null);
+    await run(text, '(stdin)', null);
   } else {
     for (const f of files) {
       // 指定を誤ったときに生のスタックトレースを出さない
@@ -101,7 +113,7 @@ function cmdCheck(args) {
         console.error(`${f} はディレクトリです。ファイルを指定してください (例: ${f}/*.md)`);
         process.exit(2);
       }
-      run(fs.readFileSync(f, 'utf8'), f, f);
+      await run(fs.readFileSync(f, 'utf8'), f, f);
     }
   }
 
@@ -350,7 +362,7 @@ if (cmd === 'version' || args.flags.version) {
 }
 switch (cmd) {
   case 'check':
-    cmdCheck(args);
+    await cmdCheck(args);
     break;
   case 'fix':
     cmdFix(args);
