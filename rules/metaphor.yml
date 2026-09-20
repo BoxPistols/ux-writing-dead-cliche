@@ -276,12 +276,13 @@
 
 - id: metaphor/puzzle-piece
   severity: warn
-  pattern: '最後のピース(です|とな|と言え)'
+  pattern: '最後のピース(です|である|だ|とな|と言え)'
   why: 「残っていた課題」の比喩で、何が欠けていたのかが書かれない。
   ask: 欠けていた機能・工程を特定して書く。
   examples:
     bad:
       - '生成AIは業務自動化の最後のピースです。'
+      - '生成AIは業務自動化の最後のピースである。'
     good:
       - '未対応だった請求書の読み取りを、生成AIが担います。'
   deny_examples:

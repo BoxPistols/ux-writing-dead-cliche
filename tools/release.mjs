@@ -43,6 +43,7 @@ const waitPublished = (v) => {
 };
 
 const pkgPath = path.join(PACKAGE_ROOT, 'package.json');
+const lockPath = path.join(PACKAGE_ROOT, 'package-lock.json');
 const pluginPath = path.join(PACKAGE_ROOT, '.claude-plugin', 'plugin.json');
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 const writeJson = (p, d) => fs.writeFileSync(p, JSON.stringify(d, null, 2) + '\n');
@@ -98,7 +99,13 @@ for (const p of [pkgPath, pluginPath]) {
 }
 const pluginVersion = readJson(pluginPath).version;
 if (pluginVersion !== version) fail(`plugin.jsonの版が一致しません (${pluginVersion})`);
-console.log(`  package.json と plugin.json を ${version} にしました`);
+// lockfileの版も上げる。npm i を誰かが実行するまで差分として残り続けるため。
+// 検証のあとに書く。落ちたときに書き換えるファイルを増やさないため。
+const lock = readJson(lockPath);
+lock.version = version;
+if (lock.packages?.['']) lock.packages[''].version = version;
+writeJson(lockPath, lock);
+console.log(`  package.json と package-lock.json と plugin.json を ${version} にしました`);
 
 step(2, '生成物を作り直す');
 run('node tools/render-prompts.mjs');
@@ -136,7 +143,7 @@ console.log('  機密・業務固有語の混入: なし');
 
 if (dryRun) {
   console.log('\ndry-runのため、ここで終了します。バージョンと生成物の変更は残っています。');
-  console.log('元に戻すには: git checkout -- package.json .claude-plugin/plugin.json docs/');
+  console.log('元に戻すには: git checkout -- package.json package-lock.json .claude-plugin/plugin.json docs/');
   process.exit(0);
 }
 
