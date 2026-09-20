@@ -15,12 +15,13 @@
 
 - id: overstatement/itself
   severity: warn
-  pattern: 'そのものです'
+  pattern: 'そのもの(です|である|だ)'
   why: 対象を理念と同一視して、評価の根拠を省く表現。
   ask: 何を見てそう判断したのか、観察された事実を書く。
   examples:
     bad:
       - 'この姿勢がプロフェッショナリズムそのものです。'
+      - 'この姿勢がプロフェッショナリズムそのものである。'
     good:
       - '締め切り前日までに全件の検証を終えていました。'
   deny_examples:
