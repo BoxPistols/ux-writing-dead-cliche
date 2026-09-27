@@ -222,7 +222,15 @@ function changedLines(filePath) {
 
 function onlyChanged(filePath, violations) {
   const lines = changedLines(filePath);
-  return lines ? violations.filter((v) => lines.has(v.line)) : violations;
+  if (!lines) return violations;
+  // 一致が改行をまたぐと v.line は開始行だけを指す。追加行にかかる違反は残す
+  return violations.filter((v) => {
+    const endLine = v.line + (v.matched.match(/\n/g) ?? []).length;
+    for (let line = v.line; line <= endLine; line++) {
+      if (lines.has(line)) return true;
+    }
+    return false;
+  });
 }
 
 function hookCheckFile(filePath) {
