@@ -11,6 +11,7 @@ import path from 'node:path';
 import process from 'node:process';
 import os from 'node:os';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig, PACKAGE_ROOT } from './load-rules.mjs';
 import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
 
@@ -190,6 +191,48 @@ function hookSkipped(filePath) {
   return HOOK_SKIP_PREFIXES.some((prefix) => filePath.startsWith(prefix));
 }
 
+// フックは今回書いた行だけを検査する。既存の文書は書き手の判断で残している文面なので、
+// ファイル全体を検査すると既存行の違反まで「書き直してください」と差し戻してしまう。
+// gitで追跡しているファイルは HEAD との差分の追加行だけを返す。追跡外・新規・gitの外では null (全体を検査)。
+// DEAD_CLICHE_HOOK_ALL=1 で従来どおりファイル全体を検査する。
+function changedLines(filePath) {
+  if (process.env.DEAD_CLICHE_HOOK_ALL === '1') return null;
+  const dir = path.dirname(filePath);
+  const git = (args) => execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 });
+  try {
+    git(['ls-files', '--error-unmatch', '--', filePath]);
+    git(['rev-parse', '--verify', 'HEAD']);
+  } catch {
+    return null;
+  }
+  let diff;
+  try {
+    diff = git(['diff', '--no-color', '--no-ext-diff', '-U0', 'HEAD', '--', filePath]);
+  } catch {
+    return null;
+  }
+  const lines = new Set();
+  for (const m of diff.matchAll(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gm)) {
+    const start = Number(m[1]);
+    const count = m[2] === undefined ? 1 : Number(m[2]);
+    for (let i = 0; i < count; i++) lines.add(start + i);
+  }
+  return lines;
+}
+
+function onlyChanged(filePath, violations) {
+  const lines = changedLines(filePath);
+  if (!lines) return violations;
+  // 一致が改行をまたぐと v.line は開始行だけを指す。追加行にかかる違反は残す
+  return violations.filter((v) => {
+    const endLine = v.line + (v.matched.match(/\n/g) ?? []).length;
+    for (let line = v.line; line <= endLine; line++) {
+      if (lines.has(line)) return true;
+    }
+    return false;
+  });
+}
+
 function hookCheckFile(filePath) {
   if (hookSkipped(filePath)) return [];
   const rc = findRc(path.dirname(filePath));
@@ -199,7 +242,7 @@ function hookCheckFile(filePath) {
   }
   const rules = applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc);
   const text = fs.readFileSync(filePath, 'utf8');
-  return checkText(text, filePath, rules).map((v) => ({ ...v, file: path.basename(filePath) }));
+  return onlyChanged(filePath, checkText(text, filePath, rules)).map((v) => ({ ...v, file: path.basename(filePath) }));
 }
 
 // プラグインとグローバル設定の両方にフックがある環境で、同じ検査が二重に返るのを防ぐ。
@@ -251,7 +294,7 @@ function cmdClaudeHook() {
     }
     const rules = applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc);
     const text = fs.readFileSync(filePath, 'utf8');
-    const violations = checkText(text, filePath, rules).filter((v) => v.severity !== 'info'); // errorとwarnは修正必須、infoは止めない
+    const violations = onlyChanged(path.resolve(filePath), checkText(text, filePath, rules)).filter((v) => v.severity !== 'info'); // errorとwarnは修正必須、infoは止めない
     if (violations.length === 0) process.exit(0);
     const lines = violations
       .slice(0, 15)
