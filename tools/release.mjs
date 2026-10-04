@@ -33,11 +33,12 @@ const PKG = 'textlint-rule-ux-writing-dead-cliche';
 const isPublished = (v) => {
   try { return run(`npm view ${PKG}@${v} version --prefer-online`).trim() === v; } catch { return false; }
 };
-// レジストリへの反映には間がある。publish直後の確認はこちらを使う
+// レジストリへの反映には間がある。publish直後の確認はこちらを使う。
+// npmは「数分かかることがある」と出す。15秒では足りず、公開済みなのに中止した例があるため3分まで待つ
 const waitPublished = (v) => {
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 18; i += 1) {
     if (isPublished(v)) return true;
-    if (i < 4) execSync('sleep 3');
+    if (i < 17) execSync('sleep 10');
   }
   return false;
 };
@@ -197,7 +198,13 @@ if (!skipNpm) {
         `  版はコミット済みなので、続きは: npm run release -- --resume --otp=123456`,
       ].join('\n'));
     }
-    if (!waitPublished(version)) fail(`npmの公開が確認できません (レジストリ上は ${run(`npm view ${PKG} version --prefer-online`).trim()})`);
+    if (!waitPublished(version)) {
+      fail([
+        `npmの公開が確認できません (レジストリ上は ${run(`npm view ${PKG} version --prefer-online`).trim()})。`,
+        '  publishは成功していて、反映が遅れているだけのことがあります。',
+        `  数分後に「npm view ${PKG} version」で${version}が出たら、続きは「npm run release -- --resume」`,
+      ].join('\n'));
+    }
     console.log(`  npm: ${version} を公開しました`);
   }
 }
