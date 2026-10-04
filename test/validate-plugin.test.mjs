@@ -70,6 +70,8 @@ test('CLI検証用の写しはgit管理下のファイルだけを作業ツリ�
   fs.mkdirSync(path.join(root, '.claude-plugin'));
   fs.writeFileSync(path.join(root, '.claude-plugin', 'plugin.json'), '{"version":"1.0.0"}');
   fs.writeFileSync(path.join(root, 'removed.md'), 'x');
+  // 管理外のファイルを指すリンク。辿って写すとリンク先の中身が混ざる
+  fs.symlinkSync('CLAUDE.local.md', path.join(root, 'link.md'));
   git('add', '.');
   // 手元にしかないファイルと、コミット前の版上げと、作業ツリーで消したファイル
   fs.writeFileSync(path.join(root, 'CLAUDE.local.md'), 'local');
@@ -80,6 +82,7 @@ test('CLI検証用の写しはgit管理下のファイルだけを作業ツリ�
   try {
     assert.ok(!fs.existsSync(path.join(dir, 'CLAUDE.local.md')));
     assert.ok(!fs.existsSync(path.join(dir, 'removed.md')));
+    assert.equal(fs.readlinkSync(path.join(dir, 'link.md')), 'CLAUDE.local.md');
     assert.equal(fs.readFileSync(path.join(dir, '.claude-plugin', 'plugin.json'), 'utf8'), '{"version":"1.1.0"}');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

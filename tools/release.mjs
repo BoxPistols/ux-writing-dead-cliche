@@ -200,7 +200,8 @@ if (!skipNpm) {
     }
     if (!waitPublished(version)) {
       fail([
-        `npmの公開が確認できません (レジストリ上は ${run(`npm view ${PKG} version --prefer-online`).trim()})。`,
+        // 照会そのものが失敗しても、続きの案内は出す
+        `npmの公開が確認できません (レジストリ上は ${(() => { try { return run(`npm view ${PKG} version --prefer-online`).trim(); } catch { return '照会に失敗'; } })()})。`,
         '  publishは成功していて、反映が遅れているだけのことがあります。',
         `  数分後に「npm view ${PKG} version」で${version}が出たら、続きは「npm run release -- --resume」`,
       ].join('\n'));
