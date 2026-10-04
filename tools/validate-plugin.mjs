@@ -29,18 +29,30 @@ export const isSemver = (v) => typeof v === 'string' && SEMVER.test(v);
 export function copyTrackedFiles(root) {
   let listed;
   try {
-    listed = execFileSync('git', ['ls-files', '-z'], { cwd: root, stdio: 'pipe', encoding: 'utf8' });
+    // 「-s」で種別を見る。100644/100755は通常のファイル、120000はシンボリックリンク、160000はサブモジュール
+    listed = execFileSync('git', ['ls-files', '-s', '-z'], { cwd: root, stdio: 'pipe', encoding: 'utf8' });
   } catch {
     return null;
   }
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dead-cliche-plugin-'));
-  for (const rel of listed.split('\0').filter(Boolean)) {
-    const src = path.join(root, rel);
-    // 管理下でも作業ツリーで消したファイルは、公開物にも入らないので写さない
-    if (!fs.existsSync(src)) continue;
-    const dest = path.join(dir, rel);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.copyFileSync(src, dest);
+  try {
+    for (const entry of listed.split('\0').filter(Boolean)) {
+      const [meta, rel] = entry.split('\t');
+      const mode = meta.split(' ')[0];
+      // サブモジュールは中身がこのリポジトリのファイルではないので写さない
+      if (mode === '160000') continue;
+      const src = path.join(root, rel);
+      // 管理下でも作業ツリーで消したファイルは、公開物にも入らないので写さない
+      if (!fs.lstatSync(src, { throwIfNoEntry: false })) continue;
+      const dest = path.join(dir, rel);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      // シンボリックリンクはgitの取得と同じくリンクのまま写す。辿って写すと管理外のリンク先の中身が混ざる
+      if (mode === '120000') fs.symlinkSync(fs.readlinkSync(src), dest);
+      else fs.copyFileSync(src, dest);
+    }
+  } catch (e) {
+    fs.rmSync(dir, { recursive: true, force: true });
+    throw e;
   }
   return dir;
 }
@@ -112,7 +124,14 @@ export function validatePlugin({ root = ROOT, runCli = true } = {}) {
   // claude CLI があるときは本物の validate も通す。判定基準のずれをここで検出する
   let ranCli = false;
   if (runCli) {
-    const tracked = copyTrackedFiles(root);
+    let tracked;
+    try {
+      tracked = copyTrackedFiles(root);
+    } catch (e) {
+      // 写しが作れないときは検証できていないので、通さずに止める
+      errors.push(`検証用の写しを作れませんでした: ${e.message}`);
+      return { errors, ranCli };
+    }
     try {
       execFileSync('claude', ['plugin', 'validate', '.', '--strict'], { cwd: tracked ?? root, stdio: 'pipe' });
       ranCli = true;
