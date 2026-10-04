@@ -10,6 +10,7 @@
 // marketplace の description が無いと警告が出て、--strict では失敗する。
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { execFileSync } from 'node:child_process';
@@ -20,6 +21,29 @@ const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // 末尾まで見る。1.2.3junk や 1.2.3.4 を通すと、claude CLI の無い環境で素通りする
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 export const isSemver = (v) => typeof v === 'string' && SEMVER.test(v);
+
+// gitで管理しているファイルだけを一時フォルダへ写す。プラグインはgitから取得されるので、
+// 手元にしかないファイル(CLAUDE.local.md等)で、validate --strictが落ちるのを避ける。
+// 中身は作業ツリーのものを使う。リリース中の版上げはコミット前に検証するため。
+// gitの管理下でなければnullを返し、呼び出し側はrootをそのまま検証する
+export function copyTrackedFiles(root) {
+  let listed;
+  try {
+    listed = execFileSync('git', ['ls-files', '-z'], { cwd: root, stdio: 'pipe', encoding: 'utf8' });
+  } catch {
+    return null;
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dead-cliche-plugin-'));
+  for (const rel of listed.split('\0').filter(Boolean)) {
+    const src = path.join(root, rel);
+    // 管理下でも作業ツリーで消したファイルは、公開物にも入らないので写さない
+    if (!fs.existsSync(src)) continue;
+    const dest = path.join(dir, rel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(src, dest);
+  }
+  return dir;
+}
 
 export function validatePlugin({ root = ROOT, runCli = true } = {}) {
   const errors = [];
@@ -88,8 +112,9 @@ export function validatePlugin({ root = ROOT, runCli = true } = {}) {
   // claude CLI があるときは本物の validate も通す。判定基準のずれをここで検出する
   let ranCli = false;
   if (runCli) {
+    const tracked = copyTrackedFiles(root);
     try {
-      execFileSync('claude', ['plugin', 'validate', '.', '--strict'], { cwd: root, stdio: 'pipe' });
+      execFileSync('claude', ['plugin', 'validate', '.', '--strict'], { cwd: tracked ?? root, stdio: 'pipe' });
       ranCli = true;
     } catch (e) {
       if (e.code === 'ENOENT') {
@@ -99,6 +124,8 @@ export function validatePlugin({ root = ROOT, runCli = true } = {}) {
         errors.push(`claude plugin validate . --strict が失敗しました:\n${out}`);
         ranCli = true;
       }
+    } finally {
+      if (tracked) fs.rmSync(tracked, { recursive: true, force: true });
     }
   }
 
