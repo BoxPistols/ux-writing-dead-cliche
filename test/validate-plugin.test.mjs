@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { isSemver, validatePlugin } from '../tools/validate-plugin.mjs';
+import { execFileSync } from 'node:child_process';
+import { copyTrackedFiles, isSemver, validatePlugin } from '../tools/validate-plugin.mjs';
 
 test('semver は末尾まで検証する', () => {
   for (const ok of ['0.15.0', '1.2.3', '1.2.3-rc.1', '1.2.3+build.5']) {
@@ -60,4 +61,31 @@ test('marketplace に載っていないプラグイン名を検出する', () =>
   });
   const { errors } = validatePlugin({ root, runCli: false });
   assert.ok(errors.some((e) => e.includes('載っていません')), errors.join(' / '));
+});
+
+test('CLI検証用の写しはgit管理下のファイルだけを作業ツリーの中身で持つ', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dead-cliche-tracked-'));
+  const git = (...a) => execFileSync('git', a, { cwd: root, stdio: 'pipe' });
+  git('init', '-q');
+  fs.mkdirSync(path.join(root, '.claude-plugin'));
+  fs.writeFileSync(path.join(root, '.claude-plugin', 'plugin.json'), '{"version":"1.0.0"}');
+  fs.writeFileSync(path.join(root, 'removed.md'), 'x');
+  // 管理外のファイルを指すリンク。辿って写すとリンク先の中身が混ざる
+  fs.symlinkSync('CLAUDE.local.md', path.join(root, 'link.md'));
+  git('add', '.');
+  // 手元にしかないファイルと、コミット前の版上げと、作業ツリーで消したファイル
+  fs.writeFileSync(path.join(root, 'CLAUDE.local.md'), 'local');
+  fs.writeFileSync(path.join(root, '.claude-plugin', 'plugin.json'), '{"version":"1.1.0"}');
+  fs.rmSync(path.join(root, 'removed.md'));
+
+  const dir = copyTrackedFiles(root);
+  try {
+    assert.ok(!fs.existsSync(path.join(dir, 'CLAUDE.local.md')));
+    assert.ok(!fs.existsSync(path.join(dir, 'removed.md')));
+    assert.equal(fs.readlinkSync(path.join(dir, 'link.md')), 'CLAUDE.local.md');
+    assert.equal(fs.readFileSync(path.join(dir, '.claude-plugin', 'plugin.json'), 'utf8'), '{"version":"1.1.0"}');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
