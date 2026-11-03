@@ -19,7 +19,7 @@ Claude CodeのBashツールにはttyがありません。プロンプトに`!`�
 版は上がりません。
 
 ```
-cd /Users/ai/dev/writing/ux-writing-dead-cliche
+cd <リポジトリのパス>
 npm run release patch
 ```
 
