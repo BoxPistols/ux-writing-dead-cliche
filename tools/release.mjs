@@ -43,6 +43,21 @@ const waitPublished = (v) => {
   return false;
 };
 
+// 業務固有語 (取引先名など) の一覧は、公開リポジトリに置くとそれ自体が漏洩になる。
+// git管理外の .release-forbidden-words (1行1パターン、#始まりと空行は無視) か
+// 環境変数 RELEASE_FORBIDDEN_PATTERN (grep -E の正規表現) から読む。
+// 一覧が無いまま走査を素通りさせないため、どちらも無ければ版を上げる前に止める
+const forbiddenFile = path.join(PACKAGE_ROOT, '.release-forbidden-words');
+const forbiddenPatterns = [
+  ...(process.env.RELEASE_FORBIDDEN_PATTERN ? [process.env.RELEASE_FORBIDDEN_PATTERN] : []),
+  ...(fs.existsSync(forbiddenFile)
+    ? fs.readFileSync(forbiddenFile, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
+    : []),
+];
+if (!forbiddenPatterns.length) {
+  fail('業務固有語の一覧がありません。.release-forbidden-words を置くか RELEASE_FORBIDDEN_PATTERN を設定してください (docs/release-guide.md)');
+}
+
 const pkgPath = path.join(PACKAGE_ROOT, 'package.json');
 const lockPath = path.join(PACKAGE_ROOT, 'package-lock.json');
 const pluginPath = path.join(PACKAGE_ROOT, '.claude-plugin', 'plugin.json');
@@ -138,7 +153,9 @@ const files = packed.split('\n').filter((l) => /npm notice \d+(\.\d+)?[kMG]?B /.
 console.log(`  公開されるファイル: ${files.length}件`);
 const risky = files.filter((l) => /\.env|secret|token|credential|\.pem|\.key/i.test(l));
 if (risky.length) fail(`公開物に機密の疑いがあるファイルが含まれています:\n${risky.join('\n')}`);
-const leaked = spawnSync('grep', ['-rlniE', 'client-a|client-b|client-c|kiro', 'rules', 'presets', 'src', 'schema'], { cwd: PACKAGE_ROOT, encoding: 'utf8' });
+const leaked = spawnSync('grep', ['-rlniE', forbiddenPatterns.join('|'), 'rules', 'presets', 'src', 'schema'], { cwd: PACKAGE_ROOT, encoding: 'utf8' });
+// grepは不正な正規表現で終了コード2を返し、何も出力しない。一覧の書き損じで走査が素通りしないよう止める
+if (leaked.status > 1) fail(`業務固有語の走査に失敗しました:\n${leaked.stderr}`);
 if (leaked.stdout.trim()) fail(`配布物に業務固有の語が含まれています:\n${leaked.stdout}`);
 console.log('  機密・業務固有語の混入: なし');
 
