@@ -1,6 +1,71 @@
 # ux-writing-dead-cliche
 
-AIが日本語文章に持ち込むクリシェを検出し、平易な文章へ直すための辞書とツールです。
+AIが書いた日本語の定型句 (クリシェ) を辞書で検出し、「なぜ避けるか」と「代わりに何を書くか」を返すツールです。
+同じ辞書がCLI・textlintルール・Claude Codeプラグイン・GitHub Actionで動きます。
+
+**ブラウザで試す: https://boxpistols.github.io/ux-writing-dead-cliche/** (インストール不要。全ルールの検索と、AIチャットに貼る指示文のコピー)
+
+[![npm](https://img.shields.io/npm/v/textlint-rule-ux-writing-dead-cliche)](https://www.npmjs.com/package/textlint-rule-ux-writing-dead-cliche)
+[![CI](https://github.com/BoxPistols/ux-writing-dead-cliche/actions/workflows/ci.yml/badge.svg)](https://github.com/BoxPistols/ux-writing-dead-cliche/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/BoxPistols/ux-writing-dead-cliche)](LICENSE)
+[![Pages](https://img.shields.io/website?url=https%3A%2F%2Fboxpistols.github.io%2Fux-writing-dead-cliche%2F&label=Pages)](https://boxpistols.github.io/ux-writing-dead-cliche/)
+
+### 実行例
+
+書き直す前の文 (`before.md`) を検査すると、検出した表現ごとに理由と書き直しの方向を返し、終了コード1で止まります。
+
+```
+$ cat before.md
+この文書はチームの羅針盤です。まさに開発の心臓部と言える内容を解説していきます。
+
+$ npx textlint-rule-ux-writing-dead-cliche check before.md --preset business
+before.md:1:10 error metaphor/compass 「羅針盤」
+  なぜ: 「指針」の比喩として頻出するが、誰がどの判断に使うのかが書かれない。
+  直す: 誰が、どの判断を、何を基準に決めるのかを書く。
+before.md:1:16 info overstatement/masani 「まさに」
+  なぜ: 強調の常套句。削っても意味が変わらないことが多い。
+  直す: 削って読み直す。強調が要るなら根拠を足す。
+before.md:1:21 error metaphor/heart 「の心臓部」
+  なぜ: 中心的だと言うだけで、なぜ中心なのかが書かれない。
+  直す: それが止まったとき、何が動かなくなるのかを書く。
+before.md:1:32 warn syntax-pattern/opener 「解説していきます」
+  なぜ: Web記事の定型の予告。予告より内容を先に出す方が読み手に残る。
+  直す: 「〜を扱います」と言い切るか、最初の情報をすぐ書く。
+
+4 件 (error 2 件)
+$ echo $?
+1
+```
+
+指摘に沿って書き直した文 (`after.md`) は通ります。
+
+```
+$ cat after.md
+この文書は、実装方針に迷ったときの判断基準を定めます。対象は認証と決済の2モジュールです。
+
+$ npx textlint-rule-ux-writing-dead-cliche check after.md --preset business
+既知のパターンは見つかりませんでした (辞書にある表現の有無だけを見ています)
+$ echo $?
+0
+```
+
+ほかの書き直し例はdocs/before-after.mdにあります。
+
+### 見どころ
+
+- 辞書1つを4つの経路で使う: ルールは `rules/*.yml` だけに書き、CLI (`src/cli.mjs`)、textlintルール (`src/textlint-rule.mjs`)、Claude Codeプラグイン (`.claude-plugin/`、`hooks/hooks.json`、`skills/`)、GitHub Action (`action.yml`) が同じエンジン (`src/engine.mjs`) を通ります。
+- 誤検出をテストで抑える: 全ルールに悪い例と良い例を必須とし、正当な日本語だけのコーパス (`corpus/negative/`) が0件で通ることをCIで確認します (`test/rules.test.mjs`、`test/corpus.test.mjs`)。
+- AIエージェントの書いた直後に止める: Claude CodeがMarkdownを書くとフックが検査し、検出があれば書き直しを求めます。gitで追跡しているファイルは変更した行だけを見ます (`hooks/hooks.json`、`src/cli.mjs` の `claude-hook`)。
+
+### クイックスタート
+
+```
+npx textlint-rule-ux-writing-dead-cliche check 文書.md
+```
+
+Claude Codeでは `/plugin marketplace add BoxPistols/ux-writing-dead-cliche` のあと `/plugin install dead-cliche` で入ります。
+
+### このツールが判定しないこと
 
 このツールが判定するのは、辞書にある表現が使われているかどうかだけです。文章が読みやすいか、
 主張が通っているか、内容が正しいかは判定できません。検出ゼロは「既知のパターンが無い」以上の
@@ -122,16 +187,6 @@ PR本文自体の検査です。
 
 フックが検査するのは、gitで追跡しているファイルでは`HEAD`から変更した行だけです。既存の行の違反では止めません。追跡していないファイルと新規ファイルは全体を検査します。ファイル全体を検査したいときは`DEAD_CLICHE_HOOK_ALL=1`を設定します。
 
-## チームの禁止ワードをフォームで足す
-
-```bash
-dead-cliche ui   # http://127.0.0.1:7777/?token=... が開く
-```
-
-プロジェクト辞書 (`.deadcliche/custom-rules.yml`) をYAMLなしで編集できます。127.0.0.1に
-だけ束ね、合言葉を要求し、受け取るのは表現そのもの (リテラル) だけです。共有辞書
-(`rules/`) には書き込みません。設計と脅威モデルは`docs/custom-rules-and-autofix.md`にあります。
-
 ## GitHub Actionsで使う
 
 PRの差分に含まれる文書だけを検査し、該当行にannotationを出します。
@@ -180,26 +235,7 @@ PRの差分に含まれる文書だけを検査し、該当行にannotationを�
 
 ## ルールの書式
 
-1ルール1エントリです。whyとaskを必須にしているのは、置換候補だけの辞書では
-別のクリシェに置き換わるだけで終わるためです。
-
-```yaml
-- id: metaphor/compass
-  severity: error
-  pattern: '(?<!船の)(?<!航海の)羅針盤'
-  why: 「指針」の比喩として頻出するが、誰がどの判断に使うのかが書かれない。
-  ask: 誰が、どの判断を、何を基準に決めるのかを書く。
-  examples:
-    bad:
-      - 'この文書はチームの羅針盤です。'
-    good:
-      - '実装方針で迷ったときは、この文書の判断基準の節に従います。'
-  deny_examples:
-    - '博物館で古い船の羅針盤を見た。'
-```
-
-書き直しの語尾は敬体 (です・ます) を既定とします。技術ドキュメントの標準に
-合わせるためで、常体で統一された学術論文だけが例外です。
+1ルール1エントリのYAMLです。書式と例はCONTRIBUTING.mdにあります。
 
 ## 検出の設計方針
 
@@ -250,16 +286,24 @@ npmパッケージがその範囲です。書き直しはClaude Codeのスキル
 やめました。運用して分かったことは [LLMに書き直させるときの設計](docs/llm-rewriting.md) に残しています。
 書き直しを実装する場合は先に読んでください。
 
-OpenAIを使うときの注意が1つあります。キーが無効な場合、401がCORSヘッダを伴わずに返るため、
-ブラウザは応答をJavaScriptに渡せません。状態番号で判別できないので、この画面では
-「キーが正しいか、通信が届いているか」の両方を案内します。
+## 禁止ワードをフォームから追加する
 
-## 禁止ワードをGUIから追加する
+YAMLを編集しない人向けに、2つのフォームがあります。
 
-YAMLを編集しない人向けに、[提案フォーム](https://boxpistols.github.io/ux-writing-dead-cliche/proposal-form.html)
-を用意しています。静的ページで、入力はどこにも自動送信されません。OSS辞書への提案は
-入力済みのIssueフォームが開き、レビューを経て辞書に入ります。チーム固有の禁止ワードは
-同じフォームで `.deadcliche/custom-rules.yml` 用のYAMLを生成できます。
+チーム固有の禁止ワードは、ローカルのフォームでプロジェクト辞書 (`.deadcliche/custom-rules.yml`) に足せます。
+
+```bash
+dead-cliche ui   # http://127.0.0.1:7777/?token=... が開く
+```
+
+127.0.0.1にだけ束ね、合言葉を要求し、受け取るのは表現そのもの (リテラル) だけです。
+共有辞書 (`rules/`) には書き込みません。
+
+OSS辞書への提案は、[提案フォーム](https://boxpistols.github.io/ux-writing-dead-cliche/proposal-form.html)
+から送れます。静的ページで、入力はどこにも自動送信されません。入力済みのIssueフォームが開き、
+レビューを経て辞書に入ります。同じフォームで `.deadcliche/custom-rules.yml` 用のYAMLも生成できます。
+
+作ったプロジェクト辞書は `.deadclicherc.json` から読み込みます。
 
 ```json
 {
