@@ -267,8 +267,15 @@ function hookCheckFile(filePath) {
   return onlyChanged(filePath, checkText(text, filePath, rules)).map((v) => ({ ...v, file: path.basename(filePath) }));
 }
 
-// プラグインとグローバル設定の両方にフックがある環境で、同じ検査が二重に返るのを防ぐ。
-// セッション・対象・内容が同じ直近の発火はスキップする。
+// プラグインとグローバル設定の両方にフックがある環境 (プラグインが複数のスコープに入っている場合も) で、
+// 同じ検査が二重に返るのを防ぐ。セッション・対象・内容が同じ直近の発火は1回だけ通す。
+// フックは同時に起動されるので、目印の確認と作成を O_EXCL の1手で行う (2手に分けると両方が通る)。
+// どちらが通るかは、git管理下の作業コピー (リリース前の最新の辞書) を優先する。
+// 配布物 (プラグイン・npm) 側は少し待ってから目印を取りに行き、作業コピー側が先に取れるようにする。
+// 待つのは、作業コピーのフックが直近に動いた端末だけにする (プラグインだけの端末で毎回待たせない)
+const HOOK_DEDUP_WINDOW_MS = 10_000;
+const HOOK_DEFER_MS = 300;
+const HOOK_DEV_PRESENCE_MS = 24 * 60 * 60 * 1000;
 function hookDedup(sessionId, files) {
   try {
     const sig = files.map((f) => {
@@ -277,8 +284,23 @@ function hookDedup(sessionId, files) {
     }).join('|');
     const key = crypto.createHash('sha1').update(`${sessionId}|${sig}`).digest('hex');
     const marker = path.join(os.tmpdir(), `dead-cliche-hook-${key}`);
-    if (fs.existsSync(marker) && Date.now() - fs.statSync(marker).mtimeMs < 10_000) return true;
-    fs.writeFileSync(marker, '');
+    const presence = path.join(os.tmpdir(), 'dead-cliche-hook-dev-present');
+    if (fs.existsSync(path.join(PACKAGE_ROOT, '.git'))) {
+      fs.writeFileSync(presence, '');
+    } else if (fs.existsSync(presence) && Date.now() - fs.statSync(presence).mtimeMs < HOOK_DEV_PRESENCE_MS) {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, HOOK_DEFER_MS);
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        fs.closeSync(fs.openSync(marker, 'wx'));
+        return false;
+      } catch (e) {
+        if (e.code !== 'EEXIST') return false;
+        if (Date.now() - fs.statSync(marker).mtimeMs < HOOK_DEDUP_WINDOW_MS) return true;
+        // 古い目印 (同じ内容をしばらくして保存し直した場合) は消して取り直す
+        fs.rmSync(marker, { force: true });
+      }
+    }
     return false;
   } catch {
     return false;

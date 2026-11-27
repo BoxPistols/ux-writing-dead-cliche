@@ -1,12 +1,12 @@
 # 類似ツールとの比較と使い分け
 
-調査日: 2026-08-28。各ツールの記述は公開ドキュメントに基づきます。
+調査日: 2026-08-28 (2026-11-27にClaude Code向けのスキルを足して更新)。各ツールの記述は公開ドキュメントに基づきます。
 
 ## 一覧
 
 | ツール | 形態 | 対象 | 本ツールとの関係 |
 | --- | --- | --- | --- |
-| textlint-rule-preset-ai-writing | OSS (textlint-ja公式) | AIっぽい記述パターン (構造中心) | 最も近い。併用可 |
+| @textlint-ja/textlint-rule-preset-ai-writing | OSS (textlint-ja公式) | AIっぽい記述パターン (構造中心) | textlintの中では最も近い。併用可 |
 | textlint-rule-preset-ai-words-ja | OSS (p1ass) | AI以後に増えた単語 (語彙中心) | 検出単位が異なる。併用推奨 |
 | textlint-rule-preset-ja-technical-writing | OSS (textlint-ja公式) | 技術文書の一般規範 (文長・二重否定など) | 補完関係。併用推奨 |
 | prh | OSS | 表記ゆれの辞書置換 | 補完関係。併用推奨 |
@@ -14,6 +14,10 @@
 | Shodo | 商用 (API / CLIあり) | LLMによる文脈校正・誤字脱字 | 対象が異なる |
 | 文賢 | 商用 (Web) | 推敲・言い換え支援 | 対象が異なる |
 | AIチェッカー各種 (User Local等) | 商用 / 無料 | 「AIが書いたか」の判定 | 目的が異なる |
+| yomiyasu | OSS (Claude Code・Codexのスキル) | AIっぽい日本語の書き直し。補助のlintスクリプトあり | スキルの中では最も近い |
+| natural-japanese | OSS (Claude Code・Cursorのスキル) | 仕事の文書の書き直しと採点。形態素解析のlintあり | 重なる |
+| stop-ai-slop-jp、humanizer-jaほか | OSS (スキル) | LLMによる書き直しのチェックリスト | 観点が重なる |
+| ja-writing-guard | OSS (Hermes Agentのプラグイン) | 決定論の規則で検出し、任意でLLMが書き直す | 仕組みが近い。Claude Codeでは動かない |
 
 ## textlint-rule-preset-ai-writingとの違い
 
@@ -101,13 +105,41 @@ preset-ai-words-jaが優位なものは次のとおりです。
 語の頻度はpreset-ai-words-ja、構造はpreset-ai-writing、修辞の型と書き直しの問いは本ツール、と
 役割が分かれます。3つをtextlint上で同時に有効にする構成が成立します。
 
+## Claude Code・Codex向けのスキルとの違い (調査日: 2026-11-27)
+
+2026年に入って、日本語のAIっぽさを直すスキルが多く公開されました。多くは、SKILL.mdに書いた方針に従ってLLMが書き直す型です。
+
+| ツール | 検出の仕組み | 書いた直後の自動検査 | トークン |
+| --- | --- | --- | --- |
+| yomiyasu | LLMが書き直す。lintスクリプト (Python、決定論) が候補を出し、推敲の前後で数値や否定が変わっていないかも比べる | 任意のフックを設定に手で貼る | 書き直すたびに使う。lint単体は使わない |
+| natural-japanese | 形態素解析 (sudachipy) のlintが候補を出し、直すかどうかはLLMが決める。0〜100で採点する | 見当たらない | 書き直しと採点で使う |
+| stop-ai-slop-jp、humanizer-ja、japanese-tech-writingなど | LLMのみ。チェックリストや採点の基準をSKILL.mdに書く | なし | 使うたびに使う |
+| 本ツール | 辞書と正規表現。LLMを呼ばない | プラグインを入れるとWrite・Editのたびに動く | 検出が0件なら使わない。指摘があるときだけ、その指摘ぶん |
+
+本ツールにしかない点は次のとおりです。
+
+- 書いた直後の検査が、プラグインを入れるだけで動きます。追加の設定は要りません
+- 1つの辞書を、CLI・textlint・GitHub Action・Claude Codeプラグイン・ブラウザのWebアプリで共有します。スキル型はtextlintやActionに乗りません
+- 各ルールが、避ける理由と代わりに書く内容を持ちます。正しい用法を誤って拾わないための例をテストで強制しています
+- 文書の種類ごとのプリセットがあり、UIの文言 (ux-microcopy) を専用に扱います
+
+ほかのツールにあって本ツールに無いものもあります。
+
+- 形態素解析。本ツールは正規表現なので、活用形を並べて書きます
+- LLMによる書き直しと、推敲の前後で意味が変わっていないかの検査 (yomiyasu)。本ツールは書き直しをエージェントに任せます
+- 点数での総合評価 (natural-japanese、stop-ai-slop-jp)
+- 誤字脱字・敬語・文法の校正 (Shodo、文賢、ATOK)
+- 検出率と誤検出率の公表 (ja-writing-guard)
+
+スキル型と本ツールは併用できます。本ツールのフックが辞書にある表現を止め、スキルが文章全体を書き直す、という分担になります。
+
 ## 推奨する併用構成 (.textlintrc.json)
 
 ```json
 {
   "rules": {
     "preset-ja-technical-writing": true,
-    "preset-ai-writing": true,
+    "@textlint-ja/preset-ai-writing": true,
     "preset-ai-words-ja": { "no-ai-words": { "allows": ["検査", "効く", "経路"] } },
     "ux-writing-dead-cliche": { "preset": "paper" },
     "prh": { "rulePaths": ["prh.yml"] }
@@ -140,3 +172,8 @@ AIチェッカー (AIが書いたかを判定するツール) は目的が異な
 - https://github.com/prh/prh
 - https://shodo.ink/ (開発者向けAPI: https://developer.shodo.ink/)
 - https://redpen.cc/
+- https://github.com/nanaism/yomiyasu
+- https://github.com/coji/natural-japanese
+- https://github.com/iKora128/stop-ai-slop-jp
+- https://github.com/gonta223/humanizer-ja
+- https://hermes-agent.nousresearch.com/docs/plugins/ja-writing-guard

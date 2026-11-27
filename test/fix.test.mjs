@@ -186,3 +186,19 @@ test('--strict は info でも exit 1 にし、JSON は severity の内訳を返
   assert.equal(json.counts.info, 1);
   assert.equal(json.counts.error + json.counts.warn, 0);
 });
+
+test('同じ編集に対してフックが同時に2回起動されても、検査を返すのは1回だけ', async () => {
+  const { spawn } = await import('node:child_process');
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dc-dedup-'));
+  const f = path.join(dir, 'doc.md');
+  fs.writeFileSync(f, '生産性が劇的に向上します。\n');
+  const input = JSON.stringify({ session_id: `dedup-${Date.now()}`, tool_input: { file_path: f } });
+  const runHook = () => new Promise((resolve) => {
+    const p = spawn('node', ['src/cli.mjs', 'claude-hook']);
+    p.on('close', (code) => resolve(code));
+    p.stdin.end(input);
+  });
+  const codes = await Promise.all([runHook(), runHook(), runHook()]);
+  assert.deepEqual(codes.sort(), [0, 0, 2], `終了コード: ${codes}`);
+});
