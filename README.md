@@ -123,6 +123,8 @@ rules/*.yml ─┬─ CLI (npx dead-cliche check)
 `--ai` を付けたときだけ、この11件を型付き判定のAPIで見ることもできます (既定はオフ)。
 詳細と実測値は [manualルールを型付き判定で見る](docs/manual-rules-ai.md) にあります。
 
+検出はLLMを呼ばないので、CLI・textlint・GitHub Actionではトークンを消費しません。フックの所要時間やプラグインが会話に入れる量は [所要時間とトークン消費](docs/performance.md) にまとめています。
+
 ## インストール
 
 CLIの実行例は冒頭の「毎日の使い方」を参照してください。
