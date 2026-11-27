@@ -362,11 +362,40 @@ OSS辞書への提案は、[提案フォーム](https://boxpistols.github.io/ux-
 機械置換できないクリシェは書き直しが必要なため、Claudeのフックと
 `/dead-cliche:check --fix` が担当します。
 
-## リリース運用
+## 運用と更新の流れ
 
-配布物 (npm・プラグイン・Releases・Pages) の出し方と、公開前のセキュリティ確認は
-docs/release-guide.mdにまとめています。バージョンをbumpしたら生成物の再生成が必要です
-(忘れるとCIが落ちます。npm testでも検出されます)。
+禁止したい語が見つかってから、各端末の検査に効くまでの流れです。
+
+### 1. 自分だけで使う語を足す (数秒で効く)
+
+公開辞書に入れるほどではない語や、業務の固有語は個人用の辞書に書きます。ホームに `~/.deadclicherc.json` を置くと、その下のすべてのプロジェクトに効きます。プロジェクト側に `.deadclicherc.json` があれば、近いほうが優先されます。この設定を読むのは `dead-cliche` コマンドとClaude Codeのフックで、textlint経由の検査には効きません。
+
+```json
+{
+  "customRules": ["path/to/my-rules.yml"],
+  "trustCustomPatterns": true
+}
+```
+
+`customRules` のパスは、この設定ファイルの場所から数えます。辞書のファイルを複数の端末で同期しているフォルダ (Gitの個人リポジトリなど) に置き、各端末に同じ `~/.deadclicherc.json` を作ってそのファイルを指せば、どの端末でも同じ語が止まります。設定ファイルは端末ごとに要りますが、作るのは最初の1回だけで、以後は辞書のファイルを同期するだけで効きます。リリースは要りません。
+
+### 2. 公開辞書に足す (全員に届く)
+
+1. `rules/*.yml` にルールを足すPRを作ります。書式はCONTRIBUTING.mdにあり、悪い例・良い例と、正しい用法を拾わないことの確認 (負例) が必須です。YAMLを書かない場合は[提案フォーム](https://boxpistols.github.io/ux-writing-dead-cliche/proposal-form.html)からIssueにします
+2. CIが辞書のテスト・生成物の同期・リポジトリ自身の文書の検査を通したらマージします。Webアプリ (GitHub Pages) と `@main` を指定したGitHub Actionは、マージの時点で新しい辞書になります
+3. メンテナーが自分のターミナルで `npm run release minor` を実行し、npm・GitHub Release・プラグインを公開します。途中で止まったときは `npm run release -- --resume` で続きから再開できます。詳しくはdocs/release-guide.mdにあります
+
+### 3. 各端末に届く
+
+| 使い方 | 届き方 |
+|---|---|
+| Claude Codeプラグイン | 自動更新を有効にしていれば、次のセッションで入り `Plugin updated: dead-cliche` と出ます (設定は「インストール」の節) |
+| `npx textlint-rule-ux-writing-dead-cliche@latest` | `@latest` を付けると、手元のキャッシュではなく最新のバージョンで実行します |
+| `npm i -D` で入れたプロジェクト | 辞書の追加はminorで公開するため、`npm update` では `^0.21.0` の範囲を超えません。`npm i -D textlint-rule-ux-writing-dead-cliche@latest` で更新します |
+| GitHub Action | `@main` を指定していれば、マージの直後の実行から新しい辞書で検査します。タグで固定している場合は、タグを上げるまで変わりません |
+| Webアプリ | マージの時点で反映済みです |
+
+バージョンをbumpしたら生成物の再生成が必要です (忘れるとCIが落ちます。npm testでも検出されます)。
 
 ## 貢献
 
