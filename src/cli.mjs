@@ -15,7 +15,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig, PACKAGE_ROOT } from './load-rules.mjs';
 import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
-import { loadWordRules } from './words.mjs';
+import { loadWordRules, wordsFilePath } from './words.mjs';
 
 const MD_EXT = new Set(['.md', '.mdx', '.markdown']);
 const TEXT_EXT = new Set([...MD_EXT, '.txt']);
@@ -210,8 +210,19 @@ const HOOK_SKIP_PREFIXES = [
   path.join(process.env.HOME ?? '', '.claude-memory') + path.sep,
 ];
 
+// 使わない語の一覧そのものは、語を並べたファイルなので検査しない
+function isWordsFile(filePath) {
+  const words = wordsFilePath();
+  if (!words) return false;
+  try {
+    return fs.realpathSync(filePath) === fs.realpathSync(words);
+  } catch {
+    return path.resolve(filePath) === words;
+  }
+}
+
 function hookSkipped(filePath) {
-  return HOOK_SKIP_PREFIXES.some((prefix) => filePath.startsWith(prefix));
+  return HOOK_SKIP_PREFIXES.some((prefix) => filePath.startsWith(prefix)) || isWordsFile(filePath);
 }
 
 // フックは今回書いた行だけを検査する。既存の文書は書き手の判断で残している文面なので、

@@ -75,3 +75,8 @@ test('PostToolUse: 書いた文書の一覧の語を止める', () => {
   assert.equal(r.status, 2);
   assert.match(r.stderr, /words\/2/);
 });
+
+test('一覧のファイルそのものは検査しない', () => {
+  const r = hook({ hook_event_name: 'PostToolUse', tool_name: 'Write', session_id: String(Date.now()), tool_input: { file_path: wordsFile } });
+  assert.equal(r.status, 0);
+});
