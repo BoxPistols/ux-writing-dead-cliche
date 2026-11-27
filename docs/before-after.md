@@ -13,7 +13,7 @@
 | `保存が失敗しました。不正な値が入力されています。` | ux-microcopy/ga-shippai<br>ux-microcopy/fusei | 保存に失敗しました。日付の形式が正しくありません。2026/01/31の形式で入力してください。 |
 | `エンジニア必見の内容です。今後の動向から目が離せません。` | overstatement/must-see<br>closing/me-ga-hanasenai | 対象読者は、初めてCIを構築するエンジニアです。次回は権限設計を扱います。 |
 | `両部門の連携が成功の鍵を握っており、シナジーの創出が求められています。` | metaphor/key<br>empty-abstraction/synergy<br>closing/motomerareteiru | 両部門で顧客リストを共用し、重複訪問をなくします。担当の割り当ては月次で見直します。 |
-| `この経験を昇華させ、唯一無二のプロダクトへと進化していきましょう。` | empty-abstraction/sublimation<br>overstatement/unique<br>closing/mashou | 障害対応で得た再発防止策3件を、次期版の設計要件に加えます。 |
+| `この経験を昇華させ、唯一無二のプロダクトへと進化していきましょう。` | empty-abstraction/sublimation<br>overstatement/unique<br>closing/mashou | 障害対応で得た再発防止策3件を、次のバージョンの設計要件に加えます。 |
 | `入力して下さい。完了後、「保存しました。」と表示されます。` | ux-microcopy/shite-kudasai<br>ux-microcopy/kagikakko-kuten | 入力してください。完了後、「保存しました」と表示されます。 |
 | `私たちは、革命的なアプローチで業界に新たな物語を紡いでいきます。` | translationese/watashitachi<br>overstatement/revolutionary<br>empty-abstraction/story | 当社は2027年までに、審査工程の自動化率を8割にします。 |
 | `継続的に改善していくことが重要です。今後の展開に期待が高まります。` | translationese/teiku-juyou<br>closing/kitai | 毎週金曜に計測結果を確認し、悪化した指標を翌週の改善対象にします。次の対象は検索速度です。 |

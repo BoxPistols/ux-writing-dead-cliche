@@ -132,8 +132,8 @@ npm run release patch -- --otp=123456       # 認証アプリを登録してい�
 ## 過去のバージョンのReleaseを後から作るとき
 
 `gh release create`は既定でそのReleaseをLatestにします。古いバージョンのReleaseを遡って
-作ると、最新版からLatestの表示を奪います。`--latest=false`を付けるか、作ったあとに
-`gh release edit vX.Y.Z --latest`で最新版に戻してください。
+作ると、最新のReleaseからLatestの表示を奪います。`--latest=false`を付けるか、作ったあとに
+`gh release edit vX.Y.Z --latest`で最新のReleaseに戻してください。
 
 ## スクリプトを使わずに出す場合
 
