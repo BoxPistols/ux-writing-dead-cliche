@@ -22,6 +22,7 @@ const CATEGORY_LABEL = {
 };
 
 // ルールの代表表記。surfaceはそのまま、patternは悪い例から実際の一致文字列を取る。
+// quotable: false のルールは代表表記が固定表現でないため、askと併記できる一覧にだけ出す。
 function repr(rule) {
   if (rule.surface?.length) return rule.surface;
   const hits = check(rule.examples.bad[0], [rule]);
@@ -90,7 +91,7 @@ function compactGuard() {
   const cats = ['metaphor', 'overstatement', 'empty-abstraction', 'syntax-pattern', 'translationese', 'closing'];
   for (const cat of cats) {
     const reprs = all
-      .filter((r) => r.category === cat && !r.manual)
+      .filter((r) => r.category === cat && !r.manual && r.quotable !== false)
       .flatMap((r) => repr(r).slice(0, 1));
     lines.push(`${CATEGORY_LABEL[cat]}: ${reprs.map((s) => '`' + s + '`').join(' ')}`);
     lines.push('');
@@ -135,7 +136,7 @@ function cleanSheetGuard() {
   lines.push('');
   const cats = ['metaphor', 'overstatement', 'empty-abstraction', 'syntax-pattern', 'translationese', 'closing'];
   for (const cat of cats) {
-    const reprs = all.filter((r) => r.category === cat && !r.manual).flatMap((r) => repr(r).slice(0, 1));
+    const reprs = all.filter((r) => r.category === cat && !r.manual && r.quotable !== false).flatMap((r) => repr(r).slice(0, 1));
     lines.push(`${CATEGORY_LABEL[cat]}: ${reprs.map((s) => '\`' + s + '\`').join(' ')}`);
     lines.push('');
   }

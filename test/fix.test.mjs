@@ -109,6 +109,44 @@ test('フックはerrorとwarnで止まり、infoだけでは止まらない', a
   assert.match(r.stderr, /劇的に/);
 });
 
+test('フックはgitで追跡しているファイルの変更した行だけを検査する', async () => {
+  const { spawnSync, execFileSync } = await import('node:child_process');
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dc-diff-'));
+  const git = (...a) => execFileSync('git', ['-C', dir, ...a], { stdio: 'ignore' });
+  git('init', '-q');
+  git('config', 'user.email', 't@example.com');
+  git('config', 'user.name', 't');
+  const f = path.join(dir, 'doc.md');
+  fs.writeFileSync(f, '生産性が劇的に向上します。\n');
+  git('add', 'doc.md');
+  git('commit', '-qm', 'init');
+  const runHook = (session, env = {}) => spawnSync('node', ['src/cli.mjs', 'claude-hook'], {
+    input: JSON.stringify({ session_id: session, tool_input: { file_path: f } }),
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
+  });
+  // 既存行の違反だけなら止めない
+  fs.appendFileSync(f, '手順を追記した。\n');
+  assert.equal(runHook('diff-a').status, 0, '既存行の違反で止まった');
+  // 追加した行の違反は止め、既存行の違反は報告しない
+  fs.appendFileSync(f, '体験が飛躍的に向上します。\n');
+  const r = runHook('diff-b');
+  assert.equal(r.status, 2, '追加した行の違反で止まらなかった');
+  assert.match(r.stderr, /飛躍的に/);
+  assert.doesNotMatch(r.stderr, /劇的に/);
+  // DEAD_CLICHE_HOOK_ALL=1 ならファイル全体を検査する
+  assert.match(runHook('diff-c', { DEAD_CLICHE_HOOK_ALL: '1' }).stderr, /劇的に/);
+  // 追跡していないファイルは全体を検査する
+  const u = path.join(dir, 'new.md');
+  fs.writeFileSync(u, '生産性が劇的に向上します。\n');
+  const ru = spawnSync('node', ['src/cli.mjs', 'claude-hook'], {
+    input: JSON.stringify({ session_id: 'diff-d', tool_input: { file_path: u } }),
+    encoding: 'utf8',
+  });
+  assert.equal(ru.status, 2, '追跡外のファイルが検査されなかった');
+});
+
 test('check は既定でwarn以上をexit 1にし、--fail-on error で従来挙動になる', async () => {
   const { spawnSync } = await import('node:child_process');
   const os = await import('node:os');

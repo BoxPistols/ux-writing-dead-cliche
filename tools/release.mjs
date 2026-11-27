@@ -33,16 +33,33 @@ const PKG = 'textlint-rule-ux-writing-dead-cliche';
 const isPublished = (v) => {
   try { return run(`npm view ${PKG}@${v} version --prefer-online`).trim() === v; } catch { return false; }
 };
-// レジストリへの反映には間がある。publish直後の確認はこちらを使う
+// レジストリへの反映には間がある。publish直後の確認はこちらを使う。
+// npmは「数分かかることがある」と出す。15秒では足りず、公開済みなのに中止した例があるため3分まで待つ
 const waitPublished = (v) => {
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 18; i += 1) {
     if (isPublished(v)) return true;
-    if (i < 4) execSync('sleep 3');
+    if (i < 17) execSync('sleep 10');
   }
   return false;
 };
 
+// 業務固有語 (取引先名など) の一覧は、公開リポジトリに置くとそれ自体が漏洩になる。
+// git管理外の .release-forbidden-words (1行1パターン、#始まりと空行は無視) か
+// 環境変数 RELEASE_FORBIDDEN_PATTERN (grep -E の正規表現) から読む。
+// 一覧が無いまま走査を素通りさせないため、どちらも無ければ版を上げる前に止める
+const forbiddenFile = path.join(PACKAGE_ROOT, '.release-forbidden-words');
+const forbiddenPatterns = [
+  ...(process.env.RELEASE_FORBIDDEN_PATTERN ? [process.env.RELEASE_FORBIDDEN_PATTERN] : []),
+  ...(fs.existsSync(forbiddenFile)
+    ? fs.readFileSync(forbiddenFile, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
+    : []),
+];
+if (!forbiddenPatterns.length) {
+  fail('業務固有語の一覧がありません。.release-forbidden-words を置くか RELEASE_FORBIDDEN_PATTERN を設定してください (docs/release-guide.md)');
+}
+
 const pkgPath = path.join(PACKAGE_ROOT, 'package.json');
+const lockPath = path.join(PACKAGE_ROOT, 'package-lock.json');
 const pluginPath = path.join(PACKAGE_ROOT, '.claude-plugin', 'plugin.json');
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 const writeJson = (p, d) => fs.writeFileSync(p, JSON.stringify(d, null, 2) + '\n');
@@ -98,7 +115,13 @@ for (const p of [pkgPath, pluginPath]) {
 }
 const pluginVersion = readJson(pluginPath).version;
 if (pluginVersion !== version) fail(`plugin.jsonの版が一致しません (${pluginVersion})`);
-console.log(`  package.json と plugin.json を ${version} にしました`);
+// lockfileの版も上げる。npm i を誰かが実行するまで差分として残り続けるため。
+// 検証のあとに書く。落ちたときに書き換えるファイルを増やさないため。
+const lock = readJson(lockPath);
+lock.version = version;
+if (lock.packages?.['']) lock.packages[''].version = version;
+writeJson(lockPath, lock);
+console.log(`  package.json と package-lock.json と plugin.json を ${version} にしました`);
 
 step(2, '生成物を作り直す');
 run('node tools/render-prompts.mjs');
@@ -130,13 +153,15 @@ const files = packed.split('\n').filter((l) => /npm notice \d+(\.\d+)?[kMG]?B /.
 console.log(`  公開されるファイル: ${files.length}件`);
 const risky = files.filter((l) => /\.env|secret|token|credential|\.pem|\.key/i.test(l));
 if (risky.length) fail(`公開物に機密の疑いがあるファイルが含まれています:\n${risky.join('\n')}`);
-const leaked = spawnSync('grep', ['-rlniE', 'client-a|client-b|client-c|kiro', 'rules', 'presets', 'src', 'schema'], { cwd: PACKAGE_ROOT, encoding: 'utf8' });
+const leaked = spawnSync('grep', ['-rlniE', forbiddenPatterns.join('|'), 'rules', 'presets', 'src', 'schema'], { cwd: PACKAGE_ROOT, encoding: 'utf8' });
+// grepは不正な正規表現で終了コード2を返し、何も出力しない。一覧の書き損じで走査が素通りしないよう止める
+if (leaked.status > 1) fail(`業務固有語の走査に失敗しました:\n${leaked.stderr}`);
 if (leaked.stdout.trim()) fail(`配布物に業務固有の語が含まれています:\n${leaked.stdout}`);
 console.log('  機密・業務固有語の混入: なし');
 
 if (dryRun) {
   console.log('\ndry-runのため、ここで終了します。バージョンと生成物の変更は残っています。');
-  console.log('元に戻すには: git checkout -- package.json .claude-plugin/plugin.json docs/');
+  console.log('元に戻すには: git checkout -- package.json package-lock.json .claude-plugin/plugin.json docs/');
   process.exit(0);
 }
 
@@ -190,7 +215,14 @@ if (!skipNpm) {
         `  版はコミット済みなので、続きは: npm run release -- --resume --otp=123456`,
       ].join('\n'));
     }
-    if (!waitPublished(version)) fail(`npmの公開が確認できません (レジストリ上は ${run(`npm view ${PKG} version --prefer-online`).trim()})`);
+    if (!waitPublished(version)) {
+      fail([
+        // 照会そのものが失敗しても、続きの案内は出す
+        `npmの公開が確認できません (レジストリ上は ${(() => { try { return run(`npm view ${PKG} version --prefer-online`).trim(); } catch { return '照会に失敗'; } })()})。`,
+        '  publishは成功していて、反映が遅れているだけのことがあります。',
+        `  数分後に「npm view ${PKG} version」で${version}が出たら、続きは「npm run release -- --resume」`,
+      ].join('\n'));
+    }
     console.log(`  npm: ${version} を公開しました`);
   }
 }
