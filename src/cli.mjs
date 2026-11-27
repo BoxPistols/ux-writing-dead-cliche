@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // dead-cliche CLI。
 //   dead-cliche check [files...] [--preset name] [--format pretty|json] [--min-severity warn]
+//   dead-cliche check [files...] --ai            manualルールも判定する (TYPESAFE_API_KEYが要る。既定はオフ)
 //   dead-cliche list [--preset name] [--manual]
 //   dead-cliche explain <rule-id>
 //   dead-cliche claude-hook   (Claude CodeのPostToolUseフックからstdin JSONで呼ばれる)
@@ -24,7 +25,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith('--')) {
       const key = a.slice(2);
-      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on', 'port', 'file'].includes(key)) {
+      if (['preset', 'format', 'min-severity', 'rules-dir', 'fail-on', 'port', 'file', 'ai-threshold'].includes(key)) {
         const value = argv[i + 1];
         // 値を落とすと既定値で走ってしまう (--port だけ書いて7777で立つ等)。指定漏れは止める
         if (value === undefined || value.startsWith('--')) {
@@ -56,19 +57,30 @@ function checkText(text, filePath, rules) {
 
 function printPretty(file, violations) {
   for (const v of violations) {
-    console.log(`${file}:${v.line}:${v.col} ${v.severity} ${v.ruleId} 「${v.matched.replace(/\n/g, '\\n')}」`);
+    // AIの判定は文書全体に対するもので行を持たない。1:1 と出すと「1行目の問題」と読まれる
+    const pos = v.source === 'ai' ? '(文書全体)' : `${v.line}:${v.col}`;
+    console.log(`${file}:${pos} ${v.severity} ${v.ruleId} 「${v.matched.replace(/\n/g, '\\n')}」`);
     console.log(`  なぜ: ${v.why}`);
     console.log(`  直す: ${v.ask}`);
   }
 }
 
-function cmdCheck(args) {
+async function cmdCheck(args) {
   const files = args._;
+  // Number('abc') は NaN で、NaN との比較は常に false になり全件が指摘になる。読み込む前に止める
+  let aiThreshold;
+  if (args.flags['ai-threshold'] !== undefined) {
+    aiThreshold = Number(args.flags['ai-threshold']);
+    if (!Number.isFinite(aiThreshold) || aiThreshold < 0 || aiThreshold > 1) {
+      console.error(`--ai-threshold は 0 から 1 の数値で指定してください (指定: ${args.flags['ai-threshold']})`);
+      process.exit(2);
+    }
+  }
   const results = [];
   let total = 0;
   let errors = 0;
 
-  const run = (text, displayName, filePath) => {
+  const run = async (text, displayName, filePath) => {
     const rc = filePath ? findRc(path.dirname(path.resolve(filePath))) : findRc(process.cwd());
     if (rc?.ignore && filePath) {
       const rel = path.relative(rc._dir, path.resolve(filePath));
@@ -77,6 +89,16 @@ function cmdCheck(args) {
     const preset = args.flags.preset ?? rc?.preset ?? 'paper';
     const rules = applyRcRuleConfig([...getRules({ preset, rulesDir: args.flags['rules-dir'] }), ...loadCustomRules(rc)], rc);
     let violations = checkText(text, filePath, rules);
+    // --ai を付けたときだけ、機械検出していないmanualルールを型付き判定のAPIで見る。
+    // 失敗しても既存の検出結果は捨てない
+    if (args.flags.ai) {
+      try {
+        const { judgeManualRules } = await import('./manual-judge.mjs');
+        violations = [...violations, ...(await judgeManualRules(text, rules, { threshold: aiThreshold }))];
+      } catch (e) {
+        console.error(`--ai の判定を飛ばしました: ${e.message}`);
+      }
+    }
     const min = args.flags['min-severity'];
     if (min) {
       const order = { info: 0, warn: 1, error: 2 };
@@ -90,7 +112,7 @@ function cmdCheck(args) {
 
   if (files.length === 0 || (files.length === 1 && files[0] === '-')) {
     const text = fs.readFileSync(0, 'utf8');
-    run(text, '(stdin)', null);
+    await run(text, '(stdin)', null);
   } else {
     for (const f of files) {
       // 指定を誤ったときに生のスタックトレースを出さない
@@ -102,7 +124,7 @@ function cmdCheck(args) {
         console.error(`${f} はディレクトリです。ファイルを指定してください (例: ${f}/*.md)`);
         process.exit(2);
       }
-      run(fs.readFileSync(f, 'utf8'), f, f);
+      await run(fs.readFileSync(f, 'utf8'), f, f);
     }
   }
 
@@ -393,7 +415,7 @@ if (cmd === 'version' || args.flags.version) {
 }
 switch (cmd) {
   case 'check':
-    cmdCheck(args);
+    await cmdCheck(args);
     break;
   case 'fix':
     cmdFix(args);
@@ -415,6 +437,7 @@ switch (cmd) {
     console.log('  check [files...] [--preset name] [--format json] [--min-severity warn] [--fail-on info|warn|error]  (既定: warn以上でexit 1)');
     console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
     console.log('  --strict は info も含めて exit 1 にする (--fail-on info と同義)');
+    console.log('  --ai はmanualルールも型付き判定のAPIで見る (TYPESAFE_API_KEYが要る。結果はinfo)。--ai-threshold 0〜1 (既定0.9)');
     console.log('  ui [--port 7777] [--file path]            プロジェクト辞書のローカル編集フォーム (127.0.0.1のみ)');
   console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');

@@ -44,6 +44,8 @@ dead-cliche fix 文書.md --write
 dead-cliche version
 ```
 
+`check` に `--ai` を付けると、正規表現では判定できないmanualルールも型付き判定のAPIで見ます。既定はオフで、環境変数 `TYPESAFE_API_KEY` が要ります。結果は確率的な判定なのでinfoとして出し、既定では終了コードに乗せません。止めたい場合は `--strict` を付けます。しきい値は `--ai-threshold` (0〜1、既定0.9) で変えられます。詳しくは [manual-rules-ai.md](manual-rules-ai.md) にあります。
+
 ### textlintルールとして (既存のtextlint資産と併用)
 
 ```
