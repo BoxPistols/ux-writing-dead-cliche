@@ -169,3 +169,18 @@ test('インラインコードのマスクは空白ではなく、太字対の�
   assert.equal(check(masked, rules).length, 0, 'マスク後の正しい太字が誤検出された');
   assert.equal(check(maskMarkdownCode('** 壊れた**太字です。\n'), rules).length, 1, '本物の崩れが検出されない');
 });
+
+test('個人の辞書が公開辞書と同じ箇所を拾ったら1件にまとめ、重さは厳しいほうに合わせる', () => {
+  const custom = [
+    { id: 'custom/example-same', category: 'custom', severity: 'error', surface: ['羅針盤'], why: 'x', ask: 'y' },
+    { id: 'custom/example-other', category: 'custom', severity: 'error', surface: ['架空語'], why: 'x', ask: 'y' },
+  ];
+  const builtin = all.map((r) => (r.id === 'metaphor/compass' ? { ...r, severity: 'warn' } : r));
+  const hits = check('チームの羅針盤です。架空語もある。', [...builtin, ...custom]);
+  const at = hits.filter((v) => v.matched === '羅針盤');
+  assert.equal(at.length, 1);
+  assert.equal(at[0].ruleId, 'metaphor/compass');
+  assert.equal(at[0].severity, 'error');
+  assert.deepEqual(at[0].alsoRuleIds, ['custom/example-same']);
+  assert.ok(hits.some((v) => v.ruleId === 'custom/example-other'), '重ならない個人ルールは残る');
+});

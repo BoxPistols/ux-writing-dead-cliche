@@ -142,7 +142,24 @@ export function check(text, rules, { minSeverity = 'info' } = {}) {
       }
     }
   }
-  return found.sort((a, b) => a.index - b.index);
+  return mergeCustomDuplicates(found).sort((a, b) => a.index - b.index);
+}
+
+// 個人やチームの辞書 (custom/) が公開辞書と同じ箇所を拾ったときは1件にまとめる。
+// 理由と直し方は公開辞書のほうが具体的なので残し、重さは厳しいほうに合わせる。
+function mergeCustomDuplicates(found) {
+  const builtinBySpan = new Map();
+  for (const v of found) {
+    if (!v.ruleId.startsWith('custom/')) builtinBySpan.set(`${v.index}:${v.length}`, v);
+  }
+  return found.filter((v) => {
+    if (!v.ruleId.startsWith('custom/')) return true;
+    const base = builtinBySpan.get(`${v.index}:${v.length}`);
+    if (!base) return true;
+    if ((SEVERITY_ORDER[v.severity] ?? 0) > (SEVERITY_ORDER[base.severity] ?? 0)) base.severity = v.severity;
+    (base.alsoRuleIds ??= []).push(v.ruleId);
+    return false;
+  });
 }
 
 // fixフィールドを持つルールの決定論的置換を適用する。
