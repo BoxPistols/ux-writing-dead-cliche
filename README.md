@@ -368,7 +368,7 @@ OSS辞書への提案は、[提案フォーム](https://boxpistols.github.io/ux-
 
 ### 1. 自分だけで使う語を足す (数秒で効く)
 
-公開辞書に入れるほどではない語や、業務の固有語は個人用の辞書に書きます。ホームに `~/.deadclicherc.json` を置くと、その下のすべてのプロジェクトに効きます。プロジェクト側に `.deadclicherc.json` があれば、近いほうが優先されます。
+公開辞書に入れるほどではない語や、業務の固有語は個人用の辞書に書きます。ホームに `~/.deadclicherc.json` を置くと、その下のすべてのプロジェクトに効きます。プロジェクト側に `.deadclicherc.json` があれば、近いほうが優先されます。この設定を読むのは `dead-cliche` コマンドとClaude Codeのフックで、textlint経由の検査には効きません。
 
 ```json
 {
@@ -377,7 +377,7 @@ OSS辞書への提案は、[提案フォーム](https://boxpistols.github.io/ux-
 }
 ```
 
-辞書のファイルを複数の端末で同期しているフォルダ (Gitの個人リポジトリなど) に置けば、どの端末でも同じ語が止まります。リリースは要りません。
+`customRules` のパスは、この設定ファイルの場所から数えます。辞書のファイルを複数の端末で同期しているフォルダ (Gitの個人リポジトリなど) に置き、各端末に同じ `~/.deadclicherc.json` を作ってそのファイルを指せば、どの端末でも同じ語が止まります。設定ファイルは端末ごとに要りますが、作るのは最初の1回だけで、以後は辞書のファイルを同期するだけで効きます。リリースは要りません。
 
 ### 2. 公開辞書に足す (全員に届く)
 
@@ -391,7 +391,7 @@ OSS辞書への提案は、[提案フォーム](https://boxpistols.github.io/ux-
 |---|---|
 | Claude Codeプラグイン | 自動更新を有効にしていれば、次のセッションで入り `Plugin updated: dead-cliche` と出ます (設定は「インストール」の節) |
 | `npx textlint-rule-ux-writing-dead-cliche@latest` | `@latest` を付けると、手元のキャッシュではなく最新のバージョンで実行します |
-| `npm i -D` で入れたプロジェクト | `npm update textlint-rule-ux-writing-dead-cliche` で更新します |
+| `npm i -D` で入れたプロジェクト | 辞書の追加はminorで公開するため、`npm update` では `^0.21.0` の範囲を超えません。`npm i -D textlint-rule-ux-writing-dead-cliche@latest` で更新します |
 | GitHub Action | `@main` を指定していれば、マージの直後の実行から新しい辞書で検査します。タグで固定している場合は、タグを上げるまで変わりません |
 | Webアプリ | マージの時点で反映済みです |
 
