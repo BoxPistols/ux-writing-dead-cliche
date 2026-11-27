@@ -20,8 +20,9 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test
-      - name: self check (README と CONTRIBUTING が自らの検査を通ること)
-        run: node src/cli.mjs check README.md CONTRIBUTING.md
+      # リリースと同じ範囲を見る。狭いとPRは通り、リリースの段階で初めて落ちる
+      - name: self check (自分の文書が自らの検査を通ること)
+        run: npm run check:self
       - name: プラグイン manifest の検証 (claude CLI があれば validate --strict も通す)
         run: node tools/validate-plugin.mjs
       - name: 比較表がコーパスと同期していること
