@@ -84,9 +84,9 @@ function fullGuard() {
 
 function compactGuard() {
   const lines = [];
-  lines.push('# 日本語クリシェ禁止 (短縮版)');
+  lines.push('# 日本語クリシェ禁止 (短縮)');
   lines.push('');
-  lines.push('文字数制限のあるカスタム指示欄向けの短縮版です。次の日本語表現を使わず、誇張や比喩が省いている事実 (誰が・何を・どれだけ) を代わりに書いてください。語尾は敬体。太字散布・絵文字見出し・AI署名は禁止。');
+  lines.push('文字数制限のあるカスタム指示欄向けに短く縮めたものです。次の日本語表現を使わず、誇張や比喩が省いている事実 (誰が・何を・どれだけ) を代わりに書いてください。語尾は敬体。太字散布・絵文字見出し・AI署名は禁止。');
   lines.push('');
   const cats = ['metaphor', 'overstatement', 'empty-abstraction', 'syntax-pattern', 'translationese', 'closing'];
   for (const cat of cats) {

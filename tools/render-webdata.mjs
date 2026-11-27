@@ -28,8 +28,8 @@ function repr(rule) {
 
 const promptsDir = path.join(PACKAGE_ROOT, 'docs', 'prompts');
 const guards = [
-  { id: 'writing-guard', title: '日本語ライティング規律 (フル版)', desc: 'システムプロンプト・プロジェクト設定に貼る全文。文章全般向け' },
-  { id: 'writing-guard-compact', title: '日本語クリシェ禁止 (短縮版)', desc: '文字数制限のあるカスタム指示欄向け' },
+  { id: 'writing-guard', title: '日本語ライティング規律 (全文)', desc: 'システムプロンプト・プロジェクト設定に貼る全文。文章全般向け' },
+  { id: 'writing-guard-compact', title: '日本語クリシェ禁止 (短縮)', desc: '文字数制限のあるカスタム指示欄向け' },
   { id: 'ux-writing-guard', title: 'UI文言規律', desc: '画面テキスト(ボタン・エラー・空状態)を書かせるAI向け' },
   { id: 'clean-sheet-writing', title: '白紙から書かせる指示文', desc: 'クリーンシートで文章を書かせるとき、テーマの前に貼る' },
 ].map((g) => ({ ...g, body: fs.readFileSync(path.join(promptsDir, `${g.id}.md`), 'utf8') }));

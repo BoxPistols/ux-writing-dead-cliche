@@ -305,9 +305,9 @@ Co-Authored-By: Claude等) と絵文字を、コミットログ・PR本文・レ
 
 元データのMarkdownはdocs/prompts/ にあります。
 
-- [writing-guard.md](docs/prompts/writing-guard.md) — フル版 (約12KB)。システムプロンプト・プロジェクト設定向け
-- [writing-guard-compact.md](docs/prompts/writing-guard-compact.md) — 短縮版 (約3KB)。文字数制限のあるカスタム指示欄向け
-- [ux-writing-guard.md](docs/prompts/ux-writing-guard.md) — UI文言版。画面テキストを書かせるとき向け
+- [writing-guard.md](docs/prompts/writing-guard.md) — すべてのルールを載せたもの (約12KB)。システムプロンプト・プロジェクト設定向け
+- [writing-guard-compact.md](docs/prompts/writing-guard-compact.md) — 短く縮めたもの (約3KB)。文字数制限のあるカスタム指示欄向け
+- [ux-writing-guard.md](docs/prompts/ux-writing-guard.md) — UI文言向け。画面テキストを書かせるとき向け
 
 生成物なので手で編集せず、辞書の更新に追随します (`npm run docs:prompts`、CIで同期検証)。
 
