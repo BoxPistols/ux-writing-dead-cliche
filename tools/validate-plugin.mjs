@@ -24,7 +24,7 @@ export const isSemver = (v) => typeof v === 'string' && SEMVER.test(v);
 
 // gitで管理しているファイルだけを一時フォルダへ写す。プラグインはgitから取得されるので、
 // 手元にしかないファイル(CLAUDE.local.md等)で、validate --strictが落ちるのを避ける。
-// 中身は作業ツリーのものを使う。リリース中の版上げはコミット前に検証するため。
+// 中身は作業ツリーのものを使う。リリース中のバージョン更新はコミット前に検証するため。
 // gitの管理下でなければnullを返し、呼び出し側はrootをそのまま検証する
 export function copyTrackedFiles(root) {
   let listed;

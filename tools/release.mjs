@@ -11,7 +11,7 @@ const args = process.argv.slice(2);
 const bump = args.find((a) => !a.startsWith('--'));
 const dryRun = args.includes('--dry-run');
 const skipNpm = args.includes('--skip-npm');
-// 途中で失敗したリリースを、版を上げ直さずに続きから流す
+// 途中で失敗したリリースを、バージョンを上げ直さずに続きから流す
 const resume = args.includes('--resume');
 // 認証アプリの6桁コード。TTYが無い環境 (Claude Code等) ではこれが無いとpublishできない
 const otp = (args.find((a) => a.startsWith('--otp=')) || '').slice('--otp='.length) || process.env.NPM_OTP || '';
@@ -46,7 +46,7 @@ const waitPublished = (v) => {
 // 業務固有語 (取引先名など) の一覧は、公開リポジトリに置くとそれ自体が漏洩になる。
 // git管理外の .release-forbidden-words (1行1パターン、#始まりと空行は無視) か
 // 環境変数 RELEASE_FORBIDDEN_PATTERN (grep -E の正規表現) から読む。
-// 一覧が無いまま走査を素通りさせないため、どちらも無ければ版を上げる前に止める
+// 一覧が無いまま走査を素通りさせないため、どちらも無ければバージョンを上げる前に止める
 const forbiddenFile = path.join(PACKAGE_ROOT, '.release-forbidden-words');
 const forbiddenPatterns = [
   ...(process.env.RELEASE_FORBIDDEN_PATTERN ? [process.env.RELEASE_FORBIDDEN_PATTERN] : []),
@@ -85,7 +85,7 @@ run('git fetch -q origin');
 const behind = run('git rev-list --count HEAD..origin/main').trim();
 if (behind !== '0') fail(`origin/mainに追いついていません (${behind}コミット遅れ)。git pullしてください`);
 
-// 版を上げてpushしてから最後の1歩で落ちると、公開されていない版がmainに残る。
+// バージョンを上げてpushしてから最後の1歩で落ちると、公開されていないバージョンがmainに残る。
 // 後段で必要になる認証は、何も変更していないこの時点で確かめる。
 if (!dryRun) {
   try { run('gh auth status'); } catch { fail('ghにログインしていません。gh auth login を実行してください'); }
@@ -114,8 +114,8 @@ for (const p of [pkgPath, pluginPath]) {
   writeJson(p, d);
 }
 const pluginVersion = readJson(pluginPath).version;
-if (pluginVersion !== version) fail(`plugin.jsonの版が一致しません (${pluginVersion})`);
-// lockfileの版も上げる。npm i を誰かが実行するまで差分として残り続けるため。
+if (pluginVersion !== version) fail(`plugin.jsonのバージョンが一致しません (${pluginVersion})`);
+// lockfileのバージョンも上げる。npm i を誰かが実行するまで差分として残り続けるため。
 // 検証のあとに書く。落ちたときに書き換えるファイルを増やさないため。
 const lock = readJson(lockPath);
 lock.version = version;
@@ -212,7 +212,7 @@ if (!skipNpm) {
       fail([
         `npm publishが失敗しました (終了コード ${pub.status})。`,
         '  EOTPなら、認証アプリの6桁コードを --otp= で渡すか、TTYのある端末で実行してください。',
-        `  版はコミット済みなので、続きは: npm run release -- --resume --otp=123456`,
+        `  バージョンはコミット済みなので、続きは: npm run release -- --resume --otp=123456`,
       ].join('\n'));
     }
     if (!waitPublished(version)) {
