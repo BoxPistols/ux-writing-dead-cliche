@@ -37,6 +37,7 @@ test('PreToolUse: コミットの本文に一覧の語があれば止める', ()
   const r = hook({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git commit -m "新しい版にする"' } });
   assert.equal(r.status, 2);
   assert.match(r.stderr, /「版」/);
+  assert.doesNotMatch(r.stderr, /。。/);
   const ok = hook({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git commit -m "バージョンを上げる"' } });
   assert.equal(ok.status, 0);
   const other = hook({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'grep 版 README.md' } });
