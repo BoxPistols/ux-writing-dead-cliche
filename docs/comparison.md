@@ -52,7 +52,7 @@ textlint上で両方を有効にする構成が成立します。
 ## textlint-rule-preset-ai-words-jaとの違い (調査日: 2026-09-16)
 
 比較したのはp1ass/textlint-rule-preset-ai-words-jaのv1.2.0 (commit 4de09b3) です。以下の
-件数はこの版で測っています。ルールは2つあり、性質が違います。
+件数はこのバージョンで測っています。ルールは2つあり、性質が違います。
 
 - `no-ai-words`: AIが書いた日本語に増えた単語そのものを検出します。辞書は49語で、
   「Qiitaの7万記事を生成AIの前後で比べ、出現率が上がった語」を根拠にしています。kuromojiの
