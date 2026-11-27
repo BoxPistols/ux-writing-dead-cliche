@@ -328,7 +328,7 @@ function wordHits(text) {
 }
 
 function wordList(hits) {
-  return [...new Map(hits.map((v) => [v.matched, `「${v.matched}」 → ${v.ask}`])).values()].join(' / ');
+  return [...new Map(hits.map((v) => [v.matched, `「${v.matched}」 → ${v.ask.replace(/。$/, "")}`])).values()].join(' / ');
 }
 
 const PUBLISH_COMMAND = /\b(git\s+(-C\s+\S+\s+)?commit|gh\s+(pr|issue|release)\s+(create|edit|comment|review))\b/;
