@@ -15,6 +15,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { loadAllRules, loadPreset, rulesForPreset, findRc, loadCustomRules, applyRcRuleConfig, PACKAGE_ROOT } from './load-rules.mjs';
 import { check, maskMarkdownCode, hasErrors, applyFixes } from './engine.mjs';
+import { loadWordRules } from './words.mjs';
 
 const MD_EXT = new Set(['.md', '.mdx', '.markdown']);
 const TEXT_EXT = new Set([...MD_EXT, '.txt']);
@@ -262,7 +263,7 @@ function hookCheckFile(filePath) {
     const rel = path.relative(rc._dir, filePath);
     if (rc.ignore.some((pat) => rel.startsWith(pat) || rel.includes(`/${pat}`))) return [];
   }
-  const rules = applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc);
+  const rules = [...applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc), ...loadWordRules()];
   const text = fs.readFileSync(filePath, 'utf8');
   return onlyChanged(filePath, checkText(text, filePath, rules)).map((v) => ({ ...v, file: path.basename(filePath) }));
 }
@@ -307,6 +308,72 @@ function hookDedup(sessionId, files) {
   }
 }
 
+// 使わない語の一覧 (words.mjs) だけで、ファイル以外の出口を調べる。
+// 公開辞書まで当てると、返答やコミットのたびにwarnで止まって作業が進まないため
+function wordHits(text) {
+  const rules = loadWordRules();
+  if (rules.length === 0) return [];
+  return check(maskMarkdownCode(text), rules);
+}
+
+function wordList(hits) {
+  return [...new Map(hits.map((v) => [v.matched, `「${v.matched}」 → ${v.ask}`])).values()].join(' / ');
+}
+
+const PUBLISH_COMMAND = /\b(git\s+(-C\s+\S+\s+)?commit|gh\s+(pr|issue|release)\s+(create|edit|comment|review))\b/;
+const BODY_FILE_OPTS = new Set(['--body-file', '-F', '--file', '--message-file']);
+
+// git commit と gh の pr / issue / release の本文は、利用者の名義で外に出るので実行前に止める
+function hookPreBash(input) {
+  const command = input?.tool_input?.command ?? '';
+  if (!PUBLISH_COMMAND.test(command) || command.includes('ALLOW_BANNED_WORDS=1')) process.exit(0);
+  const texts = [command];
+  const toks = command.split(/\s+/);
+  toks.forEach((t, i) => {
+    let val = BODY_FILE_OPTS.has(t) ? toks[i + 1] : null;
+    if (!val && t.startsWith('--') && t.includes('=') && BODY_FILE_OPTS.has(t.split('=')[0])) val = t.split('=')[1];
+    if (!val || val === '-') return;
+    try {
+      texts.push(fs.readFileSync(path.resolve(input?.cwd ?? process.cwd(), val.replace(/^['"]|['"]$/g, '')), 'utf8'));
+    } catch {}
+  });
+  const hits = texts.flatMap(wordHits);
+  if (hits.length === 0) process.exit(0);
+  console.error(`dead-cliche: 外に出る本文に使わない語があります。${wordList(hits)}。言い換えてから実行し直してください。出典の固有名などで必要なときだけ、コマンドの先頭に ALLOW_BANNED_WORDS=1 を付けます。`);
+  process.exit(2);
+}
+
+// 返答を書き終えたときに調べ、見つかれば書き直しを求める。同じ返答への2回目は止めない (止め続けないため)
+function lastReply(input) {
+  if (typeof input?.last_assistant_message === 'string') return input.last_assistant_message;
+  const file = input?.transcript_path;
+  if (!file || !fs.existsSync(file)) return '';
+  let texts = [];
+  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+    let e;
+    try { e = JSON.parse(line); } catch { continue; }
+    const content = e?.message?.content;
+    if (e?.type === 'user') {
+      // ツールの結果ではない、利用者の発言で区切る
+      if (typeof content === 'string' || (Array.isArray(content) && content.some((c) => c?.type === 'text'))) texts = [];
+    } else if (e?.type === 'assistant' && Array.isArray(content)) {
+      texts.push(...content.filter((c) => c?.type === 'text').map((c) => c.text ?? ''));
+    }
+  }
+  return texts.join('\n');
+}
+
+function hookStop(input) {
+  if (input?.stop_hook_active) process.exit(0);
+  const hits = wordHits(lastReply(input));
+  if (hits.length === 0) process.exit(0);
+  console.log(JSON.stringify({
+    decision: 'block',
+    reason: `dead-cliche: 返答に使わない語があります。${wordList(hits)}。言い換えた文を短く書き直して、利用者に示してください。`,
+  }));
+  process.exit(0);
+}
+
 function cmdClaudeHook() {
   let input;
   try {
@@ -315,6 +382,8 @@ function cmdClaudeHook() {
     process.exit(0);
   }
   try {
+    if (input?.hook_event_name === 'Stop') hookStop(input);
+    if (input?.hook_event_name === 'PreToolUse') hookPreBash(input);
     if (input?.tool_name === 'Bash' || (!input?.tool_input?.file_path && input?.tool_input?.command)) {
       const files = extractPathsFromCommand(input?.tool_input?.command ?? '', input?.cwd ?? process.cwd());
       if (files.length && hookDedup(input?.session_id ?? '', files)) process.exit(0);
@@ -336,7 +405,7 @@ function cmdClaudeHook() {
       const rel = path.relative(rc._dir, filePath);
       if (rc.ignore.some((pat) => rel.startsWith(pat) || rel.includes(`/${pat}`))) process.exit(0);
     }
-    const rules = applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc);
+    const rules = [...applyRcRuleConfig([...getRules({ preset: rc?.preset ?? 'paper' }), ...loadCustomRules(rc, { warn: () => {} })], rc), ...loadWordRules()];
     const text = fs.readFileSync(filePath, 'utf8');
     const violations = onlyChanged(path.resolve(filePath), checkText(text, filePath, rules)).filter((v) => v.severity !== 'info'); // errorとwarnは修正必須、infoは止めない
     if (violations.length === 0) process.exit(0);

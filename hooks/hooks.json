@@ -20,6 +20,29 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"${DEAD_CLICHE_WORDS:-$HOME/.dead-cliche-words.txt}\" ] || exit 0; IN=$(cat); case \"$IN\" in *commit*|*\"gh pr\"*|*\"gh issue\"*|*\"gh release\"*) printf %s \"$IN\" | node \"${CLAUDE_PLUGIN_ROOT}/src/cli.mjs\" claude-hook;; esac",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"${DEAD_CLICHE_WORDS:-$HOME/.dead-cliche-words.txt}\" ] || exit 0; node \"${CLAUDE_PLUGIN_ROOT}/src/cli.mjs\" claude-hook",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }

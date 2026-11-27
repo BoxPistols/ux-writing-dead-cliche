@@ -21,7 +21,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test",
+    "test": "DEAD_CLICHE_WORDS=off node --test",
     "sync": "npm run docs:prompts && npm run docs:webdata && npm run docs:comparison && npm test && npm run check:self",
     "gaps": "node tools/gap-report.mjs",
     "mine": "node tools/mine-ngrams.mjs",
