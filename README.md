@@ -134,6 +134,21 @@ Claude Codeプラグインとして使う場合:
 /plugin install dead-cliche
 ```
 
+辞書の更新を自動で受け取るには、マーケットプレイスの自動更新を有効にします。自分で追加したマーケットプレイスは、既定では自動更新されません。`/plugin` のMarketplacesタブで切り替えるか、各端末の `~/.claude/settings.json` に次を書きます。
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "ux-writing-dead-cliche": {
+      "source": { "source": "github", "repo": "BoxPistols/ux-writing-dead-cliche" },
+      "autoUpdate": true
+    }
+  }
+}
+```
+
+有効にすると、セッションの開始後に新しいバージョンが入り、画面に `Plugin updated: dead-cliche · Run /reload-plugins to apply` と出ます。`/reload-plugins` を実行するとそのセッションから新しい辞書で検査します。実行しなくても次の起動から反映されます。
+
 textlintと併用する場合:
 
 ```
