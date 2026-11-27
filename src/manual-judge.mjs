@@ -23,6 +23,9 @@ const MODEL = "jev-latest";
 /** 既定のしきい値。実測で誤検出0件だった値 */
 export const DEFAULT_THRESHOLD = 0.9;
 
+/** APIが応答しないとき、フック経由の編集まで止めないための上限 */
+export const DEFAULT_TIMEOUT_MS = 30_000;
+
 /** UIの文言にだけ当てるルール。本文に当てると誤検出になる */
 const UI_PREFIX = "ux-microcopy/";
 
@@ -70,7 +73,8 @@ export function toViolations(answers, rules, threshold) {
     if (answer.noul < threshold) continue;
     out.push({
       ruleId: rule.id,
-      severity: rule.severity === "manual" ? "warn" : rule.severity,
+      // 確率的な判定なので既定の終了コードに乗せない。止めたい人は --strict か --fail-on info を付ける
+      severity: "info",
       why: rule.why,
       ask: rule.ask,
       matched: `${Math.round(answer.noul * 100)}%`,
@@ -108,7 +112,7 @@ export async function judgeManualRules(text, rules, options = {}) {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
-    signal: options.signal,
+    signal: options.signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new ManualJudgeError(`APIが ${res.status} を返しました`);

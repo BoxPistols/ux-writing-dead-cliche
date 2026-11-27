@@ -75,7 +75,8 @@ test('UI以外のルールは種別で絞らない', () => {
 test('指摘の形は既存の検出と揃える', () => {
   const [v] = toViolations(answersFor('ui', { [uiRule.id]: 0.94 }), [uiRule], 0.9);
   assert.equal(v.ruleId, uiRule.id);
-  assert.equal(v.severity, uiRule.severity);
+  // 確率的な判定は既定の終了コードに乗せない
+  assert.equal(v.severity, 'info');
   assert.equal(v.why, uiRule.why);
   assert.equal(v.matched, '94%');
   assert.equal(v.source, 'ai');
@@ -94,4 +95,17 @@ test('APIが失敗したら投げる (呼び出し側が既存の検出を残せ
   await assert.rejects(() =>
     judgeManualRules('文', manualRules, { apiKey: 'dummy', endpoint }),
   );
+});
+
+test('--ai-threshold に数値以外や範囲外を渡すと exit 2 で止める', async () => {
+  const { spawnSync } = await import('node:child_process');
+  for (const value of ['abc', '1.5', '-1']) {
+    const r = spawnSync(process.execPath, ['src/cli.mjs', 'check', '--ai', '--ai-threshold', value], {
+      input: '文',
+      encoding: 'utf8',
+      env: { ...process.env, TYPESAFE_API_KEY: '' },
+    });
+    assert.equal(r.status, 2, value);
+    assert.match(r.stderr, /0 から 1/);
+  }
 });

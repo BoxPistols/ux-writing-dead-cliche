@@ -57,7 +57,9 @@ function checkText(text, filePath, rules) {
 
 function printPretty(file, violations) {
   for (const v of violations) {
-    console.log(`${file}:${v.line}:${v.col} ${v.severity} ${v.ruleId} 「${v.matched.replace(/\n/g, '\\n')}」`);
+    // AIの判定は文書全体に対するもので行を持たない。1:1 と出すと「1行目の問題」と読まれる
+    const pos = v.source === 'ai' ? '(文書全体)' : `${v.line}:${v.col}`;
+    console.log(`${file}:${pos} ${v.severity} ${v.ruleId} 「${v.matched.replace(/\n/g, '\\n')}」`);
     console.log(`  なぜ: ${v.why}`);
     console.log(`  直す: ${v.ask}`);
   }
@@ -65,6 +67,15 @@ function printPretty(file, violations) {
 
 async function cmdCheck(args) {
   const files = args._;
+  // Number('abc') は NaN で、NaN との比較は常に false になり全件が指摘になる。読み込む前に止める
+  let aiThreshold;
+  if (args.flags['ai-threshold'] !== undefined) {
+    aiThreshold = Number(args.flags['ai-threshold']);
+    if (!Number.isFinite(aiThreshold) || aiThreshold < 0 || aiThreshold > 1) {
+      console.error(`--ai-threshold は 0 から 1 の数値で指定してください (指定: ${args.flags['ai-threshold']})`);
+      process.exit(2);
+    }
+  }
   const results = [];
   let total = 0;
   let errors = 0;
@@ -83,8 +94,7 @@ async function cmdCheck(args) {
     if (args.flags.ai) {
       try {
         const { judgeManualRules } = await import('./manual-judge.mjs');
-        const threshold = args.flags['ai-threshold'] ? Number(args.flags['ai-threshold']) : undefined;
-        violations = [...violations, ...(await judgeManualRules(text, rules, { threshold }))];
+        violations = [...violations, ...(await judgeManualRules(text, rules, { threshold: aiThreshold }))];
       } catch (e) {
         console.error(`--ai の判定を飛ばしました: ${e.message}`);
       }
@@ -427,6 +437,7 @@ switch (cmd) {
     console.log('  check [files...] [--preset name] [--format json] [--min-severity warn] [--fail-on info|warn|error]  (既定: warn以上でexit 1)');
     console.log('  fix <files...> [--preset name] [--write]   決定論的修正 (既定はdry-run)');
     console.log('  --strict は info も含めて exit 1 にする (--fail-on info と同義)');
+    console.log('  --ai はmanualルールも型付き判定のAPIで見る (TYPESAFE_API_KEYが要る。結果はinfo)。--ai-threshold 0〜1 (既定0.9)');
     console.log('  ui [--port 7777] [--file path]            プロジェクト辞書のローカル編集フォーム (127.0.0.1のみ)');
   console.log('  list [--preset name] [--manual]');
     console.log('  explain <rule-id>');
